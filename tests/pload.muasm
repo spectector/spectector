@@ -1,0 +1,13 @@
+% Test for showing if concolic testing keeps unneeded constraints from previous 
+% paths (e.g., only the required memory or register accesses should appear)
+    beqz x,L1
+    load v1,16
+L1:
+    beqz y,L2
+    load v2,17
+L2:
+%    beqz z,L3
+%    load v3,18
+%L3:
+
+

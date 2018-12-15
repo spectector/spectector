@@ -1,0 +1,17 @@
+% Program 2.5
+
+    load x,0
+    load v,1
+    load w,2
+    beqz x,L6
+    load y,v
+    jmp L7
+L6:
+    store y,w
+L7:
+    beqz x,L10
+    store y,w
+    jmp End
+L10:
+    load y,v
+End:

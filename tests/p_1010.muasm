@@ -1,0 +1,15 @@
+% Program from Fig10 repeated twice
+    x<-in>=bound
+    beqz x,L3
+    jmp L10
+L3:
+    load secret,in
+    load z,secret
+L10:
+    x2<-in2>=bound2
+    beqz x2,L3b
+    jmp L10b
+L3b:
+    load secret,in
+    load z,secret
+L10b:

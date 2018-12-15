@@ -1,0 +1,9 @@
+% No user input, only 1 possible trace
+    x<-5
+    w<-0
+Loop:
+    w<-w+x
+    x<-x-1
+    y<-x=0
+    beqz y,Loop
+

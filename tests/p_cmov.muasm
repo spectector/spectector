@@ -1,0 +1,7 @@
+% test concolic and cmov instruction
+    z<-0
+    cmov x=y,z<-1
+    beqz z,End
+    load 1,v
+End:
+

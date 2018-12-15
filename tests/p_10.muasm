@@ -1,0 +1,10 @@
+% Program from Fig 10
+    x<-in>=bound
+    beqz x,L3
+    jmp L10
+L3:
+    load secret,in
+    load z,secret
+L10:
+
+

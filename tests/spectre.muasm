@@ -1,0 +1,8 @@
+    x<-v<y        % cmp
+    beqz x,End    % jae -> this instruction depends on the previous one (we flip the condition)
+    % load v,in   % mov -8(%rbp), %rax
+    load v,v      % movzbl array1(,%rax), %eax 
+    % v<-v*512    % ignored, cltq also ignored
+    load v,v      % movzbl array2(,%rax), %eax
+End:
+

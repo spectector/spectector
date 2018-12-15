@@ -1,0 +1,21 @@
+esp<-esp-1
+store esp, sto
+sto<-esp
+%store s, sto+0*0+ -8 This causes the problem
+load x, sto+0*0+ -8
+load z, 0+0*0+array1_size
+f<-z>=x
+beqz f, 16
+load x, sto+0*0+ -8
+load x, 0+x*1+array1
+skip
+skip
+load x, 0+x*1+array2
+load z,0+0*0+temp
+z<-z/\x
+store z, 0+0*0+temp
+load sto, esp
+esp<-esp+1
+load tmp, esp
+esp<-esp+1
+jmp 1000

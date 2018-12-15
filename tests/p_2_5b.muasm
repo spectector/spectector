@@ -1,0 +1,22 @@
+% Program 2.5 (modified version)
+    load j,2
+    u<-1
+    store u,j % store 1 in mem position j (make sure that sym deps are kept here)
+    %
+    load x,0
+    load v,1
+    load w,2
+    % x<-v*2
+    x<-v*2+x+1 % (make sure that sym deps are kept here)
+    beqz x,L6
+    load y,v
+    jmp L7
+L6:
+    store y,w
+L7:
+    beqz x,L10
+    store y,w
+    jmp End
+L10:
+    load y,v
+End:

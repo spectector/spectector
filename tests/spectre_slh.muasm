@@ -1,0 +1,7 @@
+	u<-0xfffffff
+	x<-v<y
+	beqz x,End
+	cmov v>=y,u<-0
+	load v,v
+	load v,(v/\u)
+End:

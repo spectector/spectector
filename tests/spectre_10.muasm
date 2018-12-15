@@ -1,0 +1,7 @@
+    x<-v<y
+    beqz x,End
+    load w,v
+    x<-w=u
+    beqz x,End
+    load z,0
+End:

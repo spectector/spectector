@@ -1,0 +1,20 @@
+% Test for checking that value in load is kept symbolic
+%
+% There should be two paths, i.e.:
+%   $ spectector -n -a reach tests/loadsym.masm -c 'c([],[x=0,pc=0])'
+%   $ spectector -n -a reach tests/loadsym.masm -c 'c([],[x=1,pc=0])'
+
+    v<-0+0
+    store v,0
+    v<-100+0
+    store v,1
+    %
+    load r,(x/\1)
+    beqz r,L1
+    v1<-256
+    jmp L2
+L1:
+    v1<-257
+L2:
+
+

@@ -1,0 +1,7 @@
+% It won't terminate because x isn't defined. Concolic will test all paths with all x models
+    w <- 0
+Loop:
+    w <- w+x
+    x <- x-1
+    y <- x=0
+    beqz y,Loop
