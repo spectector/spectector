@@ -55,15 +55,17 @@ specified in the `CIAOPATH` environment variable or `~/.ciao` by
 default.
 
 **For developing** it is recommended to define your own
-_workspace directory_ and clone this repository into it. E.g., `export
+_workspace directory_ and clone this repository into it. 
+
+
+E.g., `export
 CIAOPATH=~/ciao` and update your `PATH` with `eval "$(ciao-env)"`. 
 The dependencies can be cloned manually or fetched automatically by
 calling `ciao fetch` at the source directory.
 
 [Marco: Clarify this! (By the way, wouldn't the above be needed anyway to run ciao and compile spectector?)]
 
-Use the following commands to check your installation (it should show
-`ok` in a few seconds):
+Use the following commands to check your installation (it should show `ok` in a few seconds):
 ```
 cd SPECTECTORDIR/tests/
 ./runtests.sh
