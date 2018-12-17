@@ -84,11 +84,28 @@ Once correctly installed, Spectector can be run from the command line
 as follows:
 
 ```
-spectector assembly.file -c "c([Memory],[Assignments])" --low "[Low,variables]"
-spectector assembly.file -a analysis -c "c([Memory],[Assignments])" --low "[Low,variables]"
+spectector assembly.file -c initConf --low policy
 ```
 
-[Some documentation needed?]
+In the above command, `initConf` is a file containing the initial configuration
+and `policy` is a file specifying the security policy:
+
+* An initial configuration specifies the initial values for some of the
+  registers and memory locations. Spectector will treat all uninitialized
+  registers and memory locations as containing symbolic values. We specify the
+  initial configuration as `c([Memory],[Assignments])`, where `Memory` maps
+  memory locations to values and `Assignments` maps registers to values. For
+  instance, `c([500=0,501=0],[rax=20, pc=START])` denotes that (1) the initial
+  values of the memory locations `500` and `501` is `0`, (2) the initial value
+  of the register `rax` is `20`, and (3) the initial value of the program
+  counter register `pc` is the line number of the instruction labelled with `START`.
+
+* A policy specifies which registers and memory locations are known or
+  controlled by an attacker (i.e., they contain public information). The file
+  `policy` contains  a list of register identifiers and memory locations
+  separated by a comma. For instance, the policy `[pc, rax, 500]` states that
+  the registers `pc` and `rax` and the memory location `500` contain public
+  information.
 
 See the output of `spectector -h` for more detailed instructions.
 
