@@ -40,7 +40,7 @@ Once the Ciao system is installed, you can automatically fetch, build, and insta
 ciao get github.com/imdea-software/spectector
 ```
 
-The following dependendencies (including third-party code) will be
+The following dependencies (including third-party code) will be
 installed automatically:
 
 1. [Concolic](https://github.com/ciao-lang/concolic) for
