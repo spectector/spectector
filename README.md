@@ -39,7 +39,7 @@ Once the Ciao system is installed, you can automatically fetch, build, and insta
 ```
 ciao get github.com/spectector/spectector
 ```
-aaa
+
 The following dependencies (including third-party code) will be
 installed automatically:
 
@@ -53,22 +53,6 @@ installed automatically:
 All code will be downloaded and built under the first directory
 specified in the `CIAOPATH` environment variable or `~/.ciao` by
 default.
-
-**For developing** it is recommended to define your own
-_workspace directory_ and clone this repository into it.
-To do this, proceed as follow:
-1) Create a folder `spectector-workspace` at a path `path`.
-2) Mark the folder `spectector-workspace` as a CIAO workspace by executing `export CIAOPATH=$path/spectector-workspace` and update your `PATH` with `eval "$(ciao-env)"`. 
-3) Clone the main Spectector's repository into the folder `spectector-workspace` by executing `git clone https://github.org/spectector/spectector.git path/spectector-workspace/spectector`.
-4) The dependencies can be cloned manually or fetched automatically by
-calling `ciao fetch` in the source directory `spectector-workspace`.
-5) Spectector can be built by running `ciao build spectector`  in the source directory `spectector-workspace`.
-
-Use the following commands to check your installation (it should show `ok` in a few seconds):
-```
-cd SPECTECTORDIR/tests/
-./runtests.sh
-```
 
 # Using Spectector
 
@@ -112,14 +96,15 @@ See the output of `spectector -h` for more detailed instructions.
 
 ## Supported x64 instructions and other limitations
 
-See Sections VI.C and VIII of the [Spectector's paper](TODO) for a
+See Sections VI.C and VIII of the [Spectector's paper](docs/paper.pdf) for a
 description of the supported instructions and limitations.
 
 # Useful links
 
 1. [This](docs/paper.pdf) is the research paper describing Spectector.
-2. [This file](docs/obtaining_assembly_programs.md) describes a few ways of obtaining assembly programs.
-3. [This repository](https://gitlab.software.imdea.org/speculative-execution/spectector-benchmarks) contains the benchmarks from the Spectector's paper, and it describes how to reproduce all the results therein.
+2. [This file](docs/compiling_from_sources.md) describes how to compile Spectector from source code.
+3. [This file](docs/obtaining_assembly_programs.md) describes a few ways of obtaining assembly programs.
+4. [This repository](https://gitlab.software.imdea.org/speculative-execution/spectector-benchmarks) contains the benchmarks from the Spectector's paper, and it describes how to reproduce all the results therein.
 
 # Important
 

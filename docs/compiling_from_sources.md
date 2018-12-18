@@ -10,7 +10,7 @@ One could proceed as follow:
 4.  Move to the workspace by executing `cd ~/ciao`.
 5.  Clone the main Spectector's repository into the workspace by executing `git clone https://github.org/spectector/spectector.git`.
 6.  Clone Spectector's dependencies into the workspace by executing `git clone https://github.org/spectector/concolic.git` and `git clone https://github.org/spectector/spectector.git`.
-7. Spectector can be built by running `ciao build spectector`  in the workspace `~\ciao`.
+7. Spectector can be built by running `ciao build  -r spectector`  in the workspace `~\ciao`. This also downloads the Z3 solver.
 
 Use the following commands to check your installation (it should show `ok` in a few seconds):
 ```
