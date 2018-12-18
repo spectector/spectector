@@ -121,3 +121,10 @@ description of the supported instructions and limitations.
 1. [This](docs/paper.pdf) is the research paper describing Spectector.
 2. [This file](docs/obtaining_assembly_programs.md) describes a few ways of obtaining assembly programs.
 3. [This repository](https://gitlab.software.imdea.org/speculative-execution/spectector-benchmarks) contains the benchmarks from the Spectector's paper, and it describes how to reproduce all the results therein.
+
+# Important
+
+Spectector is not production ready. It's a research prototype that demonstrates
+the viability of detecting speculative information flows in small assembly
+programs. It cannot be used (yet!) to detect speculative leaks in large,
+real-world programs.
