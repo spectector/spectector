@@ -49,7 +49,6 @@ show_help :-
   --solver S       Use symbolic solver S
       Solvers:
         z3:        Z3 SMT (default)
-        naive:     almost brute force (internal for testing)
   -n,--nonspec     Use non-speculative semantics
   -w,--window N    Size of speculative window
   --steps N        Execution step limit
