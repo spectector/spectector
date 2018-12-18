@@ -51,7 +51,7 @@ noarr_trace([sym(element(_,K,V))|Xs]) := [sym(element(K,V))| ~noarr_trace(Xs)] :
 noarr_trace([sym(update(_,K,V,_))|Xs]) := [sym(update(K,V))| ~noarr_trace(Xs)] :- !.
 noarr_trace([X|Xs]) := [X| ~noarr_trace(Xs)].
 
-noarr_sym(arr_eq(_,_)) :- !. % (ignore)
+noarr_sym(update0(_,_)) :- !. % (ignore)
 noarr_sym(element(_,K,_)) :- atom(K), !. % (ignore)
 noarr_sym(update(_,K,_,_)) :- atom(K), !. % (ignore)
 
