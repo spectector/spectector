@@ -2,3 +2,4 @@
 *.po
 *.itf
 *.asr
+dist/

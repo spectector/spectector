@@ -37,16 +37,16 @@ Windows 10 Pro (using the Windows Linux Subsystem with kernel 4.4.0).
 Once the Ciao system is installed, you can automatically fetch, build, and install Spectector using:
 
 ```
-ciao get github.com/imdea-software/spectector
+ciao get github.com/spectector/spectector
 ```
-
+aaa
 The following dependencies (including third-party code) will be
 installed automatically:
 
 1. [Concolic](https://github.com/ciao-lang/concolic) for
    SMT-enhanced symbolic reasoning and search
    (`ciao get concolic`). This will automatically install Z3.
-2. [muASM translator](https://github.com/imdea-software/muasm_translator)
+2. [muASM translator](https://github.com/spectector/muasm_translator)
    for muASM translation from x64 assembly (`ciao get
    github.com/imdea-software/muasm_translator`)
 
@@ -55,15 +55,14 @@ specified in the `CIAOPATH` environment variable or `~/.ciao` by
 default.
 
 **For developing** it is recommended to define your own
-_workspace directory_ and clone this repository into it. 
-
-
-E.g., `export
-CIAOPATH=~/ciao` and update your `PATH` with `eval "$(ciao-env)"`. 
-The dependencies can be cloned manually or fetched automatically by
-calling `ciao fetch` at the source directory.
-
-[Marco: Clarify this! (By the way, wouldn't the above be needed anyway to run ciao and compile spectector?)]
+_workspace directory_ and clone this repository into it.
+To do this, proceed as follow:
+1) Create a folder `spectector-workspace` at a path `path`.
+2) Mark the folder `spectector-workspace` as a CIAO workspace by executing `export CIAOPATH=$path/spectector-workspace` and update your `PATH` with `eval "$(ciao-env)"`. 
+3) Clone the main Spectector's repository into the folder `spectector-workspace` by executing `git clone https://github.org/spectector/spectector.git path/spectector-workspace/spectector`.
+4) The dependencies can be cloned manually or fetched automatically by
+calling `ciao fetch` in the source directory `spectector-workspace`.
+5) Spectector can be built by running `ciao build spectector`  in the source directory `spectector-workspace`.
 
 Use the following commands to check your installation (it should show `ok` in a few seconds):
 ```
