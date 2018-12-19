@@ -53,9 +53,4 @@ Obtaining an assembly program `target.asm` (in the Intel syntax) from a C progra
 ## Disassembling existing binaries
 
 Finally, one could obtain an assembly program by disassembling existing binaries,
-without relying on a program's source code. A basic script for doing that is the
-following:
-
-```
-[TODO: Shall we try to analyze stuff from binaries?]
-```
+without relying on a program's source code, e.g., by using the `objdump` command.
