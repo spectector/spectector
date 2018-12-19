@@ -13,12 +13,12 @@ leaks caused by speculatively executed instructions. It then relies on the Z3
 SMT solver to determine the presence of possible leaks. More precisely,
 Spectector automatically proves whether a program satisfies _speculative
 non-interference_, a security property formalized in the [Spectector's
-paper](docs/paper.pdf).
+paper](https://spectector.github.org/papers/spectector.pdf).
 
 Using Spectector, we detected subtle bugs in the way countermeasures
 are placed by several major compilers, which may result in insecure
 programs or unnecessary countermeasures. See the
-[Spectector's paper](docs/paper.pdf) for more information.
+[Spectector's paper](https://spectector.github.org/papers/spectector.pdf) for more information.
 
 ## Requirements
 
@@ -58,7 +58,7 @@ default.
 
 Spectector can be executed over x64 assembly programs. Additionally,
 Spectector can analyze programs written in muASM, a simple assembly
-language described in the [Spectector's paper](docs/paper.pdf).
+language described in the [Spectector's paper](https://spectector.github.org/papers/spectector.pdf).
 
 Spectector treats each file with extension `.s` as an x64 program
 written using the AT&T syntax, each file with extension `.asm` as an
@@ -96,12 +96,12 @@ See the output of `spectector -h` for more detailed instructions.
 
 ## Supported x64 instructions and other limitations
 
-See Sections VI.C and VIII of the [Spectector's paper](docs/paper.pdf) for a
+See Sections VI.C and VIII of the [Spectector's paper](https://spectector.github.org/papers/spectector.pdf) for a
 description of the supported instructions and limitations.
 
 # Useful links
 
-1. [This](docs/paper.pdf) is the research paper describing Spectector.
+1. [This](https://spectector.github.org/papers/spectector.pdf) is the research paper describing Spectector.
 2. [This file](docs/compiling_from_sources.md) describes how to compile Spectector from source code.
 3. [This file](docs/obtaining_assembly_programs.md) describes a few ways of obtaining assembly programs.
 4. [This repository](https://gitlab.software.imdea.org/speculative-execution/spectector-benchmarks) contains the benchmarks from the Spectector's paper, and it describes how to reproduce all the results therein.
