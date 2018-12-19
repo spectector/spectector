@@ -105,6 +105,7 @@ description of the supported instructions and limitations.
 2. [This file](docs/compiling_from_sources.md) describes how to compile Spectector from source code.
 3. [This file](docs/obtaining_assembly_programs.md) describes a few ways of obtaining assembly programs.
 4. [This repository](https://gitlab.software.imdea.org/speculative-execution/spectector-benchmarks) contains the benchmarks from the Spectector's paper, and it describes how to reproduce all the results therein.
+5. [This file](docs/generate_artifact_eval.md) describes how to generate Spectector's artifact evaluation distribution.
 
 # Important
 
