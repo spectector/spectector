@@ -9,7 +9,7 @@ One could proceed as follow:
 3.  Mark the folder `~/ciao` as a CIAO workspace by executing `export CIAOPATH=~/ciao` and update your `PATH` with `eval "$(ciao-env)"`. 
 4.  Move to the workspace by executing `cd ~/ciao`.
 5.  Clone the main Spectector's repository into the workspace by executing `git clone https://github.com/spectector/spectector.git`.
-6.  Clone Spectector's dependencies into the workspace by executing `git clone https://github.com/ciao-lang/concolic.git` and `git clone https://github.com/spectector/spectector.git`.
+6.  Clone Spectector's dependencies into the workspace by executing `git clone https://github.com/ciao-lang/concolic.git` and `git clone https://github.com/spectector/muasm_translator.git`.
 7. Spectector can be built by running `ciao build  -r spectector`  in the workspace `~\ciao`. This also downloads the Z3 solver.
 
 Use the following commands to check your installation (it should show `ok` in a few seconds):
