@@ -2,7 +2,7 @@
 version('1.0').
 depends([
     core-[version>='1.18'],
-    concolic,
+    'github.com/ciao-lang/concolic',
     muasm_translator
 ]).
 alias_paths([
