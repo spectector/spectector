@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # check that we get the expected output
 
