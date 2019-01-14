@@ -13,7 +13,7 @@
 % limitations under the License.
 % ===========================================================================
 
-:- module(_, [], [assertions, fsyntax]).
+:- module(_, [], [assertions, fsyntax, dcg]).
 
 :- doc(title, "Spectector").
 :- doc(subtitle, "SPECulative deTECTOR").
@@ -28,6 +28,7 @@
 :- use_module(library(read)).
 :- use_module(library(system), [file_exists/1]).
 :- use_module(library(terms_io), [file_to_terms/2]).
+:- use_module(library(aggregates), [findall/3]).
 
 :- use_module(concolic(symbolic), [set_ext_solver/1, get_ext_solver/1]).
 :- use_module(muasm_translator(muasm_parser)).
@@ -165,17 +166,20 @@ run(PrgFile, Opts) :-
 	),
 	%
 	( Ext = '.s' ->
-	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic)
+	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic, Ini)
 	; Ext = '.asm' ->
-	    Prg = ~translate_x86_to_muasm(intel, PrgFile, Dic)
+	    Prg = ~translate_x86_to_muasm(intel, PrgFile, Dic, Ini)
 	; Ext = '.muasm' ->
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic))
 	; throw(unknown_extension(PrgFile))
 	),
+	initialize(1024, ~dic_to_list(Ini), c(Memory, Assignments)), % TODO: Set initial heap direction as a flag?
+	
         load_program(Prg), % (This instantiates labels too)
 	% write(labels(Dic)), nl,
-	translate_labels(M0, Dic, M),
-	translate_labels(A0, Dic, A),
+	translate_labels(M0, Dic, M1),
+	translate_labels(A0, Dic, A1),
+	append(M1,Memory,M), append(A1,Assignments,A),
 	%
 	write('---------------------------------------------------------------------------'), nl,
 	write('prg='), writeq(PrgNameExt), write(', '), % program
@@ -236,3 +240,20 @@ get_conf_file(Opts,Path) := ConfFile :-
 	; path_concat(Path, 'config', ConfFile),
 	  file_exists(ConfFile)
 	).
+
+keys(D) --> { var(D) }, !.
+keys(dic(K,_,L,R)) --> !, keys(L), [K], keys(R).
+
+dic_to_list(D) := P :-
+	keys(D, Keys, []),
+	findall((K,V),(member(K,Keys), dic_get(D, K, V)), P).
+
+initialize(Heap0, [(Name, C)|Ls]) := c([Heap0=Data|Ms], [Name=Heap0|As]) :-
+	( member(size(N), C) ->
+	  Heap1 is Heap0 + N
+	; Heap1 is Heap0 + 16),
+	( member(init(Data), C) ->
+	  true
+	; Data = _),
+	initialize(Heap1, Ls, c(Ms,As)).
+initialize(_,[]) := c([],[]).
