@@ -7,11 +7,13 @@ One could proceed as follow:
     CIAOPATH=~/ciao` and update your `PATH` with `eval "$(ciao-env)"`. 
 4.  Move to the workspace by executing `cd ~/ciao`.
 5.  Clone the main Spectector's repository into the workspace by executing `git
-    clone https://github.org/spectector/spectector.git`.
+    clone https://github.com/spectector/spectector.git`.
 6.  Clone Spectector's dependencies into the workspace by executing `git clone
-    https://github.org/spectector/concolic.git` and `git clone
-    https://github.org/spectector/spectector.git`.
-7. Execute the following command: `ciao custom_run . bindist`. This calls the
+    https://github.com/ciao-lang/concolic.git` and `git clone
+    https://github.com/spectector/muasm_translator.git`.
+7.  Clone Spectector's benchmarks into the workspace by executing `git clone
+    https://github.com/spectector/spectector-benchmarks.git`.
+7. Execute the following command `ciao custom_run . bindist` in `~/ciao/spectector`. This calls the
    `make_distro.sh` script with some environment variables needed to locate the
    right binaries. The binary distribution is stored at the `dist/` folder under the
    `spectector/` directory. The command also generates a `.tar.gz` file with the distribution.
