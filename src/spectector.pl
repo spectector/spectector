@@ -78,6 +78,7 @@ show_help :-
         noninter: non-interference check (default)
   --low LOW        Low registers or memory addresses for noninter
   --statistics     Show the time that the solver takes
+  --init           Memory sections declared are ignored
 
 The input program can be a .muasm file (muAsm), a .asm file (Intel
 syntax), or a .s file (gnu assembler).
@@ -92,6 +93,7 @@ short_help :-
 opt('-h', '--help', As, As, [help]).
 opt('-n', '--nospec', As, As, [nospec]).
 opt('-s', '--spec', As, As, [spec]).
+opt('', '--init', As, As, [init]).
 opt('', '--solver', [Solver|As], As, [solver(Solver)]).
 opt('', '--conf-file', [ConfFile|As], As, [conf_file(ConfFile)]).
 opt('-c', '--conf', [ConfAtm|As], As, [Opt]) :-
@@ -173,8 +175,10 @@ run(PrgFile, Opts) :-
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic))
 	; throw(unknown_extension(PrgFile))
 	),
-	initialize(1024, ~dic_to_list(Ini), c(Memory, Assignments)), % TODO: Set initial heap direction as a flag?
-	
+	( member(init, Opts) -> Memory = [], Assignments = []
+	; initialize(1024, ~dic_to_list(Ini), c(Memory, Assignments)) % TODO: Set initial heap direction as a flag
+	),
+ 
         load_program(Prg), % (This instantiates labels too)
 	% write(labels(Dic)), nl,
 	translate_labels(M0, Dic, M1),
@@ -248,12 +252,28 @@ dic_to_list(D) := P :-
 	keys(D, Keys, []),
 	findall((K,V),(member(K,Keys), dic_get(D, K, V)), P).
 
-initialize(Heap0, [(Name, C)|Ls]) := c([Heap0=Data|Ms], [Name=Heap0|As]) :-
-	( member(size(N), C) ->
-	  Heap1 is Heap0 + N
-	; Heap1 is Heap0 + 16),
-	( member(init(Data), C) ->
+initialize(Heap0, [(Name, C)|Ls]) := c(Mem_Init, [Name=Heap0|As]) :-
+	( member(size(S), C) ->
 	  true
-	; Data = _),
+	; S = 16), % TODO: A standard offset, 16?
+	( member(cons(Input), C) ->
+	  ( Input = 0 -> create_memory(Heap0, z(S), Values)
+	  ; create_memory(Heap0, Input, Values) 
+	  )
+	; member(consR(InputR), C) ->
+	  reverse(InputR, Input),
+	  create_memory(Heap0, Input, Values) 
+	; Values = []
+	),
+	append(Values, Ms, Mem_Init),
+	Heap1 is Heap0 + S,
 	initialize(Heap1, Ls, c(Ms,As)).
 initialize(_,[]) := c([],[]).
+
+create_memory(_, z(_), []) :- !. % TODO: initialize regions
+% create_memory(_, z(0), []) :- !.
+% create_memory(Heap, z(N), [Heap=0|Rs]) :-
+% 	H1 is Heap + 1, N1 is N - 1, create_memory(H1, z(N1), Rs).
+create_memory(Heap, [V|Vs], [Heap=V|Rs]) :-
+	H1 is Heap + 1, create_memory(H1, Vs, Rs).
+create_memory(_, [], []).
