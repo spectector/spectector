@@ -137,24 +137,23 @@ parse_args([], [], []).
 
 :- export(run/2).
 run(PrgFile, Opts) :-
+	( ConfContents = ~file_to_terms(~get_conf_file(Opts,Path)) -> true
+	; ConfContents = []
+	),
 	path_split(PrgFile, Path, PrgNameExt),
 	path_splitext(PrgNameExt, _PrgBasename, Ext),
 	%
 	( member(nospec, Opts) -> SpecOpt = nospec
 	; SpecOpt = spec % (default)
 	),
-	( member(c(M0,A0), Opts) -> true % TODO: replace symbolic labels!
-	; ConfFile = ~get_conf_file(Opts,Path) -> file_to_terms(ConfFile, [c(M0,A0)|_])
-	; M0 = [], A0 = [pc=0]
-	),
-	( member(ana(Ana0), Opts) -> true
-	; Ana0 = noninter % (default)
-	),
+	get_attr(c(M0,A0), [Opts, ConfContents], [[],[pc=0]]), % TODO: replace symbolic labels!
+	get_attr(ana(Ana0), [Opts], [noninter]),
+	get_attr(heap(HeapDir), [Opts, ConfContents], [1024]),
+	% TODO: set up stack
+	% get_attr(stack(StackDir), [Opts, ConfContents], 0xf000000),
 	( Ana0 = noninter ->
-	    ( member(low(Low), Opts) -> true
-	    ; Low = [] % (default)
-	    ),
-	    Ana = noninter(Low)
+	  get_attr( low(Low), [Opts, ConfContents], [[]]),
+	  Ana = noninter(Low)
 	; Ana = Ana0
 	),
 	( member(solver(Solver), Opts) -> set_ext_solver(Solver)
@@ -169,9 +168,9 @@ run(PrgFile, Opts) :-
 	%
 	% TODO: Set initial heap direction
 	( Ext = '.s' ->
-	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic, Heap)
+	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic, HeapDir, Heap)
 	; Ext = '.asm' ->
-	    Prg = ~translate_x86_to_muasm(intel, PrgFile, Dic, Heap)
+	    Prg = ~translate_x86_to_muasm(intel, PrgFile, Dic, HeapDir, Heap)
 	; Ext = '.muasm' ->
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic))
 	; throw(unknown_extension(PrgFile))
@@ -245,3 +244,8 @@ get_conf_file(Opts,Path) := ConfFile :-
 	; path_concat(Path, 'config', ConfFile),
 	  file_exists(ConfFile)
 	).
+
+% Query on the list of lists, if there's no coincidence, returns a default value
+get_attr(Query, [L|_], _) :- member(Query, L), !.
+get_attr(Query, [_|Ls], D) :- get_attr(Query, Ls, D), !.
+get_attr(Query, _, Default) :- Query =.. [_|Default].
