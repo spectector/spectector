@@ -79,6 +79,8 @@ show_help :-
   --low LOW        Low registers or memory addresses for noninter
   --statistics     Show the time that the solver takes
   --noinit         Memory sections declared are ignored
+  --ignore IGN     Ignore the specified variables initialization
+  --heap N         Heap memory direction
 
 The input program can be a .muasm file (muAsm), a .asm file (Intel
 syntax), or a .s file (gnu assembler).
@@ -93,7 +95,7 @@ short_help :-
 opt('-h', '--help', As, As, [help]).
 opt('-n', '--nospec', As, As, [nospec]).
 opt('-s', '--spec', As, As, [spec]).
-opt('', '--init', As, As, [init]).
+opt('', '--noinit', As, As, [noinit]).
 opt('', '--solver', [Solver|As], As, [solver(Solver)]).
 opt('', '--conf-file', [ConfFile|As], As, [conf_file(ConfFile)]).
 opt('-c', '--conf', [ConfAtm|As], As, [Opt]) :-
@@ -111,7 +113,14 @@ opt('', '--steps', [NAtm|As], As, [Opt]) :-
 	atom_codes(NAtm, NStr),
 	number_codes(N, NStr),
 	Opt = step(N).
+opt('', '--heap', [NAtm|As], As, [Opt]) :-
+	atom_codes(NAtm, NStr),
+	number_codes(N, NStr),
+	Opt = heap(N).
 opt('-a', '--analysis', [Ana|As], As, [ana(Ana)]).
+opt('', '--ignore', [IgnAtm|As], As, [ign(Ign)]) :-
+	atom_codes(IgnAtm, IgnStr),
+	read_from_string_atmvars(IgnStr, Ign).
 opt('', '--low', [LowAtm|As], As, [low(Low)]) :-
 	atom_codes(LowAtm, LowStr),
 	read_from_string_atmvars(LowStr, Low).
@@ -178,7 +187,7 @@ run(PrgFile, Opts) :-
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic))
 	; throw(unknown_extension(PrgFile))
 	),
-	( member(init, Opts) -> Memory = [], Assignments = []
+	( member(noinit, Opts) -> Memory = [], Assignments = []
 	; Heap = c(Memory, Assignments)
 	),
  
