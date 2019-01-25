@@ -146,11 +146,16 @@ run(PrgFile, Opts) :-
 	( member(nospec, Opts) -> SpecOpt = nospec
 	; SpecOpt = spec % (default)
 	),
+	% Initial configurations
 	get_attr(c(M0,A0), [Opts, ConfContents], [[],[pc=0]]), % TODO: replace symbolic labels!
-	get_attr(ana(Ana0), [Opts], [noninter]),
+	% Specification of the analysis
+	get_attr(ana(Ana0), [Opts, ConfContents], [noninter]),
+	% Set up heap direction
 	get_attr(heap(HeapDir), [Opts, ConfContents], [1024]),
+	% Ignore specified variable initializations
+	get_attr(ign(IgnNames), [Opts, ConfContents], [[]]),
 	% TODO: set up stack
-	% get_attr(stack(StackDir), [Opts, ConfContents], 0xf000000),
+	% get_attr(stack(StackDir), [Opts, ConfContents], [0xf000000]),
 	( Ana0 = noninter ->
 	  get_attr( low(Low), [Opts, ConfContents], [[]]),
 	  Ana = noninter(Low)
@@ -165,12 +170,10 @@ run(PrgFile, Opts) :-
 	( member(step(SLimit), Opts) -> set_step_limit(SLimit)
 	; true % (use default)
 	),
-	%
-	% TODO: Set initial heap direction
 	( Ext = '.s' ->
-	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic, HeapDir, Heap)
+	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic, IgnNames,  HeapDir, Heap)
 	; Ext = '.asm' ->
-	    Prg = ~translate_x86_to_muasm(intel, PrgFile, Dic, HeapDir, Heap)
+	    Prg = ~translate_x86_to_muasm(intel, PrgFile, Dic, IgnNames, HeapDir, Heap)
 	; Ext = '.muasm' ->
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic))
 	; throw(unknown_extension(PrgFile))
