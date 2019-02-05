@@ -48,7 +48,7 @@ installed automatically:
    (`ciao get concolic`). This will automatically install Z3.
 2. [muASM translator](https://github.com/spectector/muasm_translator)
    for muASM translation from x64 assembly (`ciao get
-   github.com/imdea-software/muasm_translator`)
+   github.com/spectector/muasm_translator`)
 
 All code will be downloaded and built under the first directory
 specified in the `CIAOPATH` environment variable or `~/.ciao` by

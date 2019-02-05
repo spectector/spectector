@@ -40,3 +40,11 @@ get_step_limit(N) :-
 	( step_limit(N0) -> N0 = N
 	; N = 100000 % default
 	).
+
+:- data no_stop_mode/0.
+:- export(no_stop_mode/0).
+
+:- export(set_no_stop_mode/0).
+set_no_stop_mode :-
+	set_fact(no_stop_mode).
+

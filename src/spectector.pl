@@ -19,6 +19,7 @@
 :- doc(subtitle, "SPECulative deTECTOR").
 
 :- use_module(library(lists)).
+:- use_module(library(llists), [flatten/2]).
 :- use_module(library(write)).
 :- use_module(library(dict)).
 :- use_module(library(stream_utils)).
@@ -28,7 +29,6 @@
 :- use_module(library(read)).
 :- use_module(library(system), [file_exists/1]).
 :- use_module(library(terms_io), [file_to_terms/2]).
-:- use_module(library(aggregates), [findall/3]).
 
 :- use_module(concolic(symbolic), [set_ext_solver/1, get_ext_solver/1]).
 :- use_module(muasm_translator(muasm_parser)).
@@ -48,7 +48,7 @@ main(Args) :-
 	    ( member(help, Opts) ->
 	        show_help
 	    ; Files = [File] ->
-	        run(File, Opts)
+  	        run(File, Opts)
 	    ; short_help, halt(1)
 	    )
 	; short_help, halt(1)
@@ -79,8 +79,11 @@ show_help :-
   --low LOW        Low registers or memory addresses for noninter
   --statistics     Show the time that the solver takes
   --noinit         Memory sections declared are ignored
-  --ignore IGN     Ignore the specified variables initialization
+  --keep-sym VAR   Ignore the specified variables initialization
   --heap N         Heap memory direction
+  --no-stop-mode   If the final of the program is reached during
+                   the speculation, it keeps stuck until
+                   speculation ends
 
 The input program can be a .muasm file (muAsm), a .asm file (Intel
 syntax), or a .s file (gnu assembler).
@@ -118,13 +121,14 @@ opt('', '--heap', [NAtm|As], As, [Opt]) :-
 	number_codes(N, NStr),
 	Opt = heap(N).
 opt('-a', '--analysis', [Ana|As], As, [ana(Ana)]).
-opt('', '--ignore', [IgnAtm|As], As, [ign(Ign)]) :-
+opt('', '--keep-sym', [IgnAtm|As], As, [ign(Ign)]) :-
 	atom_codes(IgnAtm, IgnStr),
 	read_from_string_atmvars(IgnStr, Ign).
 opt('', '--low', [LowAtm|As], As, [low(Low)]) :-
 	atom_codes(LowAtm, LowStr),
 	read_from_string_atmvars(LowStr, Low).
 opt('-r', '--reduce', As, As, [reduce]).
+opt('', '--no-stop-mode', As, As, [no_stop_mode]).
 opt('', '--statistics', As, As, [statistics]).
 
 parse_args([Arg|Args], Opts, File) :-
@@ -149,6 +153,7 @@ run(PrgFile, Opts) :-
 	( ConfContents = ~file_to_terms(~get_conf_file(Opts,Path)) -> true
 	; ConfContents = []
 	),
+	Options = ~flatten([Opts, ConfContents]),
 	path_split(PrgFile, Path, PrgNameExt),
 	path_splitext(PrgNameExt, _PrgBasename, Ext),
 	%
@@ -156,46 +161,48 @@ run(PrgFile, Opts) :-
 	; SpecOpt = spec % (default)
 	),
 	% Initial configurations
-	get_attr(c(M0,A0), [Opts, ConfContents], [[],[pc=0]]), % TODO: replace symbolic labels!
+	extract_query(c(M0,A0), Options, [[],[pc=0]]), % TODO: replace symbolic labels!
 	% Specification of the analysis
-	get_attr(ana(Ana0), [Opts, ConfContents], [noninter]),
+	extract_query(ana(Ana0), Options, [noninter]),
 	% Set up heap direction
-	get_attr(heap(HeapDir), [Opts, ConfContents], [1024]),
+	extract_query(heap(HeapDir), Options, [1024]),
 	% Ignore specified variable initializations
-	get_attr(ign(IgnNames), [Opts, ConfContents], [[]]),
+	extract_query(ign(KeepS), Options, [[]]),
 	% TODO: set up stack
-	% get_attr(stack(StackDir), [Opts, ConfContents], [0xf000000]),
+	% extract_query(stack(StackDir), [Opts, ConfContents], [0xf000000]),
 	( Ana0 = noninter ->
-	  get_attr( low(Low), [Opts, ConfContents], [[]]),
+	  extract_query( low(Low), Options, [[]]),
 	  Ana = noninter(Low)
 	; Ana = Ana0
 	),
-	( member(solver(Solver), Opts) -> set_ext_solver(Solver)
+	( member(no_stop_mode, Options) -> set_no_stop_mode
 	; true % (use default)
 	),
-	( member(window(WSize), Opts) -> set_window_size(WSize)
+	( member(solver(Solver), Options) -> set_ext_solver(Solver)
 	; true % (use default)
 	),
-	( member(step(SLimit), Opts) -> set_step_limit(SLimit)
+	( member(window(WSize), Options) -> set_window_size(WSize)
+	; true % (use default)
+	),
+	( member(step(SLimit), Options) -> set_step_limit(SLimit)
 	; true % (use default)
 	),
 	( Ext = '.s' ->
-	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic, IgnNames,  HeapDir, Heap)
+	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic, KeepS,  HeapDir, Heap)
 	; Ext = '.asm' ->
-	    Prg = ~translate_x86_to_muasm(intel, PrgFile, Dic, IgnNames, HeapDir, Heap)
+	    Prg = ~translate_x86_to_muasm(intel, PrgFile, Dic, KeepS, HeapDir, Heap)
 	; Ext = '.muasm' ->
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic))
 	; throw(unknown_extension(PrgFile))
 	),
-	( member(noinit, Opts) -> Memory = [], Assignments = []
+	( member(noinit, Options) -> Memory = [], Assignments = []
 	; Heap = c(Memory, Assignments)
 	),
- 
-        load_program(Prg), % (This instantiates labels too)
-	% write(labels(Dic)), nl,
 	translate_labels(M0, Dic, M1),
 	translate_labels(A0, Dic, A1),
 	append(M1,Memory,M), append(A1,Assignments,A),
+        load_program(Prg), % (This instantiates labels too)
+	% write(labels(Dic)), nl,
 	%
 	write('---------------------------------------------------------------------------'), nl,
 	write('prg='), writeq(PrgNameExt), write(', '), % program
@@ -211,12 +218,12 @@ run(PrgFile, Opts) :-
 	C0 = ~initc(SpecOpt, M, A),
 	write('program:'), nl,
 	show_program,
-	( member(statistics, Opts) ->
+	( member(statistics, Options) ->
 	    statistics(walltime, [T0, _])
 	; true
 	),
 	runtest2(Ana, C0),
-	( member(statistics, Opts) ->
+	( member(statistics, Options) ->
 	    statistics(walltime,[T, _]),
 	    Time is T - T0,
 	    write('done in '),
@@ -258,6 +265,6 @@ get_conf_file(Opts,Path) := ConfFile :-
 	).
 
 % Query on the list of lists, if there's no coincidence, returns a default value
-get_attr(Query, [L|_], _) :- member(Query, L), !.
-get_attr(Query, [_|Ls], D) :- get_attr(Query, Ls, D), !.
-get_attr(Query, _, Default) :- Query =.. [_|Default].
+:- export(extract_query/3).
+extract_query(Query, L, _) :- member(Query, L), !.
+extract_query(Query, _, Default) :- Query =.. [_|Default].

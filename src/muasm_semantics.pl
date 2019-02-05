@@ -147,7 +147,7 @@ run_(load(X,E),c(M,A)) := c(M,A2) :-
 	V = ~element(M,N),
 	A1 = ~update(A,X,V),
 	A2 = ~update0(A1,pc,~incpc(A1)).
-% Store
+% Store % TODO: Notify about possible injection on indirect branches
 run_(store(X,E),c(M,A)) := c(M2,A2) :-
 	Xv = ~ev(X,A),
 	Ev = ~ev(E,A),
@@ -170,7 +170,7 @@ run_(jmp(E),c(M,A)) := c(M,A2) :-
 
 pc(A) := ~concretize(~ev(pc,A)).
 
-incpc(A) := ~concretize(~ev(pc+1,A)).
+incpc(A) := ~concretize(~ev(pc+1,A)). % TODO: Numeric labels as pc counters?
 
 % make sure that the expression is boolean
 bv(A) := A :- nonvar(A), bv_(A), !.
@@ -238,10 +238,6 @@ bp_(beqz(X,L),A,L2,N,GoodL2) :-
 	( V=0 -> L2 = L ; L2 = ~incpc(A) ),
 	( V=1 -> GoodL2 = L ; GoodL2 = ~incpc(A) ), % (keep it)
 	get_window_size(N).
-% Jmp	
-bp_(jmp(E),A,L,N,L) :-
-	Ev = ~ev(E,A),
-	L = ~concretize(Ev), N = 1.
 :- else.
 % Beqz-1 and Beqz-2
 bp_(beqz(X,L),A,L2,N,L2) :-
@@ -251,11 +247,11 @@ bp_(beqz(X,L),A,L2,N,L2) :-
 	% Good prediction
 	( V=1 -> L2 = L ; L2 = ~incpc(A) ),
 	N = 1. % (irrelevant if we predict correctly)
+:- endif.
 % Jmp	
 bp_(jmp(E),A,L,N,L) :-
 	Ev = ~ev(E,A),
 	L = ~concretize(Ev), N = 1.
-:- endif.
 
 % ---------------------------------------------------------------------------
 :- doc(section, "Speculative execution").
@@ -272,6 +268,18 @@ xrun(xc(Ctr,Conf,S), Timeout) := XC2 :-
 	  XC2 = ~xrun(XC1,Timeout1)
 	).
 
+% Se-Rollback-1 stop
+xrun1(xc(Ctr,Conf,S)) := XC2 :-
+	\+ ~no_stop_mode,
+	stop(Conf),
+	S = [spec(Id,_N,L,ConfPrime,GoodL)|S2],
+	\+ L = GoodL,
+	!,
+	tracepc(Conf),
+	trace(rollback(Id)),
+	ConfPrime = c(M,A0), A = ~update0(A0,pc,GoodL),
+	trace(pc(GoodL)),
+	XC2 = xc(Ctr,c(M,A),S2).
 % Se-NoJump & Se-ExBarrier
 xrun1(xc(Ctr,Conf,S)) := XC2 :- 
 	enabled(S),
@@ -324,5 +332,6 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	enabled(SPrime),
 	\+ L = GoodL,
 	!,
-	XC2 = xc(Ctr,Conf,~append(~zeroes(SPrime),[Spec|S2])).
+	XC2 = xc(Ctr,Conf,[Spec|S2]).
+
 
