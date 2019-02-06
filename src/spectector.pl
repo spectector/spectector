@@ -84,6 +84,8 @@ show_help :-
   --no-stop-mode   If the final of the program is reached during
                    the speculation, it keeps stuck until
                    speculation ends
+  --weak           Check the security condition under the weak
+                   specification (values in memory must match)
 
 The input program can be a .muasm file (muAsm), a .asm file (Intel
 syntax), or a .s file (gnu assembler).
@@ -129,6 +131,7 @@ opt('', '--low', [LowAtm|As], As, [low(Low)]) :-
 	read_from_string_atmvars(LowStr, Low).
 opt('-r', '--reduce', As, As, [reduce]).
 opt('', '--no-stop-mode', As, As, [no_stop_mode]).
+opt('', '--weak', As, As, [weak]).
 opt('', '--statistics', As, As, [statistics]).
 
 parse_args([Arg|Args], Opts, File) :-
@@ -177,6 +180,9 @@ run(PrgFile, Opts) :-
 	),
 	( member(no_stop_mode, Options) -> set_no_stop_mode
 	; true % (use default)
+	),
+	( member(weak, Options) -> set_weak
+	; true
 	),
 	( member(solver(Solver), Options) -> set_ext_solver(Solver)
 	; true % (use default)

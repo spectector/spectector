@@ -45,6 +45,10 @@ get_step_limit(N) :-
 :- export(no_stop_mode/0).
 
 :- export(set_no_stop_mode/0).
-set_no_stop_mode :-
-	set_fact(no_stop_mode).
+set_no_stop_mode :- set_fact(no_stop_mode).
 
+:- data weak/0.
+:- export(weak/0).
+
+:- export(set_weak/0).
+set_weak :- set_fact(weak).

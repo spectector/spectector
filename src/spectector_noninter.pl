@@ -24,6 +24,7 @@
 :- use_module(muasm_semantics).
 :- use_module(muasm_program).
 :- use_module(muasm_print).
+:- use_module(spectector_flags, [weak/0]).
 :- use_module(concolic(symbolic)).
 :- use_module(concolic(concolic), [pathgoal/2, sym_filter/2]).
 
@@ -148,6 +149,7 @@ unif_obs([], []).
 unif_obs([X|Xs], [Y|Ys]) :-
 	( X = load(A) -> Y = load(A)
 	; X = store(A) -> Y = store(A)
+	; weak, X = value(A) -> Y = value(A) % TODO: % For weak speculative non-interference, we consider also value(N) observations in the non-speculative trace
 	; true
 	),
 	unif_obs(Xs,Ys).
