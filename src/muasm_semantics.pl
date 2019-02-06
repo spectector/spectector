@@ -145,6 +145,9 @@ run_(load(X,E),c(M,A)) := c(M,A2) :-
 	N = ~ev(E,A),
 	trace(load(N)),
 	V = ~element(M,N),
+	( weak -> trace(value(V))
+	; true
+	),
 	A1 = ~update(A,X,V),
 	A2 = ~update0(A1,pc,~incpc(A1)).
 % Store % TODO: Notify about possible injection on indirect branches
@@ -153,6 +156,9 @@ run_(store(X,E),c(M,A)) := c(M2,A2) :-
 	Ev = ~ev(E,A),
 	M2 = ~update(M,Ev,Xv),
 	trace(store(Ev)),
+	( weak -> trace(value(Xv))
+	; true
+	),
 	A2 = ~update0(A,pc,~incpc(A)).
 % Beqz-1 and Beqz-2
 run_(beqz(X,L),c(M,A)) := c(M,A2) :-
