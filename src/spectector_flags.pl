@@ -41,11 +41,11 @@ get_step_limit(N) :-
 	; N = 100000 % default
 	).
 
-:- data no_stop_mode/0.
-:- export(no_stop_mode/0).
+:- data term_stop_spec/0.
+:- export(term_stop_spec/0).
 
-:- export(set_no_stop_mode/0).
-set_no_stop_mode :- set_fact(no_stop_mode).
+:- export(set_term_stop_spec/0).
+set_term_stop_spec :- set_fact(term_stop_spec).
 
 :- data weak/0.
 :- export(weak/0).

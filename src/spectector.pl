@@ -81,7 +81,7 @@ show_help :-
   --noinit         Memory sections declared are ignored
   --keep-sym VAR   Ignore the specified variables initialization
   --heap N         Heap memory direction
-  --no-stop-mode   If the final of the program is reached during
+  --term-stop-spec If the final of the program is reached during
                    the speculation, it keeps stuck until
                    speculation ends
   --weak           Check the security condition under the weak
@@ -130,7 +130,7 @@ opt('', '--low', [LowAtm|As], As, [low(Low)]) :-
 	atom_codes(LowAtm, LowStr),
 	read_from_string_atmvars(LowStr, Low).
 opt('-r', '--reduce', As, As, [reduce]).
-opt('', '--no-stop-mode', As, As, [no_stop_mode]).
+opt('', '--term-stop-spec', As, As, [term_stop_spec]).
 opt('', '--weak', As, As, [weak]).
 opt('', '--statistics', As, As, [statistics]).
 
@@ -178,7 +178,7 @@ run(PrgFile, Opts) :-
 	  Ana = noninter(Low)
 	; Ana = Ana0
 	),
-	( member(no_stop_mode, Options) -> set_no_stop_mode
+	( member(term_stop_spec, Options) -> set_term_stop_spec
 	; true % (use default)
 	),
 	( member(weak, Options) -> set_weak

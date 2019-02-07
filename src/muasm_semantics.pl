@@ -171,7 +171,7 @@ run_(beqz(X,L),c(M,A)) := c(M,A2) :-
 run_(jmp(E),c(M,A)) := c(M,A2) :-
 	La = ~ev(E,A), % TODO: useful? it will show indirect jumps more easily
 	trace(pc(La)),
-	L = ~concretize(La), % TODO: make symbolic if E is symbolic
+	L = ~concretize(La), % TODO: make symbolic if E is symbolic -> warning when is symbolic?
 	A2 = ~update0(A,pc,L).
 
 pc(A) := ~concretize(~ev(pc,A)).
@@ -274,24 +274,12 @@ xrun(xc(Ctr,Conf,S), Timeout) := XC2 :-
 	  XC2 = ~xrun(XC1,Timeout1)
 	).
 
-% Se-Rollback-1 stop
-xrun1(xc(Ctr,Conf,S)) := XC2 :-
-	\+ ~no_stop_mode,
-	stop(Conf),
-	S = [spec(Id,_N,L,ConfPrime,GoodL)|S2],
-	\+ L = GoodL,
-	!,
-	tracepc(Conf),
-	trace(rollback(Id)),
-	ConfPrime = c(M,A0), A = ~update0(A0,pc,GoodL),
-	trace(pc(GoodL)),
-	XC2 = xc(Ctr,c(M,A),S2).
 % Se-NoJump & Se-ExBarrier
 xrun1(xc(Ctr,Conf,S)) := XC2 :- 
 	enabled(S),
 	\+ _ = ~bp(xc(Ctr,Conf,S)),
 	!,
-	( stop(Conf) -> Conf2 = Conf % Note: case for stop/1 (so that spec continue decr)
+	( \+ term_stop_spec, stop(Conf) -> Conf2 = Conf % Note: case for stop/1 (so that spec continue decr)
 	; tracepc(Conf),
 	  Conf2 = ~run1(Conf)
 	),
@@ -314,15 +302,28 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 % Se-Commit
 xrun1(xc(Ctr,Conf,S)) := XC2 :- 
 	append(SPrime, [spec(Id,0,L,_ConfPrime,GoodL)|S2], S),
-	enabled(SPrime),
+	enabled(S2),
 	L = GoodL,
 	!,
 	tracepc(Conf),
 	trace(commit(Id)),
 	XC2 = xc(Ctr,Conf,~append(SPrime,S2)).
-% Se-Rollback-1
+% Se-Commit-stop
+xrun1(xc(Ctr,Conf,S)) := XC2 :-
+	term_stop_spec,
+	stop(Conf),
+	append(SPrime, [spec(Id,_N,L,_ConfPrime,GoodL)|S2], S),
+	enabled(S2),
+	L = GoodL,
+	!,
+	tracepc(Conf),
+	trace(commit(Id)),
+	XC2 = xc(Ctr,Conf,~append(SPrime,S2)).
+% Se-Rollback
 xrun1(xc(Ctr,Conf,S)) := XC2 :- 
-	S = [spec(Id,0,L,ConfPrime,GoodL)|S2],
+	Spec = spec(Id,0,L,ConfPrime,GoodL),
+	append(_SPrime, [Spec|S2], S),
+	enabled(S2),
 	\+ L = GoodL,
 	!,
 	tracepc(Conf),
@@ -330,14 +331,15 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	ConfPrime = c(M,A0), A = ~update0(A0,pc,GoodL),
 	trace(pc(GoodL)),
 	XC2 = xc(Ctr,c(M,A),S2).
-% Se-Rollback-2
-xrun1(xc(Ctr,Conf,S)) := XC2 :- 
-	Spec = spec(_Id,0,L,_ConfPrime,GoodL),
-	append(SPrime, [Spec|S2], S),
-	\+ SPrime = [],
-	enabled(SPrime),
+% Se-Rollback-1-stop
+xrun1(xc(Ctr,Conf,S)) := XC2 :-
+	term_stop_spec,
+	stop(Conf),
+	S = [spec(Id,_N,L,ConfPrime,GoodL)|S2],
 	\+ L = GoodL,
 	!,
-	XC2 = xc(Ctr,Conf,[Spec|S2]).
-
-
+	tracepc(Conf),
+	trace(rollback(Id)),
+	ConfPrime = c(M,A0), A = ~update0(A0,pc,GoodL),
+	trace(pc(GoodL)),
+	XC2 = xc(Ctr,c(M,A),S2).
