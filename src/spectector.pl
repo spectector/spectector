@@ -68,6 +68,7 @@ show_help :-
   -n,--nonspec     Use non-speculative semantics
   -w,--window N    Size of speculative window
   --steps N        Execution step limit
+  -e,--entry FUNC  Entry point of the program
   --conf-file FILE Read the initial configuration from a file
   -c,--conf CONF   Initial configuration ('c(M,A)')
   -a,--analysis ANA
@@ -81,6 +82,7 @@ show_help :-
   --noinit         Memory sections declared are ignored
   --keep-sym VAR   Ignore the specified variables initialization
   --heap N         Heap memory direction
+  --stack STACK    Initial stack values ('stack(sp,bp,return)')
   --term-stop-spec If the final of the program is reached during
                    the speculation, it keeps stuck until
                    speculation ends
@@ -110,10 +112,18 @@ opt('-c', '--conf', [ConfAtm|As], As, [Opt]) :-
 	; throw(wrong_conf(ConfAtm))
 	),
 	Opt = c(M,A).
+opt('', '--stack', [StackAtm|As], As, [Opt]) :-
+	atom_codes(StackAtm, StackStr),
+	read_from_string_atmvars(StackStr, Stack),
+	( Stack = c(B,S,R) -> true
+	; throw(wrong_stack(StackAtm))
+	),
+	Opt = stack(B,S,R).
 opt('-w', '--window', [NAtm|As], As, [Opt]) :-
 	atom_codes(NAtm, NStr),
 	number_codes(N, NStr),
 	Opt = window(N).
+opt('-e', '--entry', [Entry|As], As, [Entry]). % TODO: Setup for numeric entry points?
 opt('', '--steps', [NAtm|As], As, [Opt]) :-
 	atom_codes(NAtm, NStr),
 	number_codes(N, NStr),
@@ -123,7 +133,7 @@ opt('', '--heap', [NAtm|As], As, [Opt]) :-
 	number_codes(N, NStr),
 	Opt = heap(N).
 opt('-a', '--analysis', [Ana|As], As, [ana(Ana)]).
-opt('', '--keep-sym', [IgnAtm|As], As, [ign(Ign)]) :-
+opt('', '--keep-sym', [IgnAtm|As], As, [keep_sym(Ign)]) :-
 	atom_codes(IgnAtm, IgnStr),
 	read_from_string_atmvars(IgnStr, Ign).
 opt('', '--low', [LowAtm|As], As, [low(Low)]) :-
@@ -149,16 +159,15 @@ parse_args([], [], []).
 
 % TODO: add more options:
 %   - allow max_paths (max number of explored paths)
-% DONE?  - show statistics
 
 :- export(run/2).
 run(PrgFile, Opts) :-
-	( ConfContents = ~file_to_terms(~get_conf_file(Opts,Path)) -> true
+	path_split(PrgFile, Path, PrgNameExt),
+	path_splitext(PrgNameExt, _PrgBasename, Ext),
+	( ConfContents = ~file_to_terms(~get_conf_file(Opts,Path)) -> true % TODO: Change name of the config file to "predefined"??
 	; ConfContents = []
 	),
 	Options = ~flatten([Opts, ConfContents]),
-	path_split(PrgFile, Path, PrgNameExt),
-	path_splitext(PrgNameExt, _PrgBasename, Ext),
 	%
 	( member(nospec, Opts) -> SpecOpt = nospec
 	; SpecOpt = spec % (default)
@@ -170,11 +179,13 @@ run(PrgFile, Opts) :-
 	% Set up heap direction
 	extract_query(heap(HeapDir), Options, [1024]),
 	% Ignore specified variable initializations
-	extract_query(ign(KeepS), Options, [[]]),
-	% TODO: set up stack
-	% extract_query(stack(StackDir), [Opts, ConfContents], [0xf000000]),
+	extract_query(keep_sym(KeepS), Options, [[]]),
+	% Entry point
+	extract_query(entry(Entry), Options, [0]),
+	% Set up stack
+	extract_query(stack(Bp, Sp, Return), [Options], [0xf00000, 0xf000000, 1000]),
 	( Ana0 = noninter ->
-	  extract_query( low(Low), Options, [[]]),
+	  extract_query(low(Low), Options, [[]]),
 	  Ana = noninter(Low)
 	; Ana = Ana0
 	),
@@ -204,9 +215,10 @@ run(PrgFile, Opts) :-
 	( member(noinit, Options) -> Memory = [], Assignments = []
 	; Heap = c(Memory, Assignments)
 	),
-	translate_labels(M0, Dic, M1),
-	translate_labels(A0, Dic, A1),
-	append(M1,Memory,M), append(A1,Assignments,A),
+	M1 = ~append(M0, [Sp=Return|Memory]),
+	A1 = ~append(A0, [pc=Entry, sp=Sp, bp=Bp|Assignments]),
+	translate_labels(M1, Dic, M),
+	translate_labels(A1, Dic, A),
         load_program(Prg), % (This instantiates labels too)
 	% write(labels(Dic)), nl,
 	%
