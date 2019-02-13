@@ -123,7 +123,7 @@ opt('-w', '--window', [NAtm|As], As, [Opt]) :-
 	atom_codes(NAtm, NStr),
 	number_codes(N, NStr),
 	Opt = window(N).
-opt('-e', '--entry', [Entry|As], As, [Entry]). % TODO: Setup for numeric entry points?
+opt('-e', '--entry', [Entry|As], As, [entry(Entry)]). % TODO: Setup for numeric entry points?
 opt('', '--steps', [NAtm|As], As, [Opt]) :-
 	atom_codes(NAtm, NStr),
 	number_codes(N, NStr),
@@ -142,7 +142,7 @@ opt('', '--low', [LowAtm|As], As, [low(Low)]) :-
 opt('-r', '--reduce', As, As, [reduce]).
 opt('', '--term-stop-spec', As, As, [term_stop_spec]).
 opt('', '--weak', As, As, [weak]).
-opt('', '--statistics', As, As, [statistics]).
+opt('', '--statistics', As, As, [stats]).
 
 parse_args([Arg|Args], Opts, File) :-
 	( opt(Arg, _, Args, Args0, OptsA) % short
@@ -164,7 +164,7 @@ parse_args([], [], []).
 run(PrgFile, Opts) :-
 	path_split(PrgFile, Path, PrgNameExt),
 	path_splitext(PrgNameExt, _PrgBasename, Ext),
-	( ConfContents = ~file_to_terms(~get_conf_file(Opts,Path)) -> true % TODO: Change name of the config file to "predefined"??
+	( ConfContents = ~file_to_terms(~get_conf_file(Opts,Path))
 	; ConfContents = []
 	),
 	Options = ~flatten([Opts, ConfContents]),
@@ -193,6 +193,9 @@ run(PrgFile, Opts) :-
 	; true % (use default)
 	),
 	( member(weak, Options) -> set_weak
+	; true
+	),
+	( member(stats, Options) -> set_stats
 	; true
 	),
 	( member(solver(Solver), Options) -> set_ext_solver(Solver)
@@ -236,18 +239,15 @@ run(PrgFile, Opts) :-
 	C0 = ~initc(SpecOpt, M, A),
 	write('program:'), nl,
 	show_program,
-	( member(statistics, Options) ->
-	    statistics(walltime, [T0, _])
+	( stats -> statistics(walltime, [T0, _])
 	; true
 	),
 	runtest2(Ana, C0),
-	( member(statistics, Options) ->
+	( stats ->
 	    statistics(walltime,[T, _]),
 	    Time is T - T0,
 	    write('done in '),
-	    write(Time),
-	    write(' ms'),
-	    nl
+	    write(Time), write(' ms'), nl
 	; true
 	).
 

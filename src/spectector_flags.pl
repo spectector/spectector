@@ -52,3 +52,21 @@ set_term_stop_spec :- set_fact(term_stop_spec).
 
 :- export(set_weak/0).
 set_weak :- set_fact(weak).
+
+:- data stats/0.
+:- export(stats/0).
+
+:- export(set_stats/0).
+set_stats :- set_fact(stats).
+
+:- data last_time/1.
+:- export(last_time/1).
+
+:- export(set_last_time/1).
+set_last_time(T) :- set_fact(last_time(T)).
+
+% :- data ignore_unknown_instructions/0.
+% :- export(ignore_unknown_instructions/0).
+
+% :- export(set_ignore_unknown_instructions/0).
+% set_ignore_unknown_instructions :- set_fact(ignore_unknown_instructions).

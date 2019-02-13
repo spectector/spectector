@@ -13,7 +13,7 @@
 % limitations under the License.
 % ===========================================================================
 
-:- module(_, [], [assertions, fsyntax, datafacts, dcg, hiord]).
+:- module(_, [], [assertions, fsyntax, datafacts, hiord]).
 
 :- doc(title, "µAsm semantics").
 
