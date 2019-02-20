@@ -22,6 +22,7 @@
 :- use_module(spectector_flags).
 :- use_module(concolic(concolic)).
 :- use_module(concolic(symbolic)).
+:- use_module(engine(messages_basic), [message/2]).
 
 % ---------------------------------------------------------------------------
 :- doc(section, "Evaluation (both spec and non-spec)").
@@ -129,6 +130,9 @@ run1(Conf) := Conf2 :-
 % Skip
 run_(skip,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
+run_(unknown(I),c(M,A)) := c(M,A2) :-
+	message(warning, ~atom_concat('Pass through an unsupported instruction! ', I)),
+	A2 = ~update0(A,pc,~incpc(A)).
 % Barrier
 run_(spbarr,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
@@ -150,7 +154,7 @@ run_(load(X,E),c(M,A)) := c(M,A2) :-
 	),
 	A1 = ~update(A,X,V),
 	A2 = ~update0(A1,pc,~incpc(A1)).
-% Store % TODO: Notify about possible injection on indirect branches
+% Store % TODO: Notify about possible injection on stack (return direction)
 run_(store(X,E),c(M,A)) := c(M2,A2) :-
 	Xv = ~ev(X,A),
 	Ev = ~ev(E,A),

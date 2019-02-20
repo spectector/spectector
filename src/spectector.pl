@@ -86,6 +86,8 @@ show_help :-
   --term-stop-spec If the final of the program is reached during
                    the speculation, it keeps stuck until
                    speculation ends
+  --no-show-config Configurations are not printed
+  --skip-unknown   Treat unknown instrunctions as 'skip'
   --weak           Check the security condition under the weak
                    specification (values in memory must match)
 
@@ -115,7 +117,7 @@ opt('-c', '--conf', [ConfAtm|As], As, [Opt]) :-
 opt('', '--stack', [StackAtm|As], As, [Opt]) :-
 	atom_codes(StackAtm, StackStr),
 	read_from_string_atmvars(StackStr, Stack),
-	( Stack = c(B,S,R) -> true
+	( Stack = stack(B,S,R) -> true
 	; throw(wrong_stack(StackAtm))
 	),
 	Opt = stack(B,S,R).
@@ -143,6 +145,8 @@ opt('-r', '--reduce', As, As, [reduce]).
 opt('', '--term-stop-spec', As, As, [term_stop_spec]).
 opt('', '--weak', As, As, [weak]).
 opt('', '--statistics', As, As, [stats]).
+opt('', '--no-show-conf', As, As, [no_show_conf]).
+opt('', '--skip-unknown', As, As, [skip_unknown]).
 
 parse_args([Arg|Args], Opts, File) :-
 	( opt(Arg, _, Args, Args0, OptsA) % short
@@ -159,7 +163,6 @@ parse_args([], [], []).
 
 % TODO: add more options:
 %   - allow max_paths (max number of explored paths)
-
 :- export(run/2).
 run(PrgFile, Opts) :-
 	path_split(PrgFile, Path, PrgNameExt),
@@ -173,7 +176,7 @@ run(PrgFile, Opts) :-
 	; SpecOpt = spec % (default)
 	),
 	% Initial configurations
-	extract_query(c(M0,A0), Options, [[],[pc=0]]), % TODO: replace symbolic labels!
+	extract_query(c(M0,A0), Options, [[],[]]), % TODO: replace symbolic labels!
 	% Specification of the analysis
 	extract_query(ana(Ana0), Options, [noninter]),
 	% Set up heap direction
@@ -183,7 +186,7 @@ run(PrgFile, Opts) :-
 	% Entry point
 	extract_query(entry(Entry), Options, [0]),
 	% Set up stack
-	extract_query(stack(Bp, Sp, Return), [Options], [0xf00000, 0xf000000, 1000]),
+	extract_query(stack(Bp, Sp, Return), [Options], [0xf00000, 0xf000000, 0xf000]),
 	( Ana0 = noninter ->
 	  extract_query(low(Low), Options, [[]]),
 	  Ana = noninter(Low)
@@ -198,11 +201,17 @@ run(PrgFile, Opts) :-
 	( member(stats, Options) -> set_stats
 	; true
 	),
+	( member(skip_unknown, Options) -> set_ignore_unknown_instructions
+	; true
+	),
 	( member(solver(Solver), Options) -> set_ext_solver(Solver)
 	; true % (use default)
 	),
 	( member(window(WSize), Options) -> set_window_size(WSize)
 	; true % (use default)
+	),
+	( member(no_show_conf, Options) -> true
+	; set_print_configurations % (use default)
 	),
 	( member(step(SLimit), Options) -> set_step_limit(SLimit)
 	; true % (use default)
@@ -233,8 +242,11 @@ run(PrgFile, Opts) :-
 	),
 	write('solver='), write(~get_ext_solver), write(', '), % external solver
 	write('ana='), write(Ana), nl, % kind of analysis
-	write('m='), write(M), nl, % initial memory
-	write('a='), write(A), nl, % initial registers
+	( print_configurations ->
+	  write('m='), write(M), nl, % initial memory
+	  write('a='), write(A), nl % initial registers
+	; true
+	),
 	%
 	C0 = ~initc(SpecOpt, M, A),
 	write('program:'), nl,

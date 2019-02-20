@@ -65,8 +65,14 @@ set_stats :- set_fact(stats).
 :- export(set_last_time/1).
 set_last_time(T) :- set_fact(last_time(T)).
 
-% :- data ignore_unknown_instructions/0.
-% :- export(ignore_unknown_instructions/0).
+:- data ignore_unknown_instructions/0.
+:- export(ignore_unknown_instructions/0).
 
-% :- export(set_ignore_unknown_instructions/0).
-% set_ignore_unknown_instructions :- set_fact(ignore_unknown_instructions).
+:- export(set_ignore_unknown_instructions/0).
+set_ignore_unknown_instructions :- set_fact(ignore_unknown_instructions).
+
+:- data print_configurations/0.
+:- export(print_configurations/0).
+
+:- export(set_print_configurations/0).
+set_print_configurations :- set_fact(print_configurations).
