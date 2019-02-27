@@ -18,7 +18,7 @@
 %:- doc(title, "Spectector statistics").
 
 :- use_module(library(write)).
-:- use_module(library(lists), [select/3]).
+:- use_module(library(lists), [select/3, append/3]).
 :- use_module(engine(stream_basic)).
 :- use_module(library(pillow/json)).
 :- use_module(spectector_flags).
@@ -28,16 +28,25 @@
 :- data n_paths/1.
 :- export(init_paths/0).
 init_paths :- set_fact(paths([])), set_fact(n_paths(0)),
-	init_program_counters, init_ignore_unknown_instructions.
+	init_program_counters, init_ignore_unknown_instructions,
+	init_path_stats.
 :- export(new_path/1).
 new_path(Stats) :- % Input must be a list
 	paths(Paths), program_counters(PC),
+	path_stats(PathStats), init_path_stats,
 	init_program_counters, n_paths(N0),
 	N1 is N0 + 1, set_fact(n_paths(N1)),
 	ignore_unknown_instructions(Unknown),
 	init_ignore_unknown_instructions,
-	set_fact(paths([N0=json([pc=json(PC), unknown_ins=Unknown
-				|Stats])|Paths])).
+	set_fact(paths([N0=json([pc=json(PC), unknown_ins=Unknown,
+	terminated=false |~append(Stats, PathStats)])|Paths])).
+
+:- data path_stats/1.
+init_path_stats :- set_fact(path_stats([])).
+:- export(add_path_stat/1).
+add_path_stat(Stat) :-
+	path_stats(PathS),
+	set_fact(path_stats([Stat|PathS])).
 
 :- data general_stats/1.
 :- export(init_general_stats/0).
