@@ -22,6 +22,7 @@
 :- use_module(spectector_flags).
 :- use_module(concolic(concolic)).
 :- use_module(concolic(symbolic)).
+:- use_module(spectector_stats).
 :- use_module(engine(messages_basic), [message/2]).
 
 % ---------------------------------------------------------------------------
@@ -83,6 +84,7 @@ ev(-X,A) := R :- !, R = -(~ev(X,A)).
 ev(X+Y,A) := R :- !, R = ~ev(X,A) + ~ev(Y,A).
 ev(X-Y,A) := R :- !, R = ~ev(X,A) - ~ev(Y,A).
 ev(X*Y,A) := R :- !, R = ~ev(X,A) * ~ev(Y,A).
+ev(X/Y,A) := R :- !, R = ~ev(X,A) // ~ev(Y,A).
 ev(X<<Y,A) := R :- !, R = ~ev(X,A) << ~ev(Y,A).
 ev(X>>Y,A) := R :- !, R = ~ev(X,A) >> ~ev(Y,A).
 ev(ashr(X,Y),A) := R :- !, R = ashr(~ev(X,A), ~ev(Y,A)).
@@ -132,6 +134,7 @@ run_(skip,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
 run_(unknown(I),c(M,A)) := c(M,A2) :-
 	message(warning, ~atom_concat('Pass through an unsupported instruction! ', I)),
+	increment_ignore_unknown_instructions,
 	A2 = ~update0(A,pc,~incpc(A)).
 % Barrier
 run_(spbarr,c(M,A)) := c(M,A2) :-
@@ -169,12 +172,12 @@ run_(beqz(X,L),c(M,A)) := c(M,A2) :-
 	Xv = ~ev(X,A),
 	V = ~conc_cond(Xv=0),
 	( V=1 -> L2 = L ; L2 = ~incpc(A) ),
-	trace(pc(L2)),
+	trace_label(L2),
 	A2 = ~update0(A,pc,L2).
 % Jmp	
 run_(jmp(E),c(M,A)) := c(M,A2) :-
 	La = ~ev(E,A), % TODO: useful? it will show indirect jumps more easily
-	trace(pc(La)),
+	trace_label(La),
 	L = ~concretize(La), % TODO: make symbolic if E is symbolic -> warning when is symbolic?
 	A2 = ~update0(A,pc,L).
 
@@ -298,7 +301,7 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	tracepc(Conf),
 	t(L,N,GoodL) = ~bp(xc(Ctr,Conf,S)),
 	!,
-	trace(start(Ctr)), trace(pc(L)),
+	trace(start(Ctr)), trace_label(L),
 	Conf = c(M,A),
 	Conf2 = c(M,~update0(A,pc,L)), % TODO: it was mset/3 before
 	Ctr1 is Ctr + 1,
@@ -333,7 +336,7 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	tracepc(Conf),
 	trace(rollback(Id)),
 	ConfPrime = c(M,A0), A = ~update0(A0,pc,GoodL),
-	trace(pc(GoodL)),
+	trace_label(GoodL),
 	XC2 = xc(Ctr,c(M,A),S2).
 % Se-Rollback-1-stop
 xrun1(xc(Ctr,Conf,S)) := XC2 :-
@@ -345,5 +348,7 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	tracepc(Conf),
 	trace(rollback(Id)),
 	ConfPrime = c(M,A0), A = ~update0(A0,pc,GoodL),
-	trace(pc(GoodL)),
+	trace_label(GoodL),
 	XC2 = xc(Ctr,c(M,A),S2).
+
+trace_label(L) :- trace(pc(L)), add_program_counters(L).

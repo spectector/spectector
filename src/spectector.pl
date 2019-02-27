@@ -35,6 +35,7 @@
 :- use_module(muasm_translator(x86_to_muasm)).
 
 :- use_module(spectector_flags).
+:- use_module(spectector_stats).
 :- use_module(muasm_semantics).
 :- use_module(muasm_program).
 :- use_module(muasm_print).
@@ -78,7 +79,9 @@ show_help :-
         reach1:   like reach, but stop at first path
         noninter: non-interference check (default)
   --low LOW        Low registers or memory addresses for noninter
-  --statistics     Show the time that the solver takes
+  --stats FILE     Show all the statistics on the file passed as
+                   an output (in JSON format), to get the results
+                   by stdout, the argument should be 'stdout'
   --noinit         Memory sections declared are ignored
   --keep-sym VAR   Ignore the specified variables initialization
   --heap N         Heap memory direction
@@ -86,7 +89,7 @@ show_help :-
   --term-stop-spec If the final of the program is reached during
                    the speculation, it keeps stuck until
                    speculation ends
-  --no-show-config Configurations are not printed
+  --no-show-conf   Configurations are not printed
   --skip-unknown   Treat unknown instrunctions as 'skip'
   --weak           Check the security condition under the weak
                    specification (values in memory must match)
@@ -144,7 +147,7 @@ opt('', '--low', [LowAtm|As], As, [low(Low)]) :-
 opt('-r', '--reduce', As, As, [reduce]).
 opt('', '--term-stop-spec', As, As, [term_stop_spec]).
 opt('', '--weak', As, As, [weak]).
-opt('', '--statistics', As, As, [stats]).
+opt('', '--stats', [StatsOut|As], As, [stats(StatsOut)]).
 opt('', '--no-show-conf', As, As, [no_show_conf]).
 opt('', '--skip-unknown', As, As, [skip_unknown]).
 
@@ -162,7 +165,7 @@ parse_args([], [], []).
 % ---------------------------------------------------------------------------
 
 % TODO: add more options:
-%   - allow max_paths (max number of explored paths)
+%   - allow max_paths (max number of explored paths) -> Use the flag
 :- export(run/2).
 run(PrgFile, Opts) :-
 	path_split(PrgFile, Path, PrgNameExt),
@@ -176,7 +179,7 @@ run(PrgFile, Opts) :-
 	; SpecOpt = spec % (default)
 	),
 	% Initial configurations
-	extract_query(c(M0,A0), Options, [[],[]]), % TODO: replace symbolic labels!
+	extract_query(c(M0,A0), Options, [[],[]]),
 	% Specification of the analysis
 	extract_query(ana(Ana0), Options, [noninter]),
 	% Set up heap direction
@@ -198,10 +201,11 @@ run(PrgFile, Opts) :-
 	( member(weak, Options) -> set_weak
 	; true
 	),
-	( member(stats, Options) -> set_stats
+	( member(stats(StatsOut), Options) -> set_stats
 	; true
 	),
-	( member(skip_unknown, Options) -> set_ignore_unknown_instructions
+	init_general_stats,
+	( member(skip_unknown, Options) -> init_ignore_unknown_instructions
 	; true
 	),
 	( member(solver(Solver), Options) -> set_ext_solver(Solver)
@@ -216,6 +220,7 @@ run(PrgFile, Opts) :-
 	( member(step(SLimit), Options) -> set_step_limit(SLimit)
 	; true % (use default)
 	),
+	init_paths, % Initialize number of paths traced
 	( Ext = '.s' ->
 	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic, KeepS,  HeapDir, Heap)
 	; Ext = '.asm' ->
@@ -251,15 +256,13 @@ run(PrgFile, Opts) :-
 	C0 = ~initc(SpecOpt, M, A),
 	write('program:'), nl,
 	show_program,
-	( stats -> statistics(walltime, [T0, _])
-	; true
-	),
+	statistics(walltime, [T0, _]),
 	runtest2(Ana, C0),
+	statistics(walltime,[T, _]),
+	Time is T - T0,
 	( stats ->
-	    statistics(walltime,[T, _]),
-	    Time is T - T0,
-	    write('done in '),
-	    write(Time), write(' ms'), nl
+	    new_general_stat(total_time=Time),
+	    print_all_stats(StatsOut)
 	; true
 	).
 

@@ -26,7 +26,7 @@ set_window_size(N) :-
 :- export(get_window_size/1).
 get_window_size(N) :-
 	( window_size(N0) -> N0 = N
-	; N = 100 % default
+	; N = 200 % default
 	).
 
 :- data step_limit/1.
@@ -59,20 +59,16 @@ set_weak :- set_fact(weak).
 :- export(set_stats/0).
 set_stats :- set_fact(stats).
 
-:- data last_time/1.
-:- export(last_time/1).
-
-:- export(set_last_time/1).
-set_last_time(T) :- set_fact(last_time(T)).
-
-:- data ignore_unknown_instructions/0.
-:- export(ignore_unknown_instructions/0).
-
-:- export(set_ignore_unknown_instructions/0).
-set_ignore_unknown_instructions :- set_fact(ignore_unknown_instructions).
+:- data ignore_unknown_instructions/1.
+:- export(ignore_unknown_instructions/1).
+:- export(init_ignore_unknown_instructions/0).
+init_ignore_unknown_instructions :- set_fact(ignore_unknown_instructions(0)).
+:- export(increment_ignore_unknown_instructions/0).
+increment_ignore_unknown_instructions :-
+	ignore_unknown_instructions(N0), N1 is N0 + 1,
+	set_fact(ignore_unknown_instructions(N1)).
 
 :- data print_configurations/0.
 :- export(print_configurations/0).
-
 :- export(set_print_configurations/0).
 set_print_configurations :- set_fact(print_configurations).

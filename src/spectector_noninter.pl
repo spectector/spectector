@@ -25,6 +25,7 @@
 :- use_module(muasm_program).
 :- use_module(muasm_print).
 :- use_module(spectector_flags).
+:- use_module(spectector_stats).
 :- use_module(concolic(symbolic)).
 :- use_module(concolic(concolic), [pathgoal/2, sym_filter/2]).
 :- use_module(engine(runtime_control), [statistics/2]).
@@ -35,20 +36,11 @@
 noninter_check(Low, C0) :-
 	log('[exploring paths]'),
 	( % (failure-driven loop)
-	    ( stats -> statistics(walltime, [TP0, _]),
-	      set_last_time(TP0)
-	    ; true
-	    ),
-	    concrun(C0, (C, Trace)),
-	    ( stats ->
-	      statistics(walltime,[TP, _]),
-	      last_time(LTP),
-	      TimeP is TP - LTP,
-	      write('path traced in '),
-	      write(TimeP), write(' ms'), nl,
-	      set_last_time(TP)
-	    ; true
-	    ),
+	    statistics(walltime, [TP0, _]),
+	    set_last_time(TP0),
+	    concrun(C0, (C, Trace)), % TODO: Get number of steps done
+	    statistics(walltime, [TP, _]),
+	    last_time(LTP), TimeP is TP - LTP, set_last_time(TP), % Trace time
 	    ( member(timeout, Trace) ->
 	      log('[timeout... exploring new path]'),
 	      message(warning, 'timeout -- ignoring large path (refine initial configuration or assume unsafe)'),
@@ -59,27 +51,26 @@ noninter_check(Low, C0) :-
 	    pretty_print([triple(C0,Trace,C)]),
 	    log('[checking speculative non-interference]'),
 	    C0 = xc(_,C0n,_),
-	    ( stats -> statistics(walltime, [TC0, _]),
-	      set_last_time(TC0)
-	    ; true
-	    ),
-	    noninter_cex(Low, C0n, Trace, Safe),
+	    statistics(walltime, [TC0, _]),
+	    set_last_time(TC0),
+	    noninter_cex(Low, C0n, Trace, Safe), % TODO: Get the SMT length
+	    statistics(walltime, [TC, _]),
+	    last_time(LTC), TimeC is TC - LTC, set_last_time(TC), % SMT time
 	    ( stats ->
-	      statistics(walltime,[TC, _]),
-	      last_time(LTC),
-	      TimeC is TC - LTC,
-	      write('condition checked in '),
-	      write(TimeC), write(' ms'), nl,
-	      set_last_time(TC)
+	      % Store information of the path traced % TODO: Change ~length(Trace) by the number of steps
+	      new_path([time_path=TimeP, time_solve=TimeC %, trace_length(~length(Trace))
+		       ])
 	    ; true
 	    ),
 	    ( Safe = no ->
 	      !, % stop on first unsafe path
-	      log('[program is unsafe]')
+	      log('[program is unsafe]'),
+	      new_general_stat(safe=false)
 	    ; log('[path is safe]'),
 	      fail % go for next path
 	    )
-	; log('[program is safe]')
+	; log('[program is safe]'),
+	  new_general_stat(safe=true)
 	).
 
 
