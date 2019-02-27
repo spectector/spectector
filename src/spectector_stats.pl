@@ -1,4 +1,22 @@
-:- module(_, [], [datafacts]).
+% Copyright 2019 The Spectector authors
+%
+% Licensed under the Apache License, Version 2.0 (the "License");
+% you may not use this file except in compliance with the License.
+% You may obtain a copy of the License at
+%
+%     http://www.apache.org/licenses/LICENSE-2.0
+%
+% Unless required by applicable law or agreed to in writing, software
+% distributed under the License is distributed on an "AS IS" BASIS,
+% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+% See the License for the specific language governing permissions and
+% limitations under the License.
+% ===========================================================================
+
+:- module(_, [], [datafacts, fsyntax]).
+
+%:- doc(title, "Spectector statistics").
+
 :- use_module(library(write)).
 :- use_module(library(lists), [select/3]).
 :- use_module(engine(stream_basic)).
@@ -47,16 +65,19 @@ add_program_counters(PC) :-
 set_last_time(T) :- set_fact(last_time(T)).
 
 :- export(print_all_stats/1). % Format and emit
+% TODO: measure timeout
 print_all_stats(Output) :-
 	general_stats(Stats),
 	paths(Paths0), n_paths(L),
 	Paths1 = [length=L|Paths0],
-	json_to_string(json([paths=json(Paths1)|Stats]), Str),
-	atom_codes(Json, Str),
 	( Output = stdout -> % If stdout
-	  OutStream = user_output
-	; open(Output, write, OutStream)
+	  OutStream = user_output,
+	  File=false
+	; open(Output, write, OutStream),
+	  File=string(~atom_codes(Output))
 	),
+	json_to_string(json([file=File,timeout=false,paths=json(Paths1)|Stats]), Str),
+	atom_codes(Json, Str),
 	write(OutStream, Json).
 
 % TODO: For getting lines of code

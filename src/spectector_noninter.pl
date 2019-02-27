@@ -15,7 +15,7 @@
 
 :- module(_, [], [assertions, fsyntax, datafacts, dcg]).
 
-:- doc(title, "Speculative non-interference check").
+%:- doc(title, "Speculative non-interference check").
 
 :- use_module(library(lists)).
 :- use_module(library(write)).
@@ -53,20 +53,29 @@ noninter_check(Low, C0) :-
 	    C0 = xc(_,C0n,_),
 	    statistics(walltime, [TC0, _]),
 	    set_last_time(TC0),
-	    noninter_cex(Low, C0n, Trace, Safe), % TODO: Get the SMT length
+	    noninter_cex(Low, C0n, Trace, Safe), % TODO: Get the SMT length for the stats
 	    statistics(walltime, [TC, _]),
 	    last_time(LTC), TimeC is TC - LTC, set_last_time(TC), % SMT time
-	    ( stats ->
-	      % Store information of the path traced % TODO: Change ~length(Trace) by the number of steps
-	      new_path([time_path=TimeP, time_solve=TimeC %, trace_length(~length(Trace))
-		       ])
-	    ; true
-	    ),
 	    ( Safe = no ->
 	      !, % stop on first unsafe path
 	      log('[program is unsafe]'),
-	      new_general_stat(safe=false)
+	      % Store information of the path traced % TODO: Change ~length(Trace) by the number of steps
+	      %length(Trace,Length),
+	      %Length is ~get_step_limit - Steps,
+	      ( stats ->
+		new_path([safe=false,time_trace=TimeP, time_solve=TimeC
+		%trace_length=Length
+			 ]),
+		new_general_stat(safe=false)
+	      ; true
+	      )
 	    ; log('[path is safe]'),
+	      ( stats ->
+		new_path([safe=true,time_trace=TimeP, time_solve=TimeC
+		%trace_length=Length
+		])
+	      ; true
+	      ),
 	      fail % go for next path
 	    )
 	; log('[program is safe]'),

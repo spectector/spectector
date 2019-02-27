@@ -261,8 +261,9 @@ run(PrgFile, Opts) :-
 	statistics(walltime,[T, _]),
 	Time is T - T0,
 	( stats ->
-	    new_general_stat(total_time=Time),
-	    print_all_stats(StatsOut)
+	  new_general_stat(total_time=Time),
+	  new_general_stat(name=string(~atom_codes(PrgFile))),
+	  print_all_stats(StatsOut)
 	; true
 	).
 
