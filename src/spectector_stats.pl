@@ -31,15 +31,15 @@ init_paths :- set_fact(paths([])), set_fact(n_paths(0)),
 	init_program_counters, init_ignore_unknown_instructions,
 	init_path_stats.
 :- export(new_path/1).
-new_path(Stats) :- % Input must be a list
+new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	paths(Paths), program_counters(PC),
 	path_stats(PathStats), init_path_stats,
 	init_program_counters, n_paths(N0),
 	N1 is N0 + 1, set_fact(n_paths(N1)),
 	ignore_unknown_instructions(Unknown),
 	init_ignore_unknown_instructions,
-	set_fact(paths([N0=json([pc=json(PC), unknown_ins=Unknown,
-	terminated=false |~append(Stats, PathStats)])|Paths])).
+	set_fact(paths([N0=json([pc=json(PC),unknown_ins=Unknown
+				|~append(Stats, PathStats)])|Paths])).
 
 :- data path_stats/1.
 init_path_stats :- set_fact(path_stats([])).

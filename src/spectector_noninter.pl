@@ -59,13 +59,10 @@ noninter_check(Low, C0) :-
 	    ( Safe = no ->
 	      !, % stop on first unsafe path
 	      log('[program is unsafe]'),
-	      % Store information of the path traced % TODO: Change ~length(Trace) by the number of steps
-	      %length(Trace,Length),
-	      %Length is ~get_step_limit - Steps,
+	      length(Trace,Length),
 	      ( stats ->
-		new_path([safe=false,time_trace=TimeP, time_solve=TimeC
-		%trace_length=Length
-			 ]),
+		new_path([safe=false,time_trace=TimeP, time_solve=TimeC,
+			 trace_length=Length]),
 		new_general_stat(safe=false)
 	      ; true
 	      )
