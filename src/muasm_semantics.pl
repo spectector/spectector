@@ -137,7 +137,11 @@ run1(Conf) := Conf2 :-
 run_(skip,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
 run_(unknown(I),c(M,A)) := c(M,A2) :-
-	message(warning, ~atom_concat('Pass through an unsupported instruction! ', I)),
+	message(warning, ['Pass through an unsupported instruction! ', I]),
+	increment_ignore_unknown_instructions,
+	A2 = ~update0(A,pc,~incpc(A)).
+run_(label_unknown(L),c(M,A)) := c(M,A2) :-
+	message(warning, ['Pass through a non declared Label! ', L]),
 	increment_ignore_unknown_instructions,
 	A2 = ~update0(A,pc,~incpc(A)).
 % Barrier
@@ -359,4 +363,4 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	trace_label(GoodL),
 	XC2 = xc(Ctr,c(M,A),S2).
 
-trace_label(L) :- trace(pc(L)), add_program_counters(L).
+trace_label(L) :- trace(pc(L)), add_program_counters(L). % TODO: Outside of the path (there can be side-effects)

@@ -121,4 +121,3 @@ write_kv(X) :- !, writeq(X). % TODO: this should not happen
 
 write_x(X) :- integer(X), X > 15, !, format("0x~16r", [X]).
 write_x(X) :- writeq(X).
-

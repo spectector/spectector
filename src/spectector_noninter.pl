@@ -56,27 +56,26 @@ noninter_check(Low, C0) :-
 	    noninter_cex(Low, C0n, Trace, Safe), % TODO: Get the SMT length for the stats
 	    statistics(walltime, [TC, _]),
 	    last_time(LTC), TimeC is TC - LTC, set_last_time(TC), % SMT time
-	    ( Safe = no ->
+	    ( Safe = no(Mode) ->
 	      !, % stop on first unsafe path
 	      log('[program is unsafe]'),
 	      length(Trace,Length),
 	      ( stats ->
-		new_path([safe=false,time_trace=TimeP, time_solve=TimeC,
+		new_path([unsafe=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC,
 			 trace_length=Length]),
-		new_general_stat(safe=false)
+		new_general_stat(unsafe=string(~atom_codes(Mode)))
 	      ; true
 	      )
 	    ; log('[path is safe]'),
 	      ( stats ->
-		new_path([safe=true,time_trace=TimeP, time_solve=TimeC
-		%trace_length=Length
-		])
+		new_path([unsafe=false,time_trace=TimeP, time_solve=TimeC,
+			 trace_length=Length])
 	      ; true
 	      ),
 	      fail % go for next path
 	    )
 	; log('[program is safe]'),
-	  new_general_stat(safe=true)
+	  new_general_stat(unsafe=false)
 	).
 
 
@@ -84,13 +83,10 @@ noninter_check(Low, C0) :-
 % NOTE: see the paper for details, this check works on a single trace
 %   at a time.
 
-noninter_cex(Low, C0, Trace, Safe) :-
+noninter_cex(Low, C0, Trace, no(Mode)) :-
 	( Mode = data ; Mode = control ),
-	noninter_cex_(Mode, Low, C0, Trace),
-	!,
-	Safe = no.
-noninter_cex(_, _, _, Safe) :-
-	Safe = yes.
+	noninter_cex_(Mode, Low, C0, Trace), !.
+noninter_cex(_, _, _, yes).
 
 noninter_cex_(Mode, Low, C0a, TraceA0) :-
 	erase_and_dump_constrs(C0a, InGoalA),
