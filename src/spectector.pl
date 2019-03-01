@@ -262,7 +262,10 @@ run(PrgFile, Opts) :-
 	Time is T - T0,
 	( stats ->
 	  new_general_stat(total_time=Time),
-	  new_general_stat(entry=string(~atom_codes(Entry))),
+	  ( number(Entry) -> number_codes(Entry, EntryStr)
+	  ; ~atom_codes(Entry, EntryStr)
+	  ),
+	  new_general_stat(entry=string(EntryStr)),
 	  new_general_stat(name=string(~atom_codes(PrgFile))),
 	  print_all_stats(StatsOut)
 	; true
