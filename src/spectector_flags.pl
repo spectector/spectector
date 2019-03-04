@@ -59,15 +59,6 @@ set_weak :- set_fact(weak).
 :- export(set_stats/0).
 set_stats :- set_fact(stats).
 
-:- data ignore_unknown_instructions/1.
-:- export(ignore_unknown_instructions/1).
-:- export(init_ignore_unknown_instructions/0).
-init_ignore_unknown_instructions :- set_fact(ignore_unknown_instructions(0)).
-:- export(increment_ignore_unknown_instructions/0).
-increment_ignore_unknown_instructions :-
-	ignore_unknown_instructions(N0), N1 is N0 + 1,
-	set_fact(ignore_unknown_instructions(N1)).
-
 :- data print_configurations/0.
 :- export(print_configurations/0).
 :- export(set_print_configurations/0).

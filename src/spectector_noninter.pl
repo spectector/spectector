@@ -61,21 +61,21 @@ noninter_check(Low, C0) :-
 	      log('[program is unsafe]'),
 	      length(Trace,Length),
 	      ( stats ->
-		new_path([unsafe=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC,
+		new_path([status=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC,
 			 trace_length=Length]),
-		new_general_stat(unsafe=string(~atom_codes(Mode)))
+		new_general_stat(status=string(~atom_codes(Mode)))
 	      ; true
 	      )
 	    ; log('[path is safe]'),
 	      ( stats ->
-		new_path([unsafe=false,time_trace=TimeP, time_solve=TimeC,
+		new_path([status=string("safe"),time_trace=TimeP, time_solve=TimeC,
 			 trace_length=Length])
 	      ; true
 	      ),
 	      fail % go for next path
 	    )
 	; log('[program is safe]'),
-	  new_general_stat(unsafe=false)
+	  new_general_stat(status=string("safe"))
 	).
 
 
@@ -118,6 +118,7 @@ noninter_cex_(Mode, Low, C0a, TraceA0) :-
 		    ~append(InGoalB,
 		      ~append(~pathgoal(~sym_filter(TraceB)),
 		        ~append(LowGoal,DiffGoal))))),
+	add_formula_length(~length(Goal)),
 	get_model(Goal),
 	%
 	show_cex(C0a, TraceA, C0b, TraceB, X, Y).

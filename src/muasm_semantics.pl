@@ -138,11 +138,11 @@ run_(skip,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
 run_(unknown(I),c(M,A)) := c(M,A2) :-
 	message(warning, ['Pass through an unsupported instruction! ', I]),
-	increment_ignore_unknown_instructions,
+	increment_unknown_instructions,
 	A2 = ~update0(A,pc,~incpc(A)).
 run_(label_unknown(L),c(M,A)) := c(M,A2) :-
 	message(warning, ['Pass through a non declared Label! ', L]),
-	increment_ignore_unknown_instructions,
+	increment_unknown_instructions,
 	A2 = ~update0(A,pc,~incpc(A)).
 % Barrier
 run_(spbarr,c(M,A)) := c(M,A2) :-
