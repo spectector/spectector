@@ -142,8 +142,8 @@ run_(unknown(I),c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
 run_(label_unknown(L),c(M,A)) := c(M,A2) :-
 	message(warning, ['Pass through a non declared Label! ', L]),
-	increment_unknown_instructions,
-	A2 = ~update0(A,pc,~incpc(A)).
+	new_unknown_label(string(~atom_codes(L))),
+	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
 % Barrier
 run_(spbarr,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).

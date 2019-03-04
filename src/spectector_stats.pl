@@ -38,7 +38,7 @@ new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	unknown_instructions(Unknown),
 	unknown_labels(UL),
 	formulas_length(TL),
-	set_fact(paths([N0=json([pc=json(PC),unknown_ins=Unknown,unknown_labels=json(UL),
+	set_fact(paths([N0=json([pc=json(PC),unknown_ins=Unknown,unknown_labels=UL,
 				formulas_length=TL|~append(Stats, ~path_stats)])|Paths])),
 	restore_path_info.
 
@@ -79,7 +79,7 @@ set_last_time(T) :- set_fact(last_time(T)).
 :- data unknown_labels/1.
 :- export(init_unknown_labels/0).
 init_unknown_labels :- set_fact(unknown_labels([])).
-:- export(new_general_stat/1).
+:- export(new_unknown_label/1).
 new_unknown_label(Stat) :- set_fact(unknown_labels([Stat|~unknown_labels])).
 
 
