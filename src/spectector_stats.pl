@@ -17,10 +17,11 @@
 
 %:- doc(title, "Spectector statistics").
 
-:- use_module(library(write)).
+:- use_module(library(write), [write/2]).
+:- use_module(library(streams), [nl/0]).
 :- use_module(library(lists), [select/3, append/3]).
-:- use_module(engine(stream_basic)).
-:- use_module(library(pillow/json)).
+:- use_module(engine(stream_basic), [open/3]).
+:- use_module(library(pillow/json), [json_to_string/2]).
 %:- use_module(concolic(concolic_stats)).
 
 % Main structure, it's a list, which element has the statistics of the path
@@ -29,7 +30,8 @@
 :- export(init_paths/0).
 init_paths :- set_fact(paths([])), set_fact(n_paths(0)), restore_path_info.
 restore_path_info :- init_program_counters, init_unknown_instructions,
-	init_path_stats, init_unknown_labels, init_formulas_length.
+	init_path_stats, init_unknown_labels, init_formulas_length,
+	init_indirect_jumps.
 :- export(new_path/1).
 new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	paths(Paths), program_counters(PC),
@@ -38,7 +40,9 @@ new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	unknown_instructions(Unknown),
 	unknown_labels(UL),
 	formulas_length(TL),
+	indirect_jumps(IJ),
 	set_fact(paths([N0=json([pc=json(PC),unknown_ins=Unknown,unknown_labels=UL,
+	                        indirect_jumps=IJ,
 				formulas_length=TL|~append(Stats, ~path_stats)])|Paths])),
 	restore_path_info.
 
@@ -82,6 +86,12 @@ init_unknown_labels :- set_fact(unknown_labels([])).
 :- export(new_unknown_label/1).
 new_unknown_label(Stat) :- set_fact(unknown_labels([Stat|~unknown_labels])).
 
+:- data indirect_jumps/1.
+:- export(init_indirect_jumps/0).
+init_indirect_jumps :- set_fact(indirect_jumps([])).
+:- export(new_indirect_jump/1).
+new_indirect_jump(Reg) :- set_fact(indirect_jumps([Reg|~indirect_jumps])).
+
 
 :- export(print_all_stats/1). % Format and emit
 % TODO: measure timeout
@@ -97,7 +107,7 @@ print_all_stats(Output) :-
 	),
 	json_to_string(json([file=File,paths=json(Paths1)|Stats]), Str),
 	atom_codes(Json, Str),
-	write(OutStream, Json).
+	write(OutStream, Json), nl.
 
 :- data unknown_instructions/1.
 :- export(unknown_instructions/1).

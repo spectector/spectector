@@ -144,6 +144,11 @@ run_(label_unknown(L),c(M,A)) := c(M,A2) :-
 	message(warning, ['Pass through a non declared Label! ', L]),
 	new_unknown_label(string(~atom_codes(L))),
 	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
+run_(indirect_jump(L),c(M,A)) := c(M,A2) :-
+	message(warning, ['Pass through an indirect jump, register: ', L]),
+	new_indirect_jump(string(~atom_codes(L))),
+	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
+
 % Barrier
 run_(spbarr,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
