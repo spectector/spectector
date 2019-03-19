@@ -139,8 +139,9 @@ run_(skip,c(M,A)) := c(M,A2) :-
 run_(unknown_ins(I),c(M,A)) := c(M,A2) :-
 	message(warning, ['Pass through an unsupported instruction! ', I]),
 	increment_unknown_instructions,
-	A2 = ~update0(A,pc,~incpc(A)).
-run_(unknwown_pc(L),c(M,A)) := c(M,A2) :-
+	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
+%A2 = ~update0(A,pc,~incpc(A)).
+run_(unknown_pc(L),c(M,A)) := c(M,A2) :-
 	message(warning, ['Pass through a non declared Label! ', L]),
 	new_unknown_label(string(~atom_codes(L))),
 	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
