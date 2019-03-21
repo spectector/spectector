@@ -109,14 +109,11 @@ ev(X, _) := _ :- throw(error(unknown_expr(X), ev/3)).
 
 %:- export(run/2).
 run(Conf, Timeout) := Conf :- Timeout =< 0, !,
-	Steps = ~get_step_limit,
-	add_path_stat(steps=Steps),
 	trace(timeout).
 run(Conf, Timeout) := Conf2 :-
-	( stop(Conf) -> Conf2 = Conf,
-	  Steps is ~get_step_limit - Timeout,
-	  add_path_stat(steps=Steps)
+	( stop(Conf) -> Conf2 = Conf
 	; tracepc(Conf),
+	  inc_executed_ins,
 	  Conf1 = ~run1(Conf),
 	  Timeout1 is Timeout - 1,
 	  Conf2 = ~run(Conf1, Timeout1)
@@ -287,14 +284,11 @@ bp_(jmp(E),A,L,N,L) :-
 
 %:- export(xrun/2).
 xrun(Conf, Timeout) := Conf :- Timeout =< 0, !,
-	Steps = ~get_step_limit,
-	add_path_stat(steps=Steps),
 	trace(timeout).
 xrun(xc(Ctr,Conf,S), Timeout) := XC2 :-
-	( stop(Conf), S = [] -> XC2 = xc(Ctr,Conf,S), % Note: S=[] (so that spec continue decr otherwise)
-	  Steps is ~get_step_limit - Timeout,
-	  add_path_stat(steps=Steps)
+	( stop(Conf), S = [] -> XC2 = xc(Ctr,Conf,S) % Note: S=[] (so that spec continue decr otherwise)
 	; XC1 = ~xrun1(xc(Ctr,Conf,S)),
+	  ( stop(Conf) -> true ; inc_executed_ins ),
 	  Timeout1 is Timeout - 1,
 	  XC2 = ~xrun(XC1,Timeout1)
 	).

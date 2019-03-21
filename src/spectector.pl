@@ -70,7 +70,7 @@ show_help :-
   -n,--nonspec     Use non-speculative semantics
   -w,--window N    Size of speculative window
   --steps N        Execution step limit
-  -e,--entry FUNC  Entry point of the program
+  -e,--entries L   List of entry points of the program
   --conf-file FILE Read the initial configuration from a file
   -c,--conf CONF   Initial configuration ('c(M,A)')
   -a,--analysis ANA
@@ -129,7 +129,12 @@ opt('-w', '--window', [NAtm|As], As, [Opt]) :-
 	atom_codes(NAtm, NStr),
 	number_codes(N, NStr),
 	Opt = window(N).
-opt('-e', '--entry', [Entry|As], As, [entry(Entry)]). % TODO: Setup for numeric entry points?
+opt('-e', '--entries', [EntriesAtm|As], As, [entries(Entries)]) :-
+	atom_codes(EntriesAtm, EntriesStr),
+	read_from_string_atmvars(EntriesStr, Entries),
+	( list(Entries) -> true
+	; throw(wrong_list(EntriesAtm))
+	). % TODO: Setup for numeric entry points?
 opt('', '--steps', [NAtm|As], As, [Opt]) :-
 	atom_codes(NAtm, NStr),
 	number_codes(N, NStr),
@@ -175,10 +180,6 @@ run(PrgFile, Opts) :-
 	; ConfContents = []
 	),
 	Options = ~flatten([Opts, ConfContents]),
-	%
-	( member(nospec, Opts) -> SpecOpt = nospec
-	; SpecOpt = spec % (default)
-	),
 	% Initial configurations
 	extract_query(c(M0,A0), Options, [[],[]]),
 	% Specification of the analysis
@@ -187,10 +188,10 @@ run(PrgFile, Opts) :-
 	extract_query(heap(HeapDir), Options, [1024]),
 	% Ignore specified variable initializations
 	extract_query(keep_sym(KeepS), Options, [[]]),
-	% Entry point
-	extract_query(entry(Entry), Options, [0]),
+	% Entry points
+	extract_query(entries(Entries), Options, [[0]]),
 	% Set up stack
-	extract_query(stack(Bp, Sp, Return), [Options], [0xf00000, 0xf000000, 0xf000]),
+	extract_query(stack(Bp, Sp, Return), [Options], [0xf00000, 0xf000000, -1]),
 	( Ana0 = noninter ->
 	  extract_query(low(Low), Options, [[]]),
 	  Ana = noninter(Low)
@@ -202,10 +203,9 @@ run(PrgFile, Opts) :-
 	( member(weak, Options) -> set_weak
 	; true
 	),
-	( member(stats(StatsOut), Options) -> set_stats
+	( member(stats(StatsOut), Options) -> set_stats, init_general_stats % TODO: Clean file contents
 	; true
 	),
-	init_general_stats,
 	( member(skip_unknown, Options) ->
 	  init_ignore_unknown_instructions,
 	  init_unknown_instructions
@@ -223,7 +223,7 @@ run(PrgFile, Opts) :-
 	( member(step(SLimit), Options) -> set_step_limit(SLimit)
 	; true % (use default)
 	),
-	init_paths, % Initialize number of paths traced
+	statistics(walltime, [TParse0, _]),
 	( Ext = '.s' ->
 	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic, KeepS,  HeapDir, Heap)
 	; Ext = '.asm' ->
@@ -231,15 +231,33 @@ run(PrgFile, Opts) :-
 	; Ext = '.muasm' ->
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic))
 	; throw(unknown_extension(PrgFile))
-	),
+	), % TODO: Introduce to Prg "[label(end), stop]"
+	statistics(walltime, [TParse, _]),
 	( member(noinit, Options) -> Memory = [], Assignments = []
 	; Heap = c(Memory, Assignments)
+	),
+	TimeParse is TParse - TParse0,
+	load_program(Prg), % (This instantiates labels too)
+	write('program:'), nl,
+	show_program,
+	( stats ->
+	  new_general_stat(time_parse=TimeParse),
+	  new_general_stat(name=string(~atom_codes(PrgFile)))
+	; true
+	),
+	analyze(Entries, Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assignments), PrgFile, PrgNameExt, Opts, Ana).
+
+analyze([],_Prg,_Dic,_C0,_Bp,_Return,_Sp,_StatsOut,_C,_PrgFile,_PrgNameExt, _Opts, _Ana).
+analyze([Entry|Entries], Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assignments), PrgFile, PrgNameExt, Opts, Ana) :-
+	init_paths, % Initialize number of paths traced
+	init_analysis_stats,
+	( member(nospec, Opts) -> SpecOpt = nospec
+	; SpecOpt = spec % (default)
 	),
 	M1 = ~append(M0, [Sp=Return|Memory]),
 	A1 = ~append(A0, [pc=Entry, sp=Sp, bp=Bp|Assignments]),
 	translate_labels(M1, Dic, M),
 	translate_labels(A1, Dic, A),
-        load_program(Prg), % (This instantiates labels too)
 	% write(labels(Dic)), nl,
 	%
 	write('---------------------------------------------------------------------------'), nl,
@@ -248,6 +266,7 @@ run(PrgFile, Opts) :-
 	( SpecOpt = spec -> write('window_size='), write(~get_window_size), write(', ') % speculative window size
 	; true
 	),
+	write('entry='),  write(Entry), write(', '), % speculative window size
 	write('solver='), write(~get_ext_solver), write(', '), % external solver
 	write('ana='), write(Ana), nl, % kind of analysis
 	( print_configurations ->
@@ -257,22 +276,16 @@ run(PrgFile, Opts) :-
 	),
 	%
 	C0 = ~initc(SpecOpt, M, A),
-	write('program:'), nl,
-	show_program,
 	statistics(walltime, [T0, _]),
 	runtest2(Ana, C0),
 	statistics(walltime,[T, _]),
 	Time is T - T0,
 	( stats ->
-	  new_general_stat(total_time=Time),
-	  ( number(Entry) -> number_codes(Entry, EntryStr)
-	  ; ~atom_codes(Entry, EntryStr)
-	  ),
-	  new_general_stat(entry=string(EntryStr)),
-	  new_general_stat(name=string(~atom_codes(PrgFile))),
-	  print_all_stats(StatsOut)
+	  new_analysis_stat(total_time=Time),
+	  assert_analysis_stat(Entry, StatsOut)
 	; true
-	).
+	),
+	analyze(Entries,Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut,c(Memory, Assignments),PrgFile,PrgNameExt,SpecOpt,Ana).
 
 translate_labels([], _, []).
 translate_labels([K=V|KVs], Dic, [K=V2|KVs2]) :-

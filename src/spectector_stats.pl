@@ -17,10 +17,10 @@
 
 %:- doc(title, "Spectector statistics").
 
-:- use_module(library(write), [write/2]).
+:- use_module(library(stream_utils), [write_string/2]).
 :- use_module(library(streams), [nl/0]).
 :- use_module(library(lists), [select/3, append/3]).
-:- use_module(engine(stream_basic), [open/3]).
+:- use_module(engine(stream_basic), [open/3, close/1]).
 :- use_module(library(pillow/json), [json_to_string/2]).
 %:- use_module(concolic(concolic_stats)).
 
@@ -31,7 +31,7 @@
 init_paths :- set_fact(paths([])), set_fact(n_paths(0)), restore_path_info.
 restore_path_info :- init_program_counters, init_unknown_instructions,
 	init_path_stats, init_unknown_labels, init_formulas_length,
-	init_indirect_jumps.
+	init_indirect_jumps, restart_ins_executed.
 :- export(new_path/1).
 new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	paths(Paths), program_counters(PC),
@@ -41,8 +41,9 @@ new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	unknown_labels(UL),
 	formulas_length(TL),
 	indirect_jumps(IJ),
-	set_fact(paths([N0=json([pc=json(PC),unknown_ins=Unknown,unknown_labels=UL,
-	                        indirect_jumps=IJ,
+	ins_executed(IE),
+	set_fact(paths([N0=json([pc=json(PC), unknown_ins=Unknown, unknown_labels=UL,
+	                        indirect_jumps=IJ, steps=IE,
 				formulas_length=TL|~append(Stats, ~path_stats)])|Paths])),
 	restore_path_info.
 
@@ -57,6 +58,12 @@ add_path_stat(Stat) :- set_fact(path_stats([Stat|~path_stats])).
 init_formulas_length :- set_fact(formulas_length([])).
 :- export(add_formula_length/1).
 add_formula_length(L) :- set_fact(formulas_length([L|~formulas_length])).
+
+:- data analysis_stats/1.
+:- export(init_analysis_stats/0).
+init_analysis_stats :- set_fact(analysis_stats([])).
+:- export(new_analysis_stat/1).
+new_analysis_stat(Stat) :- set_fact(analysis_stats([Stat|~analysis_stats])).
 
 :- data general_stats/1.
 :- export(init_general_stats/0).
@@ -92,22 +99,22 @@ init_indirect_jumps :- set_fact(indirect_jumps([])).
 :- export(new_indirect_jump/1).
 new_indirect_jump(Reg) :- set_fact(indirect_jumps([Reg|~indirect_jumps])).
 
-
-:- export(print_all_stats/1). % Format and emit
-% TODO: measure timeout
-print_all_stats(Output) :-
-	general_stats(Stats),
-	paths(Paths0), n_paths(L),
-	Paths1 = [length=L|Paths0],
+:- export(assert_analysis_stat/2). % Format and emit
+assert_analysis_stat(Entry, Output) :-
 	( Output = stdout -> % If stdout
 	  OutStream = user_output,
 	  File=false
-	; open(Output, write, OutStream),
+	; open(Output, append, OutStream),
 	  File=string(~atom_codes(Output))
 	),
-	json_to_string(json([file=File,paths=json(Paths1)|Stats]), Str),
-	atom_codes(Json, Str),
-	write(OutStream, Json), nl.
+	n_paths(L),
+	Paths = [length=L|~paths],
+	Stats = ~append(~analysis_stats,~general_stats),
+	JSONcontents = [file=File,paths=json(Paths),entry=string(~atom_codes(Entry))|Stats],
+	json_to_string(json(JSONcontents), Str),
+	write_string(OutStream, Str),
+	write_string(OutStream, ","), nl,
+	close(OutStream).
 
 :- data unknown_instructions/1.
 :- export(unknown_instructions/1).
@@ -118,6 +125,12 @@ increment_unknown_instructions :-
 	unknown_instructions(N0), N1 is N0 + 1,
 	set_fact(unknown_instructions(N1)).
 
+:- data ins_executed/1.
+:- export(restart_ins_executed/0).
+restart_ins_executed :- set_fact(ins_executed(0)).
+:- export(inc_executed_ins/0).
+inc_executed_ins :- InsExecuted is ~ins_executed + 1, set_fact(ins_executed(InsExecuted)).
+
 % TODO: For getting lines of code
 % :-use_module(library(process)).
-% process_call('/bin/cloc', ['/tmp/test2.s', '--json', '--hide-rate'], [stdout(string(Out))]), string_to_json(Out, Json), json_get(Json, 'Assembly', AsJson), json_get(AsJson, code, R).
+% process_call(path(cloc), ['/tmp/test2.s', '--json', '--hide-rate'], [stdout(string(Out))]), string_to_json(Out, Json), json_get(Json, 'Assembly', AsJson), json_get(AsJson, code, R).

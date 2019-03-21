@@ -59,23 +59,23 @@ noninter_check(Low, C0) :-
 	    ( Safe = no(Mode) ->
 	      !, % stop on first unsafe path
 	      log('[program is unsafe]'),
-	      length(Trace,Length),
+	      %length(Trace,Length),
 	      ( stats ->
-		new_path([status=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC,
-			 trace_length=Length]),
-		new_general_stat(status=string(~atom_codes(Mode)))
+		new_path([status=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC]),
+%			 trace_length=Length]),
+		new_analysis_stat(status=string(~atom_codes(Mode)))
 	      ; true
 	      )
 	    ; log('[path is safe]'),
 	      ( stats ->
-		new_path([status=string("safe"),time_trace=TimeP, time_solve=TimeC,
-			 trace_length=Length])
+		new_path([status=string("safe"),time_trace=TimeP, time_solve=TimeC])
+%			 trace_length=Length])
 	      ; true
 	      ),
 	      fail % go for next path
 	    )
 	; log('[program is safe]'),
-	  new_general_stat(status=string("safe"))
+	  new_analysis_stat(status=string("safe"))
 	).
 
 
