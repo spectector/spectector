@@ -202,15 +202,20 @@ bv_(_=<_).
 
 % Decrement the speculative window of all spec/4
 decr([]) := [].
-decr([spec(Id,N,L,Conf,GoodL)|S]) := [spec(Id,N1,L,Conf,GoodL)| ~decr(S)] :-
+decr([spec(Id,N,L,Conf,GoodL)|S]) := [spec(Id,N1,L,Conf,GoodL)|S] :-
 	( N > 0 -> N1 is N - 1; N1 = 0 ).
 
 % Set all speculative windows to 0
 zeroes([]) := [].
-zeroes([spec(Id,_,L,Conf,GoodL)|S]) := [spec(Id,0,L,Conf,GoodL)| ~zeroes(S)].
+zeroes([spec(Id,_,L,Conf,GoodL)|S]) := [spec(Id,0,L,Conf,GoodL)|S].
 
 enabled([]).
-enabled([spec(_Id,N,_L,_Conf,_GoodL)|S]) :- N > 0, enabled(S).
+enabled([spec(_Id,N,_L,_Conf,_GoodL)|_S]) :- N > 0.
+
+window([]) := N :- 
+	get_window_size(N).
+window([spec(Id,N,L,Conf,GoodL)|_S]) := N1 :-
+		N1 is N -1.
 
 % xc(Ctr,Conf,S)
 % <ctr,sigma,s>: N x Conf x SpecS   (ExtConf)
@@ -266,10 +271,10 @@ bp_(jmp(E),A,L,N,L) :-
 xrun(Conf, Timeout) := Conf :- Timeout =< 0, !,
 	trace(timeout).
 xrun(xc(Ctr,Conf,S), Timeout) := XC2 :-
-	( stop(Conf), S = [] -> XC2 = xc(Ctr,Conf,S) % Note: S=[] (so that spec continue decr otherwise)
+	( stop(Conf), S = [] -> XC2 = xc(Ctr,Conf,S) % Note: S=[] (so that spec continue decr otherwise) 
 	; XC1 = ~xrun1(xc(Ctr,Conf,S)),
-	  Timeout1 is Timeout - 1,
-	  XC2 = ~xrun(XC1,Timeout1)
+		( stop(Conf) -> Timeout1 is Timeout ; Timeout1 is Timeout-1) %??Marco??
+		XC2 = ~xrun(XC1,Timeout1)
 	).
 
 % Se-NoJump & Se-ExBarrier
@@ -286,6 +291,7 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	; S2 = ~decr(S)
 	),
 	XC2 = xc(Ctr,Conf2,S2).
+
 % Se-Jump
 xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	enabled(S),
@@ -296,7 +302,9 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	Conf = c(M,A),
 	Conf2 = c(M,~update0(A,pc,L)), % TODO: it was mset/3 before
 	Ctr1 is Ctr + 1,
-	XC2 = xc(Ctr1,Conf2,[spec(Ctr,N,L,Conf,GoodL) | ~decr(S)]).
+	_N1 = window(S), %??MARCO??
+	N2 is _N1 -1, %??MARCO??
+	XC2 = xc(Ctr1,Conf2,[spec(Ctr,N2,L,Conf,GoodL) | S]).
 % Se-Commit
 xrun1(xc(Ctr,Conf,S)) := XC2 :- 
 	append(SPrime, [spec(Id,0,L,_ConfPrime,GoodL)|S2], S),
@@ -316,13 +324,5 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	ConfPrime = c(M,A0), A = ~update0(A0,pc,GoodL),
 	trace(pc(GoodL)),
 	XC2 = xc(Ctr,c(M,A),S2).
-% Se-Rollback-2
-xrun1(xc(Ctr,Conf,S)) := XC2 :- 
-	Spec = spec(_Id,0,L,_ConfPrime,GoodL),
-	append(SPrime, [Spec|S2], S),
-	\+ SPrime = [],
-	enabled(SPrime),
-	\+ L = GoodL,
-	!,
-	XC2 = xc(Ctr,Conf,~append(~zeroes(SPrime),[Spec|S2])).
+
 
