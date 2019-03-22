@@ -63,3 +63,8 @@ set_stats :- set_fact(stats).
 :- export(print_configurations/0).
 :- export(set_print_configurations/0).
 set_print_configurations :- set_fact(print_configurations).
+
+:- data track_all_pc/0.
+:- export(track_all_pc/0).
+:- export(set_track_all_pc/0).
+set_track_all_pc :- set_fact(track_all_pc).

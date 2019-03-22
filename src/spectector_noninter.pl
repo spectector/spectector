@@ -33,7 +33,7 @@
 :- export(noninter_check/2).
 % `Low` is a list of register names or memory indices that are "low".
 % `C0` is the initial configuration.
-noninter_check(Low, C0) :-
+noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	log('[exploring paths]'),
 	( % (failure-driven loop)
 	    statistics(walltime, [TP0, _]),
