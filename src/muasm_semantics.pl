@@ -231,7 +231,7 @@ decr([spec(Id,N,L,Conf,GoodL)|S]) := [spec(Id,N1,L,Conf,GoodL)|S] :-
 
 % Set all speculative windows to 0
 zeroes([]) := [].
-zeroes([spec(Id,_,L,Conf,GoodL)|S]) := [spec(Id,0,L,Conf,GoodL)| ~zeroes(S)].
+zeroes([spec(Id,_,L,Conf,GoodL)|S]) := [spec(Id,0,L,Conf,GoodL)| S].
 
 enabled([]).
 enabled([spec(_Id,N,_L,_Conf,_GoodL)|_S]) :- N > 0.
