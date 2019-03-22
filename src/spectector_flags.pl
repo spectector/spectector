@@ -26,7 +26,7 @@ set_window_size(N) :-
 :- export(get_window_size/1).
 get_window_size(N) :-
 	( window_size(N0) -> N0 = N
-	; N = 100 % default
+	; N = 200 % default
 	).
 
 :- data step_limit/1.
@@ -40,3 +40,26 @@ get_step_limit(N) :-
 	( step_limit(N0) -> N0 = N
 	; N = 100000 % default
 	).
+
+:- data term_stop_spec/0.
+:- export(term_stop_spec/0).
+
+:- export(set_term_stop_spec/0).
+set_term_stop_spec :- set_fact(term_stop_spec).
+
+:- data weak/0.
+:- export(weak/0).
+
+:- export(set_weak/0).
+set_weak :- set_fact(weak).
+
+:- data stats/0.
+:- export(stats/0).
+
+:- export(set_stats/0).
+set_stats :- set_fact(stats).
+
+:- data print_configurations/0.
+:- export(print_configurations/0).
+:- export(set_print_configurations/0).
+set_print_configurations :- set_fact(print_configurations).

@@ -15,7 +15,7 @@
 
 :- module(_, [], [assertions, fsyntax, datafacts, dcg]).
 
-:- doc(title, "Speculative non-interference check").
+%:- doc(title, "Speculative non-interference check").
 
 :- use_module(library(lists)).
 :- use_module(library(write)).
@@ -24,8 +24,11 @@
 :- use_module(muasm_semantics).
 :- use_module(muasm_program).
 :- use_module(muasm_print).
+:- use_module(spectector_flags).
+:- use_module(spectector_stats).
 :- use_module(concolic(symbolic)).
 :- use_module(concolic(concolic), [pathgoal/2, sym_filter/2]).
+:- use_module(engine(runtime_control), [statistics/2]).
 
 :- export(noninter_check/2).
 % `Low` is a list of register names or memory indices that are "low".
@@ -33,25 +36,46 @@
 noninter_check(Low, C0) :-
 	log('[exploring paths]'),
 	( % (failure-driven loop)
-	  (C,Trace) = ~concrun(C0),
+	    statistics(walltime, [TP0, _]),
+	    set_last_time(TP0),
+	    concrun(C0, (C, Trace)), % TODO: Get number of steps done
+	    statistics(walltime, [TP, _]),
+	    last_time(LTP), TimeP is TP - LTP, set_last_time(TP), % Trace time
 	    ( member(timeout, Trace) ->
-	        log('[timeout... exploring new path]'),
-	        message(warning, 'timeout -- ignoring large path (refine initial configuration or assume unsafe)'),
-		fail
+	      log('[timeout... exploring new path]'),
+	      message(warning, 'timeout -- ignoring large path (refine initial configuration or assume unsafe)'),
+	      fail
 	    ; true
 	    ),
 	    log('[path found]'),
 	    pretty_print([triple(C0,Trace,C)]),
 	    log('[checking speculative non-interference]'),
 	    C0 = xc(_,C0n,_),
-	    noninter_cex(Low, C0n, Trace, Safe), % TODO: Time this operation (for each path)
-	    ( Safe = no ->
-	        !, % stop on first unsafe path
-		log('[program is unsafe]')
+	    statistics(walltime, [TC0, _]),
+	    set_last_time(TC0),
+	    noninter_cex(Low, C0n, Trace, Safe), % TODO: Get the SMT length for the stats
+	    statistics(walltime, [TC, _]),
+	    last_time(LTC), TimeC is TC - LTC, set_last_time(TC), % SMT time
+	    ( Safe = no(Mode) ->
+	      !, % stop on first unsafe path
+	      log('[program is unsafe]'),
+	      %length(Trace,Length),
+	      ( stats ->
+		new_path([status=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC]),
+%			 trace_length=Length]),
+		new_analysis_stat(status=string(~atom_codes(Mode)))
+	      ; true
+	      )
 	    ; log('[path is safe]'),
+	      ( stats ->
+		new_path([status=string("safe"),time_trace=TimeP, time_solve=TimeC])
+%			 trace_length=Length])
+	      ; true
+	      ),
 	      fail % go for next path
 	    )
-	; log('[program is safe]')
+	; log('[program is safe]'),
+	  new_analysis_stat(status=string("safe"))
 	).
 
 
@@ -59,13 +83,10 @@ noninter_check(Low, C0) :-
 % NOTE: see the paper for details, this check works on a single trace
 %   at a time.
 
-noninter_cex(Low, C0, Trace, Safe) :-
+noninter_cex(Low, C0, Trace, no(Mode)) :-
 	( Mode = data ; Mode = control ),
-	noninter_cex_(Mode, Low, C0, Trace),
-	!,
-	Safe = no.
-noninter_cex(_, _, _, Safe) :-
-	Safe = yes.
+	noninter_cex_(Mode, Low, C0, Trace), !.
+noninter_cex(_, _, _, yes).
 
 noninter_cex_(Mode, Low, C0a, TraceA0) :-
 	erase_and_dump_constrs(C0a, InGoalA),
@@ -97,6 +118,7 @@ noninter_cex_(Mode, Low, C0a, TraceA0) :-
 		    ~append(InGoalB,
 		      ~append(~pathgoal(~sym_filter(TraceB)),
 		        ~append(LowGoal,DiffGoal))))),
+	add_formula_length(~length(Goal)),
 	get_model(Goal),
 	%
 	show_cex(C0a, TraceA, C0b, TraceB, X, Y).
@@ -148,6 +170,7 @@ unif_obs([], []).
 unif_obs([X|Xs], [Y|Ys]) :-
 	( X = load(A) -> Y = load(A)
 	; X = store(A) -> Y = store(A)
+	; weak, X = value(A) -> Y = value(A) % For weak speculative non-interference, we consider also value(N) observations in the non-speculative trace
 	; true
 	),
 	unif_obs(Xs,Ys).

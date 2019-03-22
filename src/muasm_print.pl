@@ -23,6 +23,7 @@
 :- use_module(library(streams)).
 :- use_module(library(format)).
 :- use_module(concolic(symbolic), [unassign/2, sym_to_map/2]).
+:- use_module(spectector_flags, [print_configurations/0]).
 
 % Pretty print configuration and traces with symbolic information and
 % other annotations. The relation between symbolic variables is
@@ -86,14 +87,17 @@ print_item(triple(C0,T,C)) :- !,
 	write('trace:'), nl, print_trace(T),
 	write('final conf:'), nl, print_conf(C).
 
-print_conf(c(M,A)) :- !,
+print_conf(c(M,A)) :-
+	print_configurations, !,
 	write('  m='), write_map(M), nl,
 	write('  a='), write_map(A), nl.
-print_conf(xc(I,c(M,A),S)) :- !,
+print_conf(xc(I,c(M,A),S)) :-
+	print_configurations, !,
 	write('  i='), writeq(I), nl,
 	write('  m='), write_map(M), nl,
 	write('  a='), write_map(A), nl,
 	write('  s='), writeq(S), nl.
+print_conf(_).
 
 print_trace([]).
 print_trace([X|Xs]) :-
@@ -117,4 +121,3 @@ write_kv(X) :- !, writeq(X). % TODO: this should not happen
 
 write_x(X) :- integer(X), X > 15, !, format("0x~16r", [X]).
 write_x(X) :- writeq(X).
-

@@ -13,7 +13,7 @@
 % limitations under the License.
 % ===========================================================================
 
-:- module(_, [], [assertions, fsyntax, datafacts, dcg, hiord]).
+:- module(_, [], [assertions, fsyntax, datafacts, hiord]).
 
 :- doc(title, "µAsm semantics").
 
@@ -22,6 +22,8 @@
 :- use_module(spectector_flags).
 :- use_module(concolic(concolic)).
 :- use_module(concolic(symbolic)).
+:- use_module(spectector_stats).
+:- use_module(engine(messages_basic), [message/2]).
 
 % ---------------------------------------------------------------------------
 :- doc(section, "Evaluation (both spec and non-spec)").
@@ -82,6 +84,7 @@ ev(-X,A) := R :- !, R = -(~ev(X,A)).
 ev(X+Y,A) := R :- !, R = ~ev(X,A) + ~ev(Y,A).
 ev(X-Y,A) := R :- !, R = ~ev(X,A) - ~ev(Y,A).
 ev(X*Y,A) := R :- !, R = ~ev(X,A) * ~ev(Y,A).
+ev(X/Y,A) := R :- !, R = ~ev(X,A) // ~ev(Y,A).
 ev(X<<Y,A) := R :- !, R = ~ev(X,A) << ~ev(Y,A).
 ev(X>>Y,A) := R :- !, R = ~ev(X,A) >> ~ev(Y,A).
 ev(ashr(X,Y),A) := R :- !, R = ashr(~ev(X,A), ~ev(Y,A)).
@@ -110,6 +113,7 @@ run(Conf, Timeout) := Conf :- Timeout =< 0, !,
 run(Conf, Timeout) := Conf2 :-
 	( stop(Conf) -> Conf2 = Conf
 	; tracepc(Conf),
+	  inc_executed_ins,
 	  Conf1 = ~run1(Conf),
 	  Timeout1 is Timeout - 1,
 	  Conf2 = ~run(Conf1, Timeout1)
@@ -129,6 +133,20 @@ run1(Conf) := Conf2 :-
 % Skip
 run_(skip,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
+run_(unknown_ins(I),c(M,A)) := c(M,A2) :-
+	message(warning, ['Pass through an unsupported instruction! ', I]),
+	increment_unknown_instructions,
+	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
+%A2 = ~update0(A,pc,~incpc(A)).
+run_(unknown_pc(L),c(M,A)) := c(M,A2) :-
+	message(warning, ['Pass through a non declared Label! ', L]),
+	new_unknown_label(string(~atom_codes(L))),
+	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
+run_(indirect_jump(L),c(M,A)) := c(M,A2) :-
+	message(warning, ['Pass through an indirect jump, register: ', L]),
+	new_indirect_jump(string(~atom_codes(L))),
+	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
+
 % Barrier
 run_(spbarr,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
@@ -145,32 +163,38 @@ run_(load(X,E),c(M,A)) := c(M,A2) :-
 	N = ~ev(E,A),
 	trace(load(N)),
 	V = ~element(M,N),
+	( weak -> trace(value(V))
+	; true
+	),
 	A1 = ~update(A,X,V),
 	A2 = ~update0(A1,pc,~incpc(A1)).
-% Store
+% Store % TODO: Notify about possible injection on stack (return direction)
 run_(store(X,E),c(M,A)) := c(M2,A2) :-
 	Xv = ~ev(X,A),
 	Ev = ~ev(E,A),
 	M2 = ~update(M,Ev,Xv),
 	trace(store(Ev)),
+	( weak -> trace(value(Xv))
+	; true
+	),
 	A2 = ~update0(A,pc,~incpc(A)).
 % Beqz-1 and Beqz-2
 run_(beqz(X,L),c(M,A)) := c(M,A2) :-
 	Xv = ~ev(X,A),
 	V = ~conc_cond(Xv=0),
 	( V=1 -> L2 = L ; L2 = ~incpc(A) ),
-	trace(pc(L2)),
+	trace_label(L2),
 	A2 = ~update0(A,pc,L2).
 % Jmp	
 run_(jmp(E),c(M,A)) := c(M,A2) :-
 	La = ~ev(E,A), % TODO: useful? it will show indirect jumps more easily
-	trace(pc(La)),
-	L = ~concretize(La), % TODO: make symbolic if E is symbolic
+	trace_label(La),
+	L = ~concretize(La), % TODO: make symbolic if E is symbolic -> warning when is symbolic?
 	A2 = ~update0(A,pc,L).
 
 pc(A) := ~concretize(~ev(pc,A)).
 
-incpc(A) := ~concretize(~ev(pc+1,A)).
+incpc(A) := ~concretize(~ev(pc+1,A)). % TODO: Numeric labels as pc counters?
 
 % make sure that the expression is boolean
 bv(A) := A :- nonvar(A), bv_(A), !.
@@ -243,10 +267,6 @@ bp_(beqz(X,L),A,L2,N,GoodL2) :-
 	( V=0 -> L2 = L ; L2 = ~incpc(A) ),
 	( V=1 -> GoodL2 = L ; GoodL2 = ~incpc(A) ), % (keep it)
 	get_window_size(N).
-% Jmp	
-bp_(jmp(E),A,L,N,L) :-
-	Ev = ~ev(E,A),
-	L = ~concretize(Ev), N = 1.
 :- else.
 % Beqz-1 and Beqz-2
 bp_(beqz(X,L),A,L2,N,L2) :-
@@ -256,11 +276,11 @@ bp_(beqz(X,L),A,L2,N,L2) :-
 	% Good prediction
 	( V=1 -> L2 = L ; L2 = ~incpc(A) ),
 	N = 1. % (irrelevant if we predict correctly)
+:- endif.
 % Jmp	
 bp_(jmp(E),A,L,N,L) :-
 	Ev = ~ev(E,A),
 	L = ~concretize(Ev), N = 1.
-:- endif.
 
 % ---------------------------------------------------------------------------
 :- doc(section, "Speculative execution").
@@ -273,8 +293,9 @@ xrun(Conf, Timeout) := Conf :- Timeout =< 0, !,
 xrun(xc(Ctr,Conf,S), Timeout) := XC2 :-
 	( stop(Conf), S = [] -> XC2 = xc(Ctr,Conf,S) % Note: S=[] (so that spec continue decr otherwise) 
 	; XC1 = ~xrun1(xc(Ctr,Conf,S)),
-		( stop(Conf) -> Timeout1 is Timeout ; Timeout1 is Timeout-1) %??Marco??
-		XC2 = ~xrun(XC1,Timeout1)
+	  ( stop(Conf) -> Timeout1 is Timeout ; Timeout1 is Timeout-1, inc_executed_ins ),
+	  Timeout1 is Timeout - 1,
+	  XC2 = ~xrun(XC1,Timeout1)
 	).
 
 % Se-NoJump & Se-ExBarrier
@@ -282,7 +303,7 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	enabled(S),
 	\+ _ = ~bp(xc(Ctr,Conf,S)),
 	!,
-	( stop(Conf) -> Conf2 = Conf % Note: case for stop/1 (so that spec continue decr)
+	( \+ term_stop_spec, stop(Conf) -> Conf2 = Conf % Note: case for stop/1 (so that spec continue decr)
 	; tracepc(Conf),
 	  Conf2 = ~run1(Conf)
 	),
@@ -298,7 +319,7 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	tracepc(Conf),
 	t(L,N,GoodL) = ~bp(xc(Ctr,Conf,S)),
 	!,
-	trace(start(Ctr)), trace(pc(L)),
+	trace(start(Ctr)), trace_label(L),
 	Conf = c(M,A),
 	Conf2 = c(M,~update0(A,pc,L)), % TODO: it was mset/3 before
 	Ctr1 is Ctr + 1,
@@ -308,12 +329,25 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 % Se-Commit
 xrun1(xc(Ctr,Conf,S)) := XC2 :- 
 	append(SPrime, [spec(Id,0,L,_ConfPrime,GoodL)|S2], S),
-	enabled(SPrime),
+	enabled(S2),
 	L = GoodL,
 	!,
 	tracepc(Conf),
 	trace(commit(Id)),
 	XC2 = xc(Ctr,Conf,~append(SPrime,S2)).
+% Se-Commit-stop
+xrun1(xc(Ctr,Conf,S)) := XC2 :-
+	term_stop_spec,
+	stop(Conf),
+	append(SPrime, [spec(Id,_N,L,_ConfPrime,GoodL)|S2], S),
+	enabled(S2),
+	L = GoodL,
+	!,
+	tracepc(Conf),
+	trace(commit(Id)),
+	XC2 = xc(Ctr,Conf,~append(SPrime,S2)).
+
+
 % Se-Rollback-1
 xrun1(xc(Ctr,Conf,S)) := XC2 :- 
 	S = [spec(Id,0,L,ConfPrime,GoodL)|S2],
@@ -326,3 +360,4 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	XC2 = xc(Ctr,c(M,A),S2).
 
 
+trace_label(L) :- trace(pc(L)), add_program_counters(L). % TODO: Outside of the path (there can be side-effects)
