@@ -72,7 +72,16 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 %			 trace_length=Length])
 	      ; true
 	      ),
-	      fail % go for next path
+	      % For bounded analysis
+	      ( explored_paths_left(N) -> % Fails if not initialized
+		( N > 1 -> new_explored_path, fail
+		; log('[maximum number of paths reached, program is assumed as safe]'),
+		  ( stats -> new_analysis_stat(status=string("safe_bound")) % TODO: Check if there are no paths to inspect left
+		  ; true
+		  )
+		)
+	      ; fail % go for next path
+	      )
 	    )
 	; log('[program is safe]'),
 	  new_analysis_stat(status=string("safe"))

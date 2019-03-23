@@ -91,6 +91,7 @@ show_help :-
                    the speculation, it keeps stuck until
                    speculation ends
   --no-show-conf   Configurations are not printed
+  --bound-paths N  Bound in the number of paths explored
   --skip-unknown   Treat unknown instrunctions as 'skip'
   --track-all-pc   The program counters are stored on the statistics
   --weak           Check the security condition under the weak
@@ -130,6 +131,10 @@ opt('-w', '--window', [NAtm|As], As, [Opt]) :-
 	atom_codes(NAtm, NStr),
 	number_codes(N, NStr),
 	Opt = window(N).
+opt('', '--bound-paths', [NAtm|As], As, [Opt]) :-
+	atom_codes(NAtm, NStr),
+	number_codes(N, NStr),
+	Opt = bound_paths(N).
 opt('-e', '--entries', [EntriesAtm|As], As, [entries(Entries)]) :-
 	atom_codes(EntriesAtm, EntriesStr),
 	read_from_string_atmvars(EntriesStr, Entries),
@@ -200,6 +205,10 @@ run(PrgFile, Opts) :-
 	; Ana = Ana0
 	),
 	( member(term_stop_spec, Options) -> set_term_stop_spec
+	; true % (use default)
+	),
+	( member(bound_paths(BoundPaths), Options) ->
+	  set_explored_paths_left(BoundPaths)
 	; true % (use default)
 	),
 	( member(track_all_pc, Options) -> set_track_all_pc

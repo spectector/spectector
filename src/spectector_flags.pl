@@ -68,3 +68,10 @@ set_print_configurations :- set_fact(print_configurations).
 :- export(track_all_pc/0).
 :- export(set_track_all_pc/0).
 set_track_all_pc :- set_fact(track_all_pc).
+
+:- data explored_paths_left/1.
+:- export(explored_paths_left/1).
+:- export(set_explored_paths_left/1).
+set_explored_paths_left(N) :- set_fact(explored_paths_left(N)).
+:- export(new_explored_path/0).
+new_explored_path :- explored_paths_left(N0), N is N0 - 1, set_fact(explored_paths_left(N)).
