@@ -92,6 +92,7 @@ show_help :-
                    speculation ends
   --no-show-conf   Configurations are not printed
   --skip-unknown   Treat unknown instrunctions as 'skip'
+  --track-all-pc   The program counters are stored on the statistics
   --weak           Check the security condition under the weak
                    specification (values in memory must match)
 
@@ -155,6 +156,7 @@ opt('', '--term-stop-spec', As, As, [term_stop_spec]).
 opt('', '--weak', As, As, [weak]).
 opt('', '--stats', [StatsOut|As], As, [stats(StatsOut)]).
 opt('', '--no-show-conf', As, As, [no_show_conf]).
+opt('', '--track-all-pc', As, As, [track_all_pc]).
 opt('', '--skip-unknown', As, As, [skip_unknown]).
 
 parse_args([Arg|Args], Opts, File) :-
@@ -198,6 +200,9 @@ run(PrgFile, Opts) :-
 	; Ana = Ana0
 	),
 	( member(term_stop_spec, Options) -> set_term_stop_spec
+	; true % (use default)
+	),
+	( member(track_all_pc, Options) -> set_track_all_pc
 	; true % (use default)
 	),
 	( member(weak, Options) -> set_weak

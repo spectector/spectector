@@ -116,6 +116,9 @@ run(Conf, Timeout) := Conf2 :-
 	  inc_executed_ins,
 	  Conf1 = ~run1(Conf),
 	  Timeout1 is Timeout - 1,
+	  ( track_all_pc -> Conf = c(_M, A), add_program_counters(~pc(A))
+	  ; true
+	  ),
 	  Conf2 = ~run(Conf1, Timeout1)
 	).
 
@@ -294,7 +297,11 @@ xrun(xc(Ctr,Conf,S), Timeout) := XC2 :-
 	( stop(Conf), S = [] -> XC2 = xc(Ctr,Conf,S) % Note: S=[] (so that spec continue decr otherwise)
 	; XC1 = ~xrun1(xc(Ctr,Conf,S)),
 	  ( stop(Conf) -> Timeout1 = Timeout
-	  ; Timeout1 is Timeout-1, inc_executed_ins
+	  ; Timeout1 is Timeout-1,
+	    inc_executed_ins,
+	    ( track_all_pc -> Conf = c(_M, A), add_program_counters(~pc(A))
+	    ; true
+	    )
 	  ),
 	  XC2 = ~xrun(XC1,Timeout1)
 	).
@@ -348,4 +355,8 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	XC2 = xc(Ctr,c(M,A),S2).
 
 
-trace_label(L) :- trace(pc(L)), add_program_counters(L). % TODO: Outside of the path (there can be side-effects)
+trace_label(L) :-
+	trace(pc(L)),
+	( track_all_pc -> true
+	; add_program_counters(L)
+	). % TODO: Outside of the path (there can be side-effects)
