@@ -75,3 +75,8 @@ set_track_all_pc :- set_fact(track_all_pc).
 set_explored_paths_left(N) :- set_fact(explored_paths_left(N)).
 :- export(new_explored_path/0).
 new_explored_path :- explored_paths_left(N0), N is N0 - 1, set_fact(explored_paths_left(N)).
+
+:- data skip_unknown/0.
+:- export(skip_unknown/0).
+:- export(set_skip_unknown/0).
+set_skip_unknown :- set_fact(skip_unknown).

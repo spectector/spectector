@@ -92,6 +92,7 @@ show_help :-
                    speculation ends
   --no-show-conf   Configurations are not printed
   --bound-paths N  Bound in the number of paths explored
+  --parse-unknown  Parse unknown instrunctions
   --skip-unknown   Treat unknown instrunctions as 'skip'
   --track-all-pc   The program counters are stored on the statistics
   --weak           Check the security condition under the weak
@@ -162,6 +163,7 @@ opt('', '--weak', As, As, [weak]).
 opt('', '--stats', [StatsOut|As], As, [stats(StatsOut)]).
 opt('', '--no-show-conf', As, As, [no_show_conf]).
 opt('', '--track-all-pc', As, As, [track_all_pc]).
+opt('', '--parse-unknown', As, As, [parse_unknown]).
 opt('', '--skip-unknown', As, As, [skip_unknown]).
 
 parse_args([Arg|Args], Opts, File) :-
@@ -220,9 +222,13 @@ run(PrgFile, Opts) :-
 	( member(stats(StatsOut), Options) -> set_stats, init_general_stats % TODO: Clean file contents
 	; true
 	),
-	( member(skip_unknown, Options) ->
+	( member(parse_unknown, Options) ->
 	  init_ignore_unknown_instructions,
-	  init_unknown_instructions
+	  init_unknown_instructions,
+	  ( member(skip_unknown, Options) ->
+	    set_skip_unknown
+	  ; true
+	  )
 	; true
 	),
 	( member(solver(Solver), Options) -> set_ext_solver(Solver)
