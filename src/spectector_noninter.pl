@@ -17,6 +17,7 @@
 
 :- doc(title, "Speculative non-interference check").
 
+:- use_module(library(aggregates)).
 :- use_module(library(lists)).
 :- use_module(library(write)).
 :- use_module(library(streams)).
@@ -70,7 +71,6 @@ noninter_cex(_, _, _, Safe) :-
 noninter_cex_(Mode, Low, C0a, TraceA0) :-
 	erase_and_dump_constrs(C0a, InGoalA),
 	erase_model([InGoalA,TraceA0]), % remove all other concrete assignments
-	%
 	( Mode = data ->
 	    % Data-based leak
 	    TraceA = TraceA0,
@@ -78,8 +78,9 @@ noninter_cex_(Mode, Low, C0a, TraceA0) :-
 	                   C0a, InGoalA, TraceA, [],
 			   C0b, InGoalB, TraceB, [],
 			   LowGoal),
-	    member2(X, Y, TraceA, TraceB),
-	    differ(X, Y, Cond), DiffGoal = [Cond]
+	    differdisj(TraceA, TraceB, OrCond),
+	    \+ OrCond = [], % (just fail)
+	    DiffGoal = [~or_cond(OrCond) = 1]
 	; Mode = control ->
 	    % Control-based leak
 	    select_spec_cond(TraceA0, TraceA, CondA), % select cond/1 in speculative fragments
@@ -100,7 +101,7 @@ noninter_cex_(Mode, Low, C0a, TraceA0) :-
 	get_model(Goal),
 	%
 	show_cex(C0a, TraceA, C0b, TraceB, X, Y).
-	
+
 show_cex(C0a, _TraceA, C0b, _TraceB, X, Y) :-
 	log('[path is unsafe, showing counter-example initial configurations A and B]'),
 	pretty_print([
@@ -168,10 +169,18 @@ filter_nonspec([X|Xs], [X|NTrace]) :-
 	filter_nonspec(Xs, NTrace).
 filter_nonspec([], []).
 
-member2(X, Y, [X|_], [Y|_]).
-member2(X, Y, [_|Xs], [_|Ys]) :-
-	member2(X, Y, Xs, Ys).
+% Given traces Xs and Ys, obtain a disjunction representing that at
+% least one of the load or store addresses differ.
+differdisj([], [], []).
+differdisj([X|Xs], [Y|Ys], OrCond) :-
+	( differ(X, Y, Cond) -> OrCond = [Cond|OrCond0]
+	; OrCond = OrCond0
+	),
+	differdisj(Xs, Ys, OrCond0).
 
+or_cond([X]) := R :- !, R = X.
+or_cond([X|Xs]) := X\/(~or_cond(Xs)).
+	
 differ(load(A), load(B), (A\=B)) :- A \== B.
 differ(store(A), store(B), (A\=B)) :- A \== B.
 
