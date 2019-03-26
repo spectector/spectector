@@ -136,23 +136,26 @@ run1(Conf) := Conf2 :-
 % Skip
 run_(skip,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
-run_(unknown_ins(I),c(M,A)) := c(M,A2) :-
+% Stop instruction
+run_(stop_ins,c(M,A)) := c(M,A2) :-
+	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
+% Unknown
+run_(unknown_ins(I),C0) := C :-
 	message(warning, ['Pass through an unsupported instruction! ', I]),
 	increment_unknown_instructions,
 	( skip_unknown ->
-	  A2 = ~update0(A,pc,~incpc(A))
-	; A2 = ~update0(A,pc,-1)
-	). % TODO: Standard site to jump?
-%A2 = ~update0(A,pc,~incpc(A)).
-run_(unknown_pc(L),c(M,A)) := c(M,A2) :-
-	message(warning, ['Pass through a non declared Label! ', L]),
+	    C = ~run_(skip,C0)
+	; C = ~run_(stop_ins,C0)
+	).
+run_(unknown_pc(L),C0) := C :-
+	message(warning, ['Pass through a non declared Label! ', L]), % TODO: inefficient! (remember somewhere else)
 	new_unknown_label(string(~atom_codes(L))),
-	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
-run_(indirect_jump(L),c(M,A)) := c(M,A2) :-
-	message(warning, ['Pass through an indirect jump, register: ', L]),
+	C = ~run_(stop_ins,C0).
+run_(indirect_jump(L),C0) := C :-
+	message(warning, ['Pass through an indirect jump, register: ', L]), % TODO: inefficient! (remember somewhere else)
 	new_indirect_jump(string(~atom_codes(L))),
-	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
-
+	C = ~run_(stop_ins,C0).
+% 
 % Barrier
 run_(spbarr,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,~incpc(A)).
