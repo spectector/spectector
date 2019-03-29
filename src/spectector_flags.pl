@@ -59,10 +59,10 @@ set_weak :- set_fact(weak).
 :- export(set_stats/0).
 set_stats :- set_fact(stats).
 
-:- data print_configurations/0.
-:- export(print_configurations/0).
-:- export(set_print_configurations/0).
-set_print_configurations :- set_fact(print_configurations).
+:- data print_defs/0.
+:- export(print_defs/0).
+:- export(set_print_defs/0).
+set_print_defs :- set_fact(print_defs).
 
 :- data track_all_pc/0.
 :- export(track_all_pc/0).

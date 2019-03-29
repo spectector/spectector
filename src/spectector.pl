@@ -90,10 +90,11 @@ show_help :-
   --term-stop-spec If the final of the program is reached during
                    the speculation, it keeps stuck until
                    speculation ends
-  --no-show-conf   Configurations are not printed
+  --no-show-def    Definitions as memory configurations and the
+                   program in muAsm are not printed
   --bound-paths N  Bound in the number of paths explored
-  --parse-unknown  Parse unknown instrunctions
-  --skip-unknown   Treat unknown instrunctions as 'skip'
+  --parse-unknown  Parse unknown instructions
+  --skip-unknown   Treat unknown instructions as 'skip'
   --track-all-pc   The program counters are stored on the statistics
   --weak           Check the security condition under the weak
                    specification (values in memory must match)
@@ -161,7 +162,7 @@ opt('-r', '--reduce', As, As, [reduce]).
 opt('', '--term-stop-spec', As, As, [term_stop_spec]).
 opt('', '--weak', As, As, [weak]).
 opt('', '--stats', [StatsOut|As], As, [stats(StatsOut)]).
-opt('', '--no-show-conf', As, As, [no_show_conf]).
+opt('', '--no-show-def', As, As, [no_show_def]).
 opt('', '--track-all-pc', As, As, [track_all_pc]).
 opt('', '--parse-unknown', As, As, [parse_unknown]).
 opt('', '--skip-unknown', As, As, [skip_unknown]).
@@ -237,8 +238,8 @@ run(PrgFile, Opts) :-
 	( member(window(WSize), Options) -> set_window_size(WSize)
 	; true % (use default)
 	),
-	( member(no_show_conf, Options) -> true
-	; set_print_configurations % (use default)
+	( member(no_show_def, Options) -> true
+	; set_print_defs % (use default)
 	),
 	( member(step(SLimit), Options) -> set_step_limit(SLimit)
 	; true % (use default)
@@ -258,8 +259,11 @@ run(PrgFile, Opts) :-
 	),
 	TimeParse is TParse - TParse0,
 	load_program(Prg), % (This instantiates labels too)
-	write('program:'), nl,
-	show_program,
+	( print_defs ->
+	  write('program:'), nl,
+	  show_program
+	; true
+	),
 	( stats ->
 	  new_general_stat(time_parse=TimeParse),
 	  new_general_stat(name=string(~atom_codes(PrgFile)))
@@ -289,7 +293,7 @@ analyze([Entry|Entries], Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assig
 	write('entry='),  write(Entry), write(', '), % speculative window size
 	write('solver='), write(~get_ext_solver), write(', '), % external solver
 	write('ana='), write(Ana), nl, % kind of analysis
-	( print_configurations ->
+	( print_defs ->
 	  write('m='), write(M), nl, % initial memory
 	  write('a='), write(A), nl % initial registers
 	; true

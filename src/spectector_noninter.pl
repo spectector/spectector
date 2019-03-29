@@ -212,7 +212,7 @@ differdisj([X|Xs], [Y|Ys], OrCond) :-
 
 or_cond([X]) := R :- !, R = X.
 or_cond([X|Xs]) := X\/(~or_cond(Xs)).
-	
+
 differ(load(A), load(B), (A\=B)) :- A \== B.
 differ(store(A), store(B), (A\=B)) :- A \== B.
 

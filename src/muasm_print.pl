@@ -23,7 +23,7 @@
 :- use_module(library(streams)).
 :- use_module(library(format)).
 :- use_module(concolic(symbolic), [unassign/2, sym_to_map/2]).
-:- use_module(spectector_flags, [print_configurations/0]).
+:- use_module(spectector_flags, [print_defs/0]).
 
 % Pretty print configuration and traces with symbolic information and
 % other annotations. The relation between symbolic variables is
@@ -88,11 +88,11 @@ print_item(triple(C0,T,C)) :- !,
 	write('final conf:'), nl, print_conf(C).
 
 print_conf(c(M,A)) :-
-	print_configurations, !,
+	print_defs, !,
 	write('  m='), write_map(M), nl,
 	write('  a='), write_map(A), nl.
 print_conf(xc(I,c(M,A),S)) :-
-	print_configurations, !,
+	print_defs, !,
 	write('  i='), writeq(I), nl,
 	write('  m='), write_map(M), nl,
 	write('  a='), write_map(A), nl,
