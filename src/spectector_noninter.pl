@@ -62,6 +62,8 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	      log('[program is unsafe]'),
 	      %length(Trace,Length),
 	      ( stats ->
+		trace_length(Trace, TL),
+		add_path_stat(trace_length=TL),
 		new_path([status=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC]),
 %			 trace_length=Length]),
 		new_analysis_stat(status=string(~atom_codes(Mode)))
@@ -69,6 +71,8 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	      )
 	    ; log('[path is safe]'),
 	      ( stats ->
+		trace_length(Trace, TL),
+		add_path_stat(trace_length=TL),
 		new_path([status=string("safe"),time_trace=TimeP, time_solve=TimeC])
 %			 trace_length=Length])
 	      ; true
@@ -241,6 +245,17 @@ only_specmarks([X|Xs], [X|Ys]) :-
 	only_specmarks(Xs, Ys).
 only_specmarks([_|Xs], Ys) :-
 	only_specmarks(Xs, Ys).
+
+trace_length([], 0).
+trace_length([X|Xs], N) :-
+	trace_length(Xs, N0),
+	( integer(X) ->
+	    N = N0
+	; X = sym(_X0) ->
+	    N = N0
+	; N is N0 + 1
+	).
+
 
 % ---------------------------------------------------------------------------
 % (log messages)
