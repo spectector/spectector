@@ -93,6 +93,7 @@ show_help :-
   --no-show-def    Definitions as memory configurations and the
                    program in muAsm are not printed
   --bound-paths N  Bound in the number of paths explored
+  --use-dump       Cache parsed file in a dump file
   --parse-unknown  Parse unknown instructions
   --skip-unknown   Treat unknown instructions as 'skip'
   --track-all-pc   The program counters are stored on the statistics
@@ -164,6 +165,7 @@ opt('', '--weak', As, As, [weak]).
 opt('', '--stats', [StatsOut|As], As, [stats(StatsOut)]).
 opt('', '--no-show-def', As, As, [no_show_def]).
 opt('', '--track-all-pc', As, As, [track_all_pc]).
+opt('', '--use-dump', As, As, [use_dump]).
 opt('', '--parse-unknown', As, As, [parse_unknown]).
 opt('', '--skip-unknown', As, As, [skip_unknown]).
 
@@ -220,6 +222,9 @@ run(PrgFile, Opts) :-
 	( member(weak, Options) -> set_weak
 	; true
 	),
+	( member(use_dump, Options) -> UseDump = yes
+	; UseDump = no
+	),
 	( member(stats(StatsOut), Options) -> set_stats, init_general_stats % TODO: Clean file contents
 	; true
 	),
@@ -244,18 +249,20 @@ run(PrgFile, Opts) :-
 	( member(step(SLimit), Options) -> set_step_limit(SLimit)
 	; true % (use default)
 	),
+	( member(noinit, Options) -> InitMem = no ; InitMem = yes ),
 	statistics(walltime, [TParse0, _]),
 	( Ext = '.s' ->
-	    Prg = ~translate_x86_to_muasm(gas, PrgFile, Dic, KeepS,  HeapDir, Heap)
+	    Prg = ~translate_x86_to_muasm(gas, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, c(Memory0, Assignments0))
 	; Ext = '.asm' ->
-	    Prg = ~translate_x86_to_muasm(intel, PrgFile, Dic, KeepS, HeapDir, Heap)
+	    Prg = ~translate_x86_to_muasm(intel, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, c(Memory0, Assignments0))
 	; Ext = '.muasm' ->
-	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic))
+	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic)),
+	    Memory0 = [], Assignments0 = [] % TODO: allow init mem and symbols?
 	; throw(unknown_extension(PrgFile))
 	), % TODO: Introduce to Prg "[label(end), stop]"
 	statistics(walltime, [TParse, _]),
 	( member(noinit, Options) -> Memory = [], Assignments = []
-	; Heap = c(Memory, Assignments)
+	; c(Memory0, Assignments0) = c(Memory, Assignments)
 	),
 	TimeParse is TParse - TParse0,
 	load_program(Prg), % (This instantiates labels too)
