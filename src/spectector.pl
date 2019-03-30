@@ -252,17 +252,17 @@ run(PrgFile, Opts) :-
 	( member(noinit, Options) -> InitMem = no ; InitMem = yes ),
 	statistics(walltime, [TParse0, _]),
 	( Ext = '.s' ->
-	    Prg = ~translate_x86_to_muasm(gas, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, c(Memory0, Assignments0))
+	    Prg = ~translate_x86_to_muasm(gas, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
 	; Ext = '.asm' ->
-	    Prg = ~translate_x86_to_muasm(intel, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, c(Memory0, Assignments0))
+	    Prg = ~translate_x86_to_muasm(intel, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
 	; Ext = '.muasm' ->
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic)),
-	    Memory0 = [], Assignments0 = [] % TODO: allow init mem and symbols?
+	    Memory0 = [], Locs0 = [] % TODO: allow init mem and symbols?
 	; throw(unknown_extension(PrgFile))
 	), % TODO: Introduce to Prg "[label(end), stop]"
 	statistics(walltime, [TParse, _]),
-	( member(noinit, Options) -> Memory = [], Assignments = []
-	; c(Memory0, Assignments0) = c(Memory, Assignments)
+	( member(noinit, Options) -> Memory=[], Assignments=[]
+	; Memory=Memory0, Assignments=Locs0
 	),
 	TimeParse is TParse - TParse0,
 	load_program(Prg), % (This instantiates labels too)
