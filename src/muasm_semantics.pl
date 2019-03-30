@@ -77,6 +77,7 @@ conf(c(_M,_A)).
 
 ev(X,_A) := R :- var(X), !, R=X.
 ev(pc,A) := R :- !, R = ~element0(A,pc). % TODO: slow if we use element/2, fix?
+ev(X,_A) := R :- loc(X,N0), !, R = N0. % TODO: resolve symbol location statically instead?
 ev(X,A) := R :- reg(X), !, R = ~elementF(A,X). % TODO: can we use element/2?
 ev(N,_A) := N :- integer(N), !.
 ev(+X,A) := ~ev(X,A) :- !.

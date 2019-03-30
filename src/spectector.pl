@@ -261,14 +261,14 @@ run(PrgFile, Opts) :-
 	; throw(unknown_extension(PrgFile))
 	), % TODO: Introduce to Prg "[label(end), stop]"
 	statistics(walltime, [TParse, _]),
-	( member(noinit, Options) -> Memory=[], Assignments=[]
-	; Memory=Memory0, Assignments=Locs0
+	( member(noinit, Options) -> Memory=[], Locs=Locs0
+	; Memory=Memory0, Locs=Locs0
 	),
 	TimeParse is TParse - TParse0,
-	load_program(Prg), % (This instantiates labels too)
+	load_program(Prg,Locs), % (This instantiates labels too)
 	( print_defs ->
-	  write('program:'), nl,
-	  show_program
+	    write('program:'), nl,
+	    show_program
 	; true
 	),
 	( stats ->
@@ -276,10 +276,10 @@ run(PrgFile, Opts) :-
 	  new_general_stat(name=string(~atom_codes(PrgFile)))
 	; true
 	),
-	analyze(Entries, Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assignments), PrgFile, PrgNameExt, Opts, Ana).
+	analyze(Entries,Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, []), PrgFile, PrgNameExt, Opts, Ana).
 
 analyze([],_Prg,_Dic,_C0,_Bp,_Return,_Sp,_StatsOut,_C,_PrgFile,_PrgNameExt, _Opts, _Ana).
-analyze([Entry|Entries], Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assignments), PrgFile, PrgNameExt, Opts, Ana) :-
+analyze([Entry|Entries],Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assignments), PrgFile, PrgNameExt, Opts, Ana) :-
 	init_paths, % Initialize number of paths traced
 	init_analysis_stats,
 	( member(nospec, Opts) -> SpecOpt = nospec
@@ -301,8 +301,8 @@ analyze([Entry|Entries], Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assig
 	write('solver='), write(~get_ext_solver), write(', '), % external solver
 	write('ana='), write(Ana), nl, % kind of analysis
 	( print_defs ->
-	  write('m='), write(M), nl, % initial memory
-	  write('a='), write(A), nl % initial registers
+	    write('m='), write(M), nl, % initial memory
+	    write('a='), write(A), nl % initial registers
 	; true
 	),
 	%
