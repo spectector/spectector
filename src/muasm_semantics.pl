@@ -141,7 +141,7 @@ run_(skip,c(M,A)) := c(M,A2) :-
 run_(stop_ins,c(M,A)) := c(M,A2) :-
 	A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
 % Unknown
-run_(unknown_ins(I),C0) := C :-
+run_(unsupported_ins(I),C0) := C :-
 	message(warning, ['Pass through an unsupported instruction! ', I]),
 	increment_unknown_instructions,
 	( skip_unknown ->

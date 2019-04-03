@@ -33,7 +33,6 @@
 :- use_module(concolic(symbolic), [set_ext_solver/1, get_ext_solver/1]).
 :- use_module(muasm_translator(muasm_parser)).
 :- use_module(muasm_translator(x86_to_muasm)).
-:- use_module(muasm_translator(translator_flags)).
 
 :- use_module(spectector_flags).
 :- use_module(spectector_stats).
@@ -229,7 +228,6 @@ run(PrgFile, Opts) :-
 	; true
 	),
 	( member(parse_unknown, Options) ->
-	  init_ignore_unknown_instructions,
 	  init_unknown_instructions,
 	  ( member(skip_unknown, Options) ->
 	    set_skip_unknown
