@@ -113,18 +113,15 @@ run(Conf, Timeout) := Conf :- Timeout =< 0, !,
 	trace(timeout).
 run(Conf, Timeout) := Conf2 :-
 	( stop(Conf) -> Conf2 = Conf
-	; tracepc(Conf),
-	  inc_executed_ins,
+	; trace_rawpc(Conf),
+	  track_ins(Conf),
 	  Conf1 = ~run1(Conf),
 	  Timeout1 is Timeout - 1,
-	  ( track_all_pc -> Conf = c(_M, A), add_program_counters(~pc(A))
-	  ; true
-	  ),
 	  Conf2 = ~run(Conf1, Timeout1)
 	).
 
 % Add raw PC to the trace (just for readability in print_trace)
-tracepc(c(_,A)) :- trace(~pc(A)).
+trace_rawpc(c(_,A)) :- trace(~pc(A)).
 
 % TODO: pc|->bottom needed?
 stop(c(_,A)) :- \+ _ = ~p(~pc(A)).
@@ -193,13 +190,14 @@ run_(beqz(X,L),c(M,A)) := c(M,A2) :-
 	Xv = ~ev(X,A),
 	V = ~conc_cond(Xv=0),
 	( V=1 -> L2 = L ; L2 = ~incpc(A) ),
-	trace_label(L2),
+	trace_pc(L2), track_branch(L2),
 	A2 = ~update0(A,pc,L2).
 % Jmp	
 run_(jmp(E),c(M,A)) := c(M,A2) :-
 	La = ~ev(E,A), % TODO: useful? it will show indirect jumps more easily
-	trace_label(La),
+	trace_pc(La),
 	L = ~concretize(La), % TODO: make symbolic if E is symbolic -> warning when is symbolic?
+	track_branch(L),
 	A2 = ~update0(A,pc,L).
 
 pc(A) := ~concretize(~ev(pc,A)).
@@ -305,10 +303,7 @@ xrun(xc(Ctr,Conf,S), Timeout) := XC2 :-
 	; XC1 = ~xrun1(xc(Ctr,Conf,S)),
 	  ( stop(Conf) -> Timeout1 = Timeout
 	  ; Timeout1 is Timeout-1,
-	    inc_executed_ins,
-	    ( track_all_pc -> Conf = c(_M, A), add_program_counters(~pc(A))
-	    ; true
-	    )
+	    track_ins(Conf)
 	  ),
 	  XC2 = ~xrun(XC1,Timeout1)
 	).
@@ -319,7 +314,7 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	\+ _ = ~bp(xc(Ctr,Conf,S)),
 	!,
 	( stop(Conf) -> Conf2 = Conf % Note: case for stop/1 (so that spec continue decr)
-	; tracepc(Conf),
+	; trace_rawpc(Conf),
 	  Conf2 = ~run1(Conf)
 	),
 	( Conf = c(_M,A), spbarr = ~p(~pc(A)) ->
@@ -331,10 +326,10 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 % Se-Jump
 xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	enabled(S),
-	tracepc(Conf),
+	trace_rawpc(Conf),
 	t(L,N,GoodL) = ~bp(xc(Ctr,Conf,S)),
 	!,
-	trace(start(Ctr)), trace_label(L),
+	trace(start(Ctr)), trace_pc(L), track_branch(L),
 	Conf = c(M,A),
 	Conf2 = c(M,~update0(A,pc,L)), % TODO: it was mset/3 before
 	Ctr1 is Ctr + 1,
@@ -345,7 +340,7 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	enabled(S2),
 	L = GoodL,
 	!,
-	tracepc(Conf),
+	trace_rawpc(Conf),
 	trace(commit(Id)),
 	XC2 = xc(Ctr,Conf,S2).
 
@@ -355,15 +350,24 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
 	enabled(S2),
 	\+ L = GoodL,
 	!,
-	tracepc(Conf),
+	trace_rawpc(Conf),
 	trace(rollback(Id)),
 	ConfPrime = c(M,A0), A = ~update0(A0,pc,GoodL),
-	trace_label(GoodL),
+	trace_pc(GoodL), track_branch(GoodL),
 	XC2 = xc(Ctr,c(M,A),S2).
 
 
-trace_label(L) :-
-	trace(pc(L)),
+trace_pc(L) :- trace(pc(L)).
+
+% Keep statistic and counters for executed instructions
+track_ins(Conf) :-
+	inc_executed_ins,
+	( track_all_pc -> Conf = c(_M, A), add_program_counters(~pc(A))
+	; true
+	).
+
+% Special case for tracking branch instructions
+track_branch(L) :-
 	( track_all_pc -> true
 	; add_program_counters(L)
 	). % TODO: Outside of the path (there can be side-effects)
