@@ -252,11 +252,13 @@ trace_length(Xs, N) :-
 
 trace_length_([], N, N).
 trace_length_([X|Xs], N0, N) :-
-	( integer(X) ->
-	    N1 = N0
-	; X = sym(_X0) ->
-	    N1 = N0
-	; N1 is N0 + 1
+	( X = sym(_) ->
+	    N1 is N0 + 1
+	; X = load(_) ->
+	    N1 is N0 + 1
+	; X = store(_) ->
+	    N1 is N0 + 1
+	; N1 = N0
 	),
 	trace_length_(Xs, N1, N).
 
