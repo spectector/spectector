@@ -22,6 +22,7 @@
 :- use_module(library(lists), [select/3, append/3]).
 :- use_module(engine(stream_basic), [open/3, close/1]).
 :- use_module(library(pillow/json), [json_to_string/2]).
+:- use_module(library(aggregates), [findall/3]).
 %:- use_module(concolic(concolic_stats)).
 
 % Main structure, it's a list, which element has the statistics of the path
@@ -29,12 +30,12 @@
 :- data n_paths/1.
 :- export(init_paths/0).
 init_paths :- set_fact(paths([])), set_fact(n_paths(0)), restore_path_info.
-restore_path_info :- init_program_counters, init_unknown_instructions,
+restore_path_info :- init_pc_freq, init_unknown_instructions,
 	init_path_stats, init_unknown_labels, init_formulas_length,
 	init_indirect_jumps, restart_ins_executed.
 :- export(new_path/1).
 new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
-	paths(Paths), program_counters(PC),
+	paths(Paths), findall(PC=Val, pc_freq(PC, Val), PCFreqs),
 	n_paths(N0),
 	N1 is N0 + 1, set_fact(n_paths(N1)),
 	unknown_instructions(Unknown),
@@ -42,7 +43,7 @@ new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	formulas_length(TL),
 	indirect_jumps(IJ),
 	ins_executed(IE),
-	set_fact(paths([N0=json([pc=json(PC), unknown_ins=Unknown, unknown_labels=UL,
+	set_fact(paths([N0=json([pc=json(PCFreqs), unknown_ins=Unknown, unknown_labels=UL,
 	                        indirect_jumps=IJ, steps=IE,
 				formulas_length=TL|~append(Stats, ~path_stats)])|Paths])),
 	restore_path_info.
@@ -71,15 +72,14 @@ init_general_stats :- set_fact(general_stats([])).
 :- export(new_general_stat/1).
 new_general_stat(Stat) :- set_fact(general_stats([Stat|~general_stats])).
 
-:- data program_counters/1.
-init_program_counters :- set_fact(program_counters([])).
-:- export(add_program_counters/1).
-add_program_counters(PC) :-
-	program_counters(PVC),
-	( select(PC=N0, PVC, L),
-	  N1 is N0 + 1,
-	  set_fact(program_counters([PC=N1|L]))
-	; set_fact(program_counters([PC=1|PVC]))
+:- data pc_freq/2.
+init_pc_freq :- retractall_fact(pc_freq(_,_)).
+:- export(inc_pc/1).
+inc_pc(PC) :-
+	( retract_fact(pc_freq(PC, N0)) ->
+	    N1 is N0 + 1,
+	    assertz_fact(pc_freq(PC,N1))
+	; assertz_fact(pc_freq(PC, 1))
 	).
 
 :- data last_time/1. % To measure times

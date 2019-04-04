@@ -362,12 +362,12 @@ trace_pc(L) :- trace(pc(L)).
 % Keep statistic and counters for executed instructions
 track_ins(Conf) :-
 	inc_executed_ins,
-	( track_all_pc -> Conf = c(_M, A), add_program_counters(~pc(A))
+	( track_all_pc -> Conf = c(_M, A), inc_pc(~pc(A))
 	; true
 	).
 
 % Special case for tracking branch instructions
 track_branch(L) :-
 	( track_all_pc -> true
-	; add_program_counters(L)
+	; inc_pc(L)
 	). % TODO: Outside of the path (there can be side-effects)
