@@ -93,8 +93,8 @@ show_help :-
                    program in muAsm are not printed
   --bound-paths N  Bound in the number of paths explored
   --use-dump       Cache parsed file in a dump file
-  --parse-unknown  Parse unknown instructions
-  --skip-unknown   Treat unknown instructions as 'skip'
+  --parse-uns      Parse unsupported instructions
+  --skip-uns       Treat unsupported instructions as 'skip'
   --track-all-pc   The program counters are stored on the statistics
   --weak           Check the security condition under the weak
                    specification (values in memory must match)
@@ -165,8 +165,8 @@ opt('', '--stats', [StatsOut|As], As, [stats(StatsOut)]).
 opt('', '--no-show-def', As, As, [no_show_def]).
 opt('', '--track-all-pc', As, As, [track_all_pc]).
 opt('', '--use-dump', As, As, [use_dump]).
-opt('', '--parse-unknown', As, As, [parse_unknown]).
-opt('', '--skip-unknown', As, As, [skip_unknown]).
+opt('', '--parse-uns', As, As, [parse_unsupported]).
+opt('', '--skip-uns', As, As, [skip_unsupported]).
 
 parse_args([Arg|Args], Opts, File) :-
 	( opt(Arg, _, Args, Args0, OptsA) % short
@@ -218,7 +218,7 @@ run(PrgFile, Opts) :-
 	( member(track_all_pc, Options) -> set_track_all_pc
 	; true % (use default)
 	),
-	( member(weak, Options) -> set_weak
+	( member(weak, Options) -> set_weak_sni
 	; true
 	),
 	( member(use_dump, Options) -> UseDump = yes
@@ -227,10 +227,10 @@ run(PrgFile, Opts) :-
 	( member(stats(StatsOut), Options) -> set_stats, init_general_stats % TODO: Clean file contents
 	; true
 	),
-	( member(parse_unknown, Options) ->
-	  init_unknown_instructions,
-	  ( member(skip_unknown, Options) ->
-	    set_skip_unknown
+	( member(parse_unsupported, Options) ->
+	  init_unsupported_instructions,
+	  ( member(skip_unsupported, Options) ->
+	    set_skip_unsupported
 	  ; true
 	  )
 	; true
@@ -256,7 +256,7 @@ run(PrgFile, Opts) :-
 	; Ext = '.muasm' ->
 	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic)),
 	    Memory0 = [], Locs0 = [] % TODO: allow init mem and symbols?
-	; throw(unknown_extension(PrgFile))
+	; throw(unsupported_extension(PrgFile))
 	), % TODO: Introduce to Prg "[label(end), stop]"
 	statistics(walltime, [TParse, _]),
 	( member(noinit, Options) -> Memory=[], Locs=Locs0

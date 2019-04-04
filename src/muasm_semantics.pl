@@ -140,8 +140,8 @@ run_(stop_ins,c(M,A)) := c(M,A2) :-
 % Unknown
 run_(unsupported_ins(I),C0) := C :-
 	message(warning, ['Pass through an unsupported instruction! ', I]),
-	increment_unknown_instructions,
-	( skip_unknown ->
+	increment_unsupported_instructions,
+	( skip_unsupported ->
 	    C = ~run_(skip,C0)
 	; C = ~run_(stop_ins,C0)
 	).
@@ -170,7 +170,7 @@ run_(load(X,E),c(M,A)) := c(M,A2) :-
 	N = ~ev(E,A),
 	trace(load(N)),
 	V = ~element(M,N),
-	( weak -> trace(value(V))
+	( weak_sni -> trace(value(V))
 	; true
 	),
 	A1 = ~update(A,X,V),
@@ -181,7 +181,7 @@ run_(store(X,E),c(M,A)) := c(M2,A2) :-
 	Ev = ~ev(E,A),
 	M2 = ~update(M,Ev,Xv),
 	trace(store(Ev)),
-	( weak -> trace(value(Xv))
+	( weak_sni -> trace(value(Xv))
 	; true
 	),
 	A2 = ~update0(A,pc,~incpc(A)).

@@ -47,11 +47,11 @@ get_step_limit(N) :-
 :- export(set_term_stop_spec/0).
 set_term_stop_spec :- set_fact(term_stop_spec).
 
-:- data weak/0.
-:- export(weak/0).
+:- data weak_sni/0.
+:- export(weak_sni/0).
 
-:- export(set_weak/0).
-set_weak :- set_fact(weak).
+:- export(set_weak_sni/0).
+set_weak_sni :- set_fact(weak_sni).
 
 :- data stats/0.
 :- export(stats/0).
@@ -76,7 +76,7 @@ set_explored_paths_left(N) :- set_fact(explored_paths_left(N)).
 :- export(new_explored_path/0).
 new_explored_path :- explored_paths_left(N0), N is N0 - 1, set_fact(explored_paths_left(N)).
 
-:- data skip_unknown/0.
-:- export(skip_unknown/0).
-:- export(set_skip_unknown/0).
-set_skip_unknown :- set_fact(skip_unknown).
+:- data skip_unsupported/0.
+:- export(skip_unsupported/0).
+:- export(set_skip_unsupported/0).
+set_skip_unsupported :- set_fact(skip_unsupported).

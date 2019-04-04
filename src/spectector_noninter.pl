@@ -184,7 +184,7 @@ unif_obs([], []).
 unif_obs([X|Xs], [Y|Ys]) :-
 	( X = load(A) -> Y = load(A)
 	; X = store(A) -> Y = store(A)
-	; weak, X = value(A) -> Y = value(A) % For weak speculative non-interference, we consider also value(N) observations in the non-speculative trace
+	; weak_sni, X = value(A) -> Y = value(A) % For weak speculative non-interference, we consider also value(N) observations in the non-speculative trace
 	; true
 	),
 	unif_obs(Xs,Ys).

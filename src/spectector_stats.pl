@@ -1,4 +1,4 @@
-% Copyright 2019 The Spectector authors
+ % Copyright 2019 The Spectector authors
 %
 % Licensed under the Apache License, Version 2.0 (the "License");
 % you may not use this file except in compliance with the License.
@@ -30,47 +30,54 @@
 :- data n_paths/1.
 :- export(init_paths/0).
 init_paths :- set_fact(paths([])), set_fact(n_paths(0)), restore_path_info.
-restore_path_info :- init_pc_freq, init_unknown_instructions,
+restore_path_info :- init_pc_freq, init_unsupported_instructions,
 	init_path_stats, init_unknown_labels, init_formulas_length,
 	init_indirect_jumps, restart_ins_executed.
 :- export(new_path/1).
 new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	paths(Paths), findall(PC=Val, pc_freq(PC, Val), PCFreqs),
-	n_paths(N0),
-	N1 is N0 + 1, set_fact(n_paths(N1)),
-	unknown_instructions(Unknown),
-	unknown_labels(UL),
-	formulas_length(TL),
-	indirect_jumps(IJ),
+	n_paths(N0), N1 is N0 + 1, set_fact(n_paths(N1)),
+	unsupported_instructions(Unknown),
+	findall(L, list_stats(unknown_labels, L), UL),
+	findall(F, list_stats(formulas_length, F), TL),
+	findall(J, list_stats(indirect_jumps, J), IJ),
 	ins_executed(IE),
-	set_fact(paths([N0=json([pc=json(PCFreqs), unknown_ins=Unknown, unknown_labels=UL,
+	set_fact(paths([N0=json([pc=json(PCFreqs), unsupported_ins=Unknown, unknown_labels=UL,
 	                        indirect_jumps=IJ, steps=IE,
-				formulas_length=TL|~append(Stats, ~path_stats)])|Paths])),
+				formulas_length=TL|~append(Stats, ~findall(Stat, list_stats(path, Stat)))])|Paths])),
 	restore_path_info.
 
-:- data path_stats/1.
-init_path_stats :- set_fact(path_stats([])).
+
+:- data list_stats/2.
+init_list_stats :- retractall_fact(list_stats(_,_)).
+
+init_path_stats :- retractall_fact(list_stats(path, _)).
 :- export(add_path_stat/1).
-add_path_stat(Stat) :- set_fact(path_stats([Stat|~path_stats])).
+add_path_stat(Stat) :- assertz_fact(list_stats(path, Stat)).
 
-:- data formulas_length/1.
-:- export(formulas_length/1).
-:- export(init_formulas_length/0).
-init_formulas_length :- set_fact(formulas_length([])).
+init_formulas_length :- retractall_fact(list_stats(formulas_length, _)).
 :- export(add_formula_length/1).
-add_formula_length(L) :- set_fact(formulas_length([L|~formulas_length])).
+add_formula_length(L) :- assertz_fact(list_stats(formulas_length, L)).
 
-:- data analysis_stats/1.
 :- export(init_analysis_stats/0).
-init_analysis_stats :- set_fact(analysis_stats([])).
+init_analysis_stats :- retractall_fact(list_stats(analysis_stats, _)).
 :- export(new_analysis_stat/1).
-new_analysis_stat(Stat) :- set_fact(analysis_stats([Stat|~analysis_stats])).
+new_analysis_stat(Stat) :- assertz_fact(list_stats(analysis_stats, Stat)).
 
-:- data general_stats/1.
 :- export(init_general_stats/0).
-init_general_stats :- set_fact(general_stats([])).
+init_general_stats :- retractall_fact(list_stats(general_stats, _)).
 :- export(new_general_stat/1).
-new_general_stat(Stat) :- set_fact(general_stats([Stat|~general_stats])).
+new_general_stat(Stat) :- assertz_fact(list_stats(general_stats, Stat)).
+
+:- export(init_unknown_labels/0).
+init_unknown_labels :- retractall_fact(list_stats(unknown_labels, _)).
+:- export(new_unknown_label/1).
+new_unknown_label(L) :- assertz_fact(list_stats(unknown_labels, L)).
+
+:- export(init_indirect_jumps/0).
+init_indirect_jumps :- retractall_fact(list_stats(indirect_jumps, _)).
+:- export(new_indirect_jump/1).
+new_indirect_jump(Reg) :- assertz_fact(list_stats(indirect_jumps, Reg)).
 
 :- data pc_freq/2.
 init_pc_freq :- retractall_fact(pc_freq(_,_)).
@@ -87,18 +94,6 @@ inc_pc(PC) :-
 :- export(set_last_time/1).
 set_last_time(T) :- set_fact(last_time(T)).
 
-:- data unknown_labels/1.
-:- export(init_unknown_labels/0).
-init_unknown_labels :- set_fact(unknown_labels([])).
-:- export(new_unknown_label/1).
-new_unknown_label(Stat) :- set_fact(unknown_labels([Stat|~unknown_labels])).
-
-:- data indirect_jumps/1.
-:- export(init_indirect_jumps/0).
-init_indirect_jumps :- set_fact(indirect_jumps([])).
-:- export(new_indirect_jump/1).
-new_indirect_jump(Reg) :- set_fact(indirect_jumps([Reg|~indirect_jumps])).
-
 :- export(assert_analysis_stat/2). % Format and emit
 assert_analysis_stat(Entry, Output) :-
 	( Output = stdout -> % If stdout
@@ -109,21 +104,22 @@ assert_analysis_stat(Entry, Output) :-
 	),
 	n_paths(L),
 	Paths = [length=L|~paths],
-	Stats = ~append(~analysis_stats,~general_stats),
+	Stats = ~append(~findall(AS, list_stats(analysis_stats, AS)),
+	                ~findall(GS, list_stats(general_stats, GS))),
 	JSONcontents = [file=File,paths=json(Paths),entry=string(~atom_codes(Entry))|Stats],
 	json_to_string(json(JSONcontents), Str),
 	write_string(OutStream, Str),
 	write_string(OutStream, ","), nl,
 	close(OutStream).
 
-:- data unknown_instructions/1.
-:- export(unknown_instructions/1).
-:- export(init_unknown_instructions/0).
-init_unknown_instructions :- set_fact(unknown_instructions(0)).
-:- export(increment_unknown_instructions/0).
-increment_unknown_instructions :-
-	unknown_instructions(N0), N1 is N0 + 1,
-	set_fact(unknown_instructions(N1)).
+:- data unsupported_instructions/1.
+:- export(unsupported_instructions/1).
+:- export(init_unsupported_instructions/0).
+init_unsupported_instructions :- set_fact(unsupported_instructions(0)).
+:- export(increment_unsupported_instructions/0).
+increment_unsupported_instructions :-
+	unsupported_instructions(N0), N1 is N0 + 1,
+	set_fact(unsupported_instructions(N1)).
 
 :- data ins_executed/1.
 :- export(restart_ins_executed/0).
