@@ -28,7 +28,7 @@
 :- use_module(spectector_flags).
 :- use_module(spectector_stats).
 :- use_module(concolic(symbolic)).
-:- use_module(concolic(concolic), [pathgoal/2, sym_filter/2]).
+:- use_module(concolic(concolic), [pathgoal/2, sym_filter/2, conc_stats/2]).
 :- use_module(engine(runtime_control), [statistics/2]).
 
 :- export(noninter_check/2).
@@ -60,12 +60,12 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	    ( Safe = no(Mode) ->
 	      !, % stop on first unsafe path
 	      log('[program is unsafe]'),
-	      %length(Trace,Length),
 	      ( stats ->
 		trace_length(Trace, TL),
 		add_path_stat(trace_length=TL),
+		findall(json([len=ConcLen,time=ConcT]), (conc_stats(ConcLen, ConcT)), LConc),
+		add_path_stat(concolic_stats=LConc),
 		new_path([status=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC]),
-%			 trace_length=Length]),
 		new_analysis_stat(status=string(~atom_codes(Mode)))
 	      ; true
 	      )
@@ -74,7 +74,6 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 		trace_length(Trace, TL),
 		add_path_stat(trace_length=TL),
 		new_path([status=string("safe"),time_trace=TimeP, time_solve=TimeC])
-%			 trace_length=Length])
 	      ; true
 	      ),
 	      % For bounded analysis

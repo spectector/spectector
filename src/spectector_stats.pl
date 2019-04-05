@@ -29,22 +29,22 @@
 :- data paths/1.
 :- data n_paths/1.
 :- export(init_paths/0).
-init_paths :- set_fact(paths([])), set_fact(n_paths(0)), restore_path_info.
+init_paths :- retractall_fact(paths(_)), set_fact(n_paths(0)), restore_path_info.
 restore_path_info :- init_pc_freq, init_unsupported_instructions,
 	init_path_stats, init_unknown_labels, init_formulas_length,
 	init_indirect_jumps, restart_ins_executed.
 :- export(new_path/1).
 new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
-	paths(Paths), findall(PC=Val, pc_freq(PC, Val), PCFreqs),
+	findall(PC=Val, pc_freq(PC, Val), PCFreqs),
 	n_paths(N0), N1 is N0 + 1, set_fact(n_paths(N1)),
 	unsupported_instructions(Unknown),
 	findall(L, list_stats(unknown_labels, L), UL),
 	findall(F, list_stats(formulas_length, F), TL),
 	findall(J, list_stats(indirect_jumps, J), IJ),
 	ins_executed(IE),
-	set_fact(paths([N0=json([pc=json(PCFreqs), unsupported_ins=Unknown, unknown_labels=UL,
+	assertz_fact(paths(N0=json([pc=json(PCFreqs), unsupported_ins=Unknown, unknown_labels=UL,
 	                        indirect_jumps=IJ, steps=IE,
-				formulas_length=TL|~append(Stats, ~findall(Stat, list_stats(path, Stat)))])|Paths])),
+				formulas_length=TL|~append(Stats, ~findall(Stat, list_stats(path, Stat)))]))),
 	restore_path_info.
 
 
@@ -103,7 +103,7 @@ assert_analysis_stat(Entry, Output) :-
 	  File=string(~atom_codes(Output))
 	),
 	n_paths(L),
-	Paths = [length=L|~paths],
+	Paths = [length=L|~findall(PATHS, paths(PATHS))],
 	Stats = ~append(~findall(AS, list_stats(analysis_stats, AS)),
 	                ~findall(GS, list_stats(general_stats, GS))),
 	JSONcontents = [file=File,paths=json(Paths),entry=string(~atom_codes(Entry))|Stats],
