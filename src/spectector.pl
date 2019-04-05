@@ -31,6 +31,7 @@
 :- use_module(library(terms_io), [file_to_terms/2]).
 
 :- use_module(concolic(symbolic), [set_ext_solver/1, get_ext_solver/1]).
+:- use_module(concolic(concolic), [conc_stats/2]).
 :- use_module(muasm_translator(muasm_parser)).
 :- use_module(muasm_translator(x86_to_muasm)).
 
@@ -330,6 +331,7 @@ runtest2(none, _C0) :- !.
 runtest2(reach, C0) :- !,
 	( % (failure-driven loop)
 	  (C,Trace) = ~concrun(C0),
+	     %display(user_error, t), ( conc_stats(Len,T), display(user_error, [Len,T]), fail ; true ), nl(user_error),
 	     pretty_print([triple(C0,Trace,C)]),
 	     fail
 	; true
