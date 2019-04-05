@@ -73,6 +73,8 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	      ( stats ->
 		trace_length(Trace, TL),
 		add_path_stat(trace_length=TL),
+		findall(json([len=ConcLen,time=ConcT]), (conc_stats(ConcLen, ConcT)), LConc),
+		add_path_stat(concolic_stats=LConc),
 		new_path([status=string("safe"),time_trace=TimeP, time_solve=TimeC])
 	      ; true
 	      ),
