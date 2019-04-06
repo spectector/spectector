@@ -61,21 +61,21 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	      !, % stop on first unsafe path
 	      log('[program is unsafe]'),
 	      ( stats ->
-		trace_length(Trace, TL),
-		add_path_stat(trace_length=TL),
-		findall(json([len=ConcLen,time=ConcT]), (conc_stats(ConcLen, ConcT)), LConc),
-		add_path_stat(concolic_stats=LConc),
-		new_path([status=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC]),
-		new_analysis_stat(status=string(~atom_codes(Mode)))
+					trace_length(Trace, TL),
+					add_path_stat(trace_length=TL),
+					findall(json([len=ConcLen,time=ConcT]), (conc_stats(ConcLen, ConcT)), LConc),
+					add_path_stat(concolic_stats=LConc),
+					new_path([status=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC]),
+					new_analysis_stat(status=string(~atom_codes(Mode)))
 	      ; true
 	      )
 	    ; log('[path is safe]'),
 	      ( stats ->
-		trace_length(Trace, TL),
-		add_path_stat(trace_length=TL),
-		findall(json([len=ConcLen,time=ConcT]), (conc_stats(ConcLen, ConcT)), LConc),
-		add_path_stat(concolic_stats=LConc),
-		new_path([status=string("safe"),time_trace=TimeP, time_solve=TimeC])
+					trace_length(Trace, TL),
+					add_path_stat(trace_length=TL),
+					findall(json([len=ConcLen,time=ConcT]), (conc_stats(ConcLen, ConcT)), LConc),
+					add_path_stat(concolic_stats=LConc),
+					new_path([status=string("safe"),time_trace=TimeP, time_solve=TimeC])
 	      ; true
 	      ),
 	      % For bounded analysis
@@ -253,7 +253,7 @@ trace_length(Xs, N) :-
 
 trace_length_([], N, N).
 trace_length_([X|Xs], N0, N) :-
-	( X = sym(_) ->
+	( X = sym(cond(_)) ->
 	    N1 is N0 + 1
 	; X = load(_) ->
 	    N1 is N0 + 1
