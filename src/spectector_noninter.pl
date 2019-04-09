@@ -28,7 +28,7 @@
 :- use_module(spectector_flags).
 :- use_module(spectector_stats).
 :- use_module(concolic(symbolic)).
-:- use_module(concolic(concolic), [pathgoal/2, sym_filter/2, conc_stats/2]).
+:- use_module(concolic(concolic), [pathgoal/2, sym_filter/2, conc_stats/3]).
 :- use_module(engine(runtime_control), [statistics/2]).
 
 :- export(noninter_check/2).
@@ -37,15 +37,15 @@
 noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	log('[exploring paths]'),
 	( % (failure-driven loop)
-	    statistics(walltime, [TP0, _]),
-	    set_last_time(TP0),
-	    concrun(C0, (C, Trace)), % TODO: Get number of steps done
-	    statistics(walltime, [TP, _]),
-	    last_time(LTP), TimeP is TP - LTP, set_last_time(TP), % Trace time
+	  statistics(walltime, [TP0, _]),
+	  set_last_time(TP0),
+	  concrun(C0, (C, Trace)), % TODO: Get number of steps done
+	  statistics(walltime, [TP, _]),
+	  last_time(LTP), TimeP is TP - LTP, set_last_time(TP), % Trace time
 	    ( member(timeout, Trace) ->
-	      log('[timeout... exploring new path]'),
-	      message(warning, 'timeout -- ignoring large path (refine initial configuration or assume unsafe)'),
-	      fail
+	        log('[timeout... exploring new path]'),
+	        message(warning, 'timeout -- ignoring large path (refine initial configuration or assume unsafe)'),
+	        fail
 	    ; true
 	    ),
 	    log('[path found]'),
@@ -57,35 +57,18 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	    noninter_cex(Low, C0n, Trace, Safe), % TODO: Get the SMT length for the stats
 	    statistics(walltime, [TC, _]),
 	    last_time(LTC), TimeC is TC - LTC, set_last_time(TC), % SMT time
-	    ( Safe = no(Mode) ->
-	      !, % stop on first unsafe path
-	      log('[program is unsafe]'),
-	      ( stats ->
-					trace_length(Trace, TL),
-					add_path_stat(trace_length=TL),
-					findall(json([len=ConcLen,time=ConcT]), (conc_stats(ConcLen, ConcT)), LConc),
-					add_path_stat(concolic_stats=LConc),
-					new_path([status=string(~atom_codes(Mode)),time_trace=TimeP, time_solve=TimeC]),
-					new_analysis_stat(status=string(~atom_codes(Mode)))
-	      ; true
-	      )
+	    collect_stats(Safe, Trace, TimeP, TimeC),
+	    ( Safe = no(_) ->
+	        !, % stop on first unsafe path
+		log('[program is unsafe]')
 	    ; log('[path is safe]'),
-	      ( stats ->
-					trace_length(Trace, TL),
-					add_path_stat(trace_length=TL),
-					findall(json([len=ConcLen,time=ConcT]), (conc_stats(ConcLen, ConcT)), LConc),
-					add_path_stat(concolic_stats=LConc),
-					new_path([status=string("safe"),time_trace=TimeP, time_solve=TimeC])
-	      ; true
-	      ),
 	      % For bounded analysis
 	      ( explored_paths_left(N) -> % Fails if not initialized
-		( N > 1 -> new_explored_path, fail
-		; log('[maximum number of paths reached, program is assumed as safe]'),
-		  ( stats -> new_analysis_stat(status=string("safe_bound")) % TODO: Check if there are no paths to inspect left
-		  ; true
+		  ( N > 1 -> new_explored_path, fail
+		  ; log('[maximum number of paths reached, program is assumed as safe]'),
+		    !, % stop here
+		    collect_path_limit_stats
 		  )
-		)
 	      ; fail % go for next path
 	      )
 	    )
@@ -93,6 +76,21 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	  new_analysis_stat(status=string("safe"))
 	).
 
+collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
+	trace_length(Trace, TL),
+	add_path_stat(trace_length=TL),
+	findall(json([len=ConcLen,time=ConcT,status=ConcSt]), (conc_stats(ConcLen, ConcT, ConcSt)), LConc),
+	add_path_stat(concolic_stats=LConc),
+	( Safe = no(Mode) -> StatusStr = ~atom_codes(Mode)
+	; StatusStr = "safe"
+	),
+	new_path([status=string(StatusStr),time_trace=TimeP,time_solve=TimeC]),
+	( Safe = no(_) -> new_analysis_stat(status=string(StatusStr)) ; true ).
+collect_stats(_, _, _, _).
+
+collect_path_limit_stats :- stats, !,
+	new_analysis_stat(status=string("safe_bound")). % TODO: Check if there are no paths to inspect left
+collect_path_limit_stats.
 
 % Obtain a counter example for speculative non-interference.
 % NOTE: see the paper for details, this check works on a single trace
@@ -147,7 +145,7 @@ show_cex(C0a, _TraceA, C0b, _TraceB, X, Y) :-
 	  msg('Case B:'),
 	  (C0b,[Y]) % TODO: where?
 	  % (C0b,~append(TraceB, [Y]))
-		     ]).
+        ]).
 
 % Obtain a copy of the trace, unifying:
 %  - variables corresponding to low memory and registers
