@@ -30,7 +30,7 @@
 :- use_module(library(system), [file_exists/1]).
 :- use_module(library(terms_io), [file_to_terms/2]).
 
-:- use_module(concolic(symbolic), [set_ext_solver/1, get_ext_solver/1]).
+%:- use_module(concolic(symbolic), [set_ext_solver/1, get_ext_solver/1]).
 :- use_module(concolic(concolic), [conc_stats/2]).
 :- use_module(muasm_translator(muasm_parser)).
 :- use_module(muasm_translator(x86_to_muasm)).
@@ -64,9 +64,6 @@ show_help :-
 
   -h,--help        Show this help
   -s,--spec        Use speculative semantics (default)
-  --solver S       Use symbolic solver S
-      Solvers:
-        z3:        Z3 SMT (default)
   -n,--nonspec     Use non-speculative semantics
   -w,--window N    Size of speculative window
   --steps N        Execution step limit
@@ -105,6 +102,10 @@ syntax), or a .s file (gnu assembler).
 
 ").
 
+%  --solver S       Use symbolic solver S
+%      Solvers:
+%        z3:        Z3 SMT (default)
+
 short_help :-
 	write_string(
 "Unrecognized arguments, use '-h' for help\n"
@@ -114,7 +115,7 @@ opt('-h', '--help', As, As, [help]).
 opt('-n', '--nospec', As, As, [nospec]).
 opt('-s', '--spec', As, As, [spec]).
 opt('', '--noinit', As, As, [noinit]).
-opt('', '--solver', [Solver|As], As, [solver(Solver)]).
+%opt('', '--solver', [Solver|As], As, [solver(Solver)]).
 opt('', '--conf-file', [ConfFile|As], As, [conf_file(ConfFile)]).
 opt('-c', '--conf', [ConfAtm|As], As, [Opt]) :-
 	atom_codes(ConfAtm, ConfStr),
@@ -236,9 +237,9 @@ run(PrgFile, Opts) :-
 	  )
 	; true
 	),
-	( member(solver(Solver), Options) -> set_ext_solver(Solver)
-	; true % (use default)
-	),
+	% ( member(solver(Solver), Options) -> set_ext_solver(Solver)
+	% ; true % (use default)
+	% ),
 	( member(window(WSize), Options) -> set_window_size(WSize)
 	; true % (use default)
 	),
@@ -297,7 +298,7 @@ analyze([Entry|Entries],Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assign
 	; true
 	),
 	write('entry='),  write(Entry), write(', '), % speculative window size
-	write('solver='), write(~get_ext_solver), write(', '), % external solver
+	% write('solver='), write(~get_ext_solver), write(', '), % external solver
 	write('ana='), write(Ana), nl, % kind of analysis
 	( print_defs ->
 	    write('m='), write(M), nl, % initial memory
