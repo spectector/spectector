@@ -79,7 +79,7 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
 	trace_length(Trace, TL),
 	add_path_stat(trace_length=TL),
-	findall(json([len=ConcLen,time=ConcT,status=ConcSt]), (conc_stats(ConcLen, ConcT, ConcSt)), LConc),
+	findall(X, conc_stats_json(X), LConc),
 	add_path_stat(concolic_stats=LConc),
 	( Safe = no(Mode) -> StatusStr = ~atom_codes(Mode)
 	; StatusStr = "safe"
@@ -87,6 +87,10 @@ collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
 	new_path([status=string(StatusStr),time_trace=TimeP,time_solve=TimeC]),
 	( Safe = no(_) -> new_analysis_stat(status=string(StatusStr)) ; true ).
 collect_stats(_, _, _, _).
+
+conc_stats_json(json([len=ConcLen,time=ConcT,status=string(ConcStStr)])) :-
+	conc_stats(ConcLen, ConcT, ConcSt),
+	ConcStStr = ~atom_codes(ConcSt).
 
 collect_path_limit_stats :- stats, !,
 	new_analysis_stat(status=string("safe_bound")). % TODO: Check if there are no paths to inspect left
