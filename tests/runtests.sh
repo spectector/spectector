@@ -61,7 +61,8 @@ spectector=spectector # TODO: locate
 
 # SOLVER="--solver naive"
 # alltests > test_results.txt || exit 1
-SOLVER="--solver z3"
+# SOLVER="--solver z3"
+# SOLVER="--nextpath-timeout 100 --noninter-timeout 100"
 alltests > test_results.txt || exit 1
 diff test_results.txt test_results.txt-ok && echo ok
 

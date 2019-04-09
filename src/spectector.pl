@@ -66,7 +66,6 @@ show_help :-
   -s,--spec        Use speculative semantics (default)
   -n,--nonspec     Use non-speculative semantics
   -w,--window N    Size of speculative window
-  --steps N        Execution step limit
   -e,--entries L   List of entry points of the program
   --conf-file FILE Read the initial configuration from a file
   -c,--conf CONF   Initial configuration ('c(M,A)')
@@ -76,6 +75,11 @@ show_help :-
         reach:    reachability using concolic execution
         reach1:   like reach, but stop at first path
         noninter: non-interference check (default)
+  --steps N        Execution step limit
+  --nextpath-timeout T
+                   Timeout for computing next path
+  --noninter-timeout T
+                   Timeout for non-interference check
   --low LOW        Low registers or memory addresses for noninter
   --stats FILE     Show all the statistics on the file passed as
                    an output (in JSON format), to get the results
@@ -132,13 +136,9 @@ opt('', '--stack', [StackAtm|As], As, [Opt]) :-
 	),
 	Opt = stack(B,S,R).
 opt('-w', '--window', [NAtm|As], As, [Opt]) :-
-	atom_codes(NAtm, NStr),
-	number_codes(N, NStr),
-	Opt = window(N).
+	Opt = window(~atom_number(NAtm)).
 opt('', '--bound-paths', [NAtm|As], As, [Opt]) :-
-	atom_codes(NAtm, NStr),
-	number_codes(N, NStr),
-	Opt = bound_paths(N).
+	Opt = bound_paths(~atom_number(NAtm)).
 opt('-e', '--entries', [EntriesAtm|As], As, [entries(Entries)]) :-
 	atom_codes(EntriesAtm, EntriesStr),
 	read_from_string_atmvars(EntriesStr, Entries),
@@ -146,13 +146,13 @@ opt('-e', '--entries', [EntriesAtm|As], As, [entries(Entries)]) :-
 	; throw(wrong_list(EntriesAtm))
 	). % TODO: Setup for numeric entry points?
 opt('', '--steps', [NAtm|As], As, [Opt]) :-
-	atom_codes(NAtm, NStr),
-	number_codes(N, NStr),
-	Opt = step(N).
+	Opt = step(~atom_number(NAtm)).
+opt('', '--nextpath-timeout', [NAtm|As], As, [Opt]) :-
+	Opt = nextpath_timeout(~atom_number(NAtm)).
+opt('', '--noninter-timeout', [NAtm|As], As, [Opt]) :-
+	Opt = noninter_timeout(~atom_number(NAtm)).
 opt('', '--heap', [NAtm|As], As, [Opt]) :-
-	atom_codes(NAtm, NStr),
-	number_codes(N, NStr),
-	Opt = heap(N).
+	Opt = heap(~atom_number(NAtm)).
 opt('-a', '--analysis', [Ana|As], As, [ana(Ana)]).
 opt('', '--keep-sym', [IgnAtm|As], As, [keep_sym(Ign)]) :-
 	atom_codes(IgnAtm, IgnStr),
@@ -246,7 +246,13 @@ run(PrgFile, Opts) :-
 	( member(no_show_def, Options) -> true
 	; set_print_defs % (use default)
 	),
-	( member(step(SLimit), Options) -> set_step_limit(SLimit)
+	( member(step(SLimit), Options) -> set_limit(step, SLimit)
+	; true % (use default)
+	),
+	( member(nextpath_timeout(NextPathTO), Options) -> set_limit(nextpath_timeout, NextPathTO)
+	; true % (use default)
+	),
+	( member(noninter_timeout(NonInterTO), Options) -> set_limit(noninter_timeout, NonInterTO)
 	; true % (use default)
 	),
 	( member(noinit, Options) -> InitMem = no ; InitMem = yes ),

@@ -35,8 +35,8 @@ mrun(C0) := CT :-
 	CT = (C,Trace).
 
 % Run c/2 or xc/3 configurations
-mrun_(C0) := C :- C0 = c(_,_), !, C = ~run(C0, ~get_step_limit).
-mrun_(C0) := C :- C0 = xc(_,_,_), !, C = ~xrun(C0, ~get_step_limit).
+mrun_(C0) := C :- C0 = c(_,_), !, C = ~run(C0, ~get_limit(step)).
+mrun_(C0) := C :- C0 = xc(_,_,_), !, C = ~xrun(C0, ~get_limit(step)).
 
 :- export(new_c/3).
 new_c(M,A) := c(~map_to_sym(M), ~map_to_sym(A)).

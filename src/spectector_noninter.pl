@@ -28,13 +28,14 @@
 :- use_module(spectector_flags).
 :- use_module(spectector_stats).
 :- use_module(concolic(symbolic)).
-:- use_module(concolic(concolic), [pathgoal/2, sym_filter/2, conc_stats/3]).
+:- use_module(concolic(concolic), [pathgoal/2, sym_filter/2, conc_stats/3, set_nextpath_timeout/1]).
 :- use_module(engine(runtime_control), [statistics/2]).
 
 :- export(noninter_check/2).
 % `Low` is a list of register names or memory indices that are "low".
 % `C0` is the initial configuration.
 noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
+	set_nextpath_timeout(~get_limit(nextpath_timeout)),
 	log('[exploring paths]'),
 	( % (failure-driven loop)
 	  statistics(walltime, [TP0, _]),
@@ -61,7 +62,10 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	    ( Safe = no(_) ->
 	        !, % stop on first unsafe path
 		log('[program is unsafe]')
-	    ; log('[path is safe]'),
+	    ; ( Safe = unknown_noninter ->
+		  log('[unknown noninter]')
+	      ; log('[path is safe]') % TODO: change log?
+	      ),
 	      % For bounded analysis
 	      ( explored_paths_left(N) -> % Fails if not initialized
 		  ( N > 1 -> new_explored_path, fail
@@ -72,7 +76,7 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	      ; fail % go for next path
 	      )
 	    )
-	; log('[program is safe]'),
+	; log('[program is safe]'), % TODO: except for timeouts!
 	  new_analysis_stat(status=string("safe"))
 	).
 
@@ -82,6 +86,7 @@ collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
 	findall(X, conc_stats_json(X), LConc),
 	add_path_stat(concolic_stats=LConc),
 	( Safe = no(Mode) -> StatusStr = ~atom_codes(Mode)
+	; Safe = unknown_noninter -> StatusStr = "unknown_noninter" % TODO: change?
 	; StatusStr = "safe"
 	),
 	new_path([status=string(StatusStr),time_trace=TimeP,time_solve=TimeC]),
@@ -100,10 +105,17 @@ collect_path_limit_stats.
 % NOTE: see the paper for details, this check works on a single trace
 %   at a time.
 
+:- data noninter_status/2.
+
 noninter_cex(Low, C0, Trace, no(Mode)) :-
+	retractall_fact(noninter_status(_,_)),
 	( Mode = data ; Mode = control ),
 	noninter_cex_(Mode, Low, C0, Trace), !.
-noninter_cex(_, _, _, yes).
+noninter_cex(_, _, _, Safe) :-
+	( noninter_status(_, unknown) -> % unknown safety if some get_model/2 returned unknown
+	    Safe = unknown_noninter
+	; Safe = yes
+	).
 
 noninter_cex_(Mode, Low, C0a, TraceA0) :-
 	erase_and_dump_constrs(C0a, InGoalA),
@@ -136,7 +148,10 @@ noninter_cex_(Mode, Low, C0a, TraceA0) :-
 		      ~append(~pathgoal(~sym_filter(TraceB)),
 		        ~append(LowGoal,DiffGoal))))),
 	add_formula_length(~length(Goal)),
-	get_model(Goal),
+	set_solver_opt(timeout, ~get_limit(noninter_timeout)),
+	get_model(Goal, Status),
+	assertz_fact(noninter_status(Mode, Status)),
+	Status = sat, % (fail otherwise)
 	%
 	show_cex(C0a, TraceA, C0b, TraceB, X, Y).
 

@@ -29,54 +29,65 @@ get_window_size(N) :-
 	; N = 200 % default
 	).
 
-:- data step_limit/1.
+:- data limit_value/2.
 
-:- export(set_step_limit/1).
-set_step_limit(N) :-
-	set_fact(step_limit(N)).
+:- export(set_limit/2).
+set_limit(Name, Val) :-
+	retractall_fact(limit_value(Name, _)),
+	assertz_fact(limit_value(Name, Val)).
 
-:- export(get_step_limit/1).
-get_step_limit(N) :-
-	( step_limit(N0) -> N0 = N
-	; N = 100000 % default
+:- export(get_limit/2).
+get_limit(Name, Val) :-
+	( limit_value(Name, Val0) -> Val = Val0
+	; default_limit(Name, Val)
 	).
 
-:- data term_stop_spec/0.
+default_limit(step, 100000).
+default_limit(noninter_timeout, 0). % no timeout
+default_limit(nextpath_timeout, 0). % no timeout
+
 :- export(term_stop_spec/0).
+:- data term_stop_spec/0.
 
 :- export(set_term_stop_spec/0).
 set_term_stop_spec :- set_fact(term_stop_spec).
 
-:- data weak_sni/0.
 :- export(weak_sni/0).
+:- data weak_sni/0.
 
 :- export(set_weak_sni/0).
 set_weak_sni :- set_fact(weak_sni).
 
-:- data stats/0.
 :- export(stats/0).
+:- data stats/0.
 
 :- export(set_stats/0).
 set_stats :- set_fact(stats).
 
-:- data print_defs/0.
 :- export(print_defs/0).
+:- data print_defs/0.
+
 :- export(set_print_defs/0).
 set_print_defs :- set_fact(print_defs).
 
-:- data track_all_pc/0.
 :- export(track_all_pc/0).
+:- data track_all_pc/0.
+
 :- export(set_track_all_pc/0).
 set_track_all_pc :- set_fact(track_all_pc).
 
-:- data explored_paths_left/1.
 :- export(explored_paths_left/1).
+:- data explored_paths_left/1.
+
 :- export(set_explored_paths_left/1).
 set_explored_paths_left(N) :- set_fact(explored_paths_left(N)).
+
+% TODO: this counter should be in spectector_noninter state
 :- export(new_explored_path/0).
 new_explored_path :- explored_paths_left(N0), N is N0 - 1, set_fact(explored_paths_left(N)).
 
-:- data skip_unsupported/0.
 :- export(skip_unsupported/0).
+:- data skip_unsupported/0.
+
 :- export(set_skip_unsupported/0).
 set_skip_unsupported :- set_fact(skip_unsupported).
