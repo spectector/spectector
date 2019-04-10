@@ -76,6 +76,8 @@ show_help :-
         reach1:   like reach, but stop at first path
         noninter: non-interference check (default)
   --steps N        Execution step limit
+  --timeout T
+                   Timeout for the whole analysis
   --nextpath-timeout T
                    Timeout for computing next path
   --noninter-timeout T
@@ -147,6 +149,8 @@ opt('-e', '--entries', [EntriesAtm|As], As, [entries(Entries)]) :-
 	). % TODO: Setup for numeric entry points?
 opt('', '--steps', [NAtm|As], As, [Opt]) :-
 	Opt = step(~atom_number(NAtm)).
+opt('', '--timeout', [NAtm|As], As, [Opt]) :-
+	Opt = full_timeout(~atom_number(NAtm)).
 opt('', '--nextpath-timeout', [NAtm|As], As, [Opt]) :-
 	Opt = nextpath_timeout(~atom_number(NAtm)).
 opt('', '--noninter-timeout', [NAtm|As], As, [Opt]) :-
@@ -247,6 +251,9 @@ run(PrgFile, Opts) :-
 	; set_print_defs % (use default)
 	),
 	( member(step(SLimit), Options) -> set_limit(step, SLimit)
+	; true % (use default)
+	),
+	( member(full_timeout(FullTO), Options) -> set_limit(full_timeout, FullTO)
 	; true % (use default)
 	),
 	( member(nextpath_timeout(NextPathTO), Options) -> set_limit(nextpath_timeout, NextPathTO)

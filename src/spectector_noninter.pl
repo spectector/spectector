@@ -36,6 +36,8 @@
 % `C0` is the initial configuration.
 noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	set_nextpath_timeout(~get_limit(nextpath_timeout)),
+	get_maxtime(MaxTime),
+	%
 	log('[exploring paths]'),
 	( % (failure-driven loop)
 	  statistics(walltime, [TP0, _]),
@@ -66,8 +68,12 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	      ; log('[path is safe]') % TODO: change log?
 	      ),
 	      % For bounded analysis
-	      ( explored_paths_left(N) -> % Fails if not initialized
-		  ( N > 1 -> new_explored_path, fail
+	      ( check_maxtime_limit(MaxTime) ->
+		  log('[full timeout reached, program is assumed as safe]'),
+		  !, % stop here
+		  collect_path_limit_stats
+	      ; explored_paths_left(N) -> % Fails if not initialized
+		  ( N > 1 -> new_explored_path, fail % go for next path
 		  ; log('[maximum number of paths reached, program is assumed as safe]'),
 		    !, % stop here
 		    collect_path_limit_stats
@@ -78,6 +84,21 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	; log('[program is safe]'), % TODO: except for timeouts!
 	  new_analysis_stat(status=string("safe"))
 	).
+
+% Compute MaxTime for full timeout
+get_maxtime(MaxTime) :-
+	( FullTO = ~get_limit(full_timeout),
+	  FullTO > 0 ->
+	    statistics(walltime, [Time0, _]),
+	    MaxTime is Time0 + FullTO
+	; MaxTime = 0 % no timeout
+	).
+
+% Check if we have reached the MaxTime limit (full timeout)
+check_maxtime_limit(MaxTime) :-
+	MaxTime > 0, % (disabled otherwise)
+	statistics(walltime, [CurrTime, _]),
+	CurrTime > MaxTime.
 
 collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
 	trace_length(Trace, TL),

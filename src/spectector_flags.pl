@@ -43,6 +43,7 @@ get_limit(Name, Val) :-
 	).
 
 default_limit(step, 100000).
+default_limit(full_timeout, 0). % no timeout
 default_limit(noninter_timeout, 0). % no timeout
 default_limit(nextpath_timeout, 0). % no timeout
 
