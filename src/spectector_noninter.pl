@@ -43,10 +43,9 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	  concrun(C0, (C, Trace)), % TODO: Get number of steps done
 	  statistics(walltime, [TP, _]),
 	  last_time(LTP), TimeP is TP - LTP, set_last_time(TP), % Trace time
-	    ( member(timeout, Trace) ->
-	        log('[timeout... exploring new path]'),
-	        message(warning, 'timeout -- ignoring large path (refine initial configuration or assume unsafe)'),
-	        fail
+			( member(timeout, Trace) ->
+					log('[maximum number of steps reached]'),
+	        message(warning, 'maximum number of steps reached -- ignoring remaining path')
 	    ; true
 	    ),
 	    log('[path found]'),

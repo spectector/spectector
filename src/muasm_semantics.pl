@@ -109,8 +109,9 @@ ev(X, _) := _ :- throw(error(unknown_expr(X), ev/3)).
 :- doc(section, "Command evaluation (non-speculative)").
 
 %:- export(run/2).
-run(Conf, Timeout) := Conf :- Timeout =< 0, !,
-	trace(timeout).
+run(Conf, Timeout) := Conf1 :- Timeout =< 0, !,
+	Conf1= ~run_(stop_ins,Conf).
+
 run(Conf, Timeout) := Conf2 :-
 	( stop(Conf) -> Conf2 = Conf
 	; trace_rawpc(Conf),
