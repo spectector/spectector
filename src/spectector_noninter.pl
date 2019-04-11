@@ -56,7 +56,7 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	    C0 = xc(_,C0n,_),
 	    statistics(walltime, [TC0, _]),
 	    set_last_time(TC0),
-	    noninter_cex(Low, C0n, Trace, Safe), % TODO: Get the SMT length for the stats
+	    noninter_cex(Low, C0n, Trace, MaxTime, Safe), % TODO: Get the SMT length for the stats
 	    statistics(walltime, [TC, _]),
 	    last_time(LTC), TimeC is TC - LTC, set_last_time(TC), % SMT time
 	    collect_stats(Safe, Trace, TimeP, TimeC),
@@ -127,17 +127,17 @@ collect_path_limit_stats.
 
 :- data noninter_status/2.
 
-noninter_cex(Low, C0, Trace, no(Mode)) :-
+noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	retractall_fact(noninter_status(_,_)),
 	( Mode = data ; Mode = control ),
-	noninter_cex_(Mode, Low, C0, Trace), !.
-noninter_cex(_, _, _, Safe) :-
+	noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
+noninter_cex(_, _, _, _, Safe) :-
 	( noninter_status(_, unknown) -> % unknown safety if some get_model/2 returned unknown
 	    Safe = unknown_noninter
 	; Safe = yes
 	).
 
-noninter_cex_(Mode, Low, C0a, TraceA0) :-
+noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
 	erase_and_dump_constrs(C0a, InGoalA),
 	erase_model([InGoalA,TraceA0]), % remove all other concrete assignments
 	( Mode = data ->
@@ -152,6 +152,7 @@ noninter_cex_(Mode, Low, C0a, TraceA0) :-
 	    DiffGoal = [~or_cond(OrCond) = 1]
 	; Mode = control ->
 	    % Control-based leak
+	    % (nondet)
 	    select_spec_cond(TraceA0, TraceA, CondA), % select cond/1 in speculative fragments
 	    rename_symspec(Low,
 	                   C0a, InGoalA, TraceA, CondA,
@@ -160,6 +161,13 @@ noninter_cex_(Mode, Low, C0a, TraceA0) :-
 	    NegCondB = ~negcond(CondB), DiffGoal = [CondA,NegCondB],
 	    X = sym(cond(CondA)), Y = sym(cond(NegCondB))
 	; throw(unknown_mode(Mode))
+	),
+	% Check MaxTime for possible timeouts
+	( check_maxtime_limit(MaxTime) ->
+	    !, % (stop search, remember status, and fail)
+	    assertz_fact(noninter_status(Mode, unknown)),
+	    fail
+	; true
 	),
 	% Get input model for two different heaps
 	Goal = ~append(InGoalA,
