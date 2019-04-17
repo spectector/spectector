@@ -130,7 +130,7 @@ collect_path_limit_stats.
 noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	retractall_fact(noninter_status(_,_)),
 	( Mode = data ; Mode = control ),
-	noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
+	\+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
 noninter_cex(_, _, _, _, Safe) :-
 	( noninter_status(_, unknown) -> % unknown safety if some get_model/2 returned unknown
 	    Safe = unknown_noninter
