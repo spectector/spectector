@@ -25,6 +25,11 @@
 :- use_module(library(aggregates), [findall/3]).
 %:- use_module(concolic(concolic_stats)).
 
+:- data paths_json/1.
+
+:- export(set_paths_json/1).
+set_paths_json(JSON) :- set_fact(paths_json(JSON)).
+
 % Main structure, it's a list, which element has the statistics of the path
 :- data paths/1.
 :- data n_paths/1.
@@ -47,7 +52,7 @@ new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 				formulas_length=TL|~append(Stats, ~findall(Stat, list_stats(path, Stat)))]),
 	assertz_fact(paths(N0=PATH)),
 	json_to_string(PATH, StringJSON),
-	open('/tmp/stats_paths.json', append, Stream),
+	open(~paths_json, append, Stream),
 	write_string(Stream, StringJSON),
 	restore_path_info.
 

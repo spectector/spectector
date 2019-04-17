@@ -29,6 +29,7 @@
 :- use_module(library(read)).
 :- use_module(library(system), [file_exists/1]).
 :- use_module(library(terms_io), [file_to_terms/2]).
+:- use_module(engine(basic_props), [num/1]).
 
 %:- use_module(concolic(symbolic), [set_ext_solver/1, get_ext_solver/1]).
 %:- use_module(concolic(concolic), [conc_stats/3]).
@@ -231,7 +232,9 @@ run(PrgFile, Opts) :-
 	; UseDump = no
 	),
 	( member(stats(StatsOut), Options) -> set_stats, init_general_stats, % TODO: Clean file contents
-	  open('/tmp/stats_paths.json', write, _) % Clean file
+	  atom_concat(StatsOut, '_paths', PathsJSON),
+	  set_paths_json(PathsJSON),
+	  open(PathsJSON, write, _) % Clean file
 	; true
 	),
 	( member(parse_unsupported, Options) ->
@@ -327,7 +330,11 @@ analyze([Entry|Entries],Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assign
 	Time is T - T0,
 	( stats ->
 	  new_analysis_stat(total_time=Time),
-	  assert_analysis_stat(Entry, StatsOut)
+	  ( num(Entry) ->
+	    atom_codes(AtomEntry, ~number_codes(Entry))
+	  ; AtomEntry = Entry
+	  ),
+	  assert_analysis_stat(AtomEntry, StatsOut)
 	; true
 	),
 	analyze(Entries,Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut,c(Memory, Assignments),PrgFile,PrgNameExt,SpecOpt,Ana).
