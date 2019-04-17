@@ -234,7 +234,9 @@ run(PrgFile, Opts) :-
 	( member(stats(StatsOut), Options) -> set_stats, init_general_stats, % TODO: Clean file contents
 	  atom_concat(StatsOut, '_paths', PathsJSON),
 	  set_paths_json(PathsJSON),
-	  open(PathsJSON, write, _) % Clean file
+	  open(PathsJSON, write, TempStream), % Clean file
+	  write_string(TempStream, "["),
+	  close(TempStream)
 	; true
 	),
 	( member(parse_unsupported, Options) ->

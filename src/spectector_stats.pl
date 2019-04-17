@@ -18,6 +18,7 @@
 %:- doc(title, "Spectector statistics").
 
 :- use_module(library(stream_utils), [write_string/2]).
+:- use_module(library(write), [write/2]).
 :- use_module(library(streams), [nl/0]).
 :- use_module(library(lists), [select/3, append/3]).
 :- use_module(engine(stream_basic), [open/3, close/1]).
@@ -53,7 +54,12 @@ new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	assertz_fact(paths(N0=PATH)),
 	json_to_string(PATH, StringJSON),
 	open(~paths_json, append, Stream),
+	write_string(Stream, "\"path"),
+	write(Stream, N0),
+	write_string(Stream, "\"="),
 	write_string(Stream, StringJSON),
+	write_string(Stream, ","),
+	close(Stream),
 	restore_path_info.
 
 
