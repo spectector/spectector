@@ -77,11 +77,11 @@ show_help :-
         noninter: non-interference check (default)
   --steps N        Execution step limit
   --timeout T
-                   Timeout for the whole analysis
+                   Timeout for the whole analysis (in ms)
   --nextpath-timeout T
-                   Timeout for computing next path
+                   Timeout for computing next path (in ms??)
   --noninter-timeout T
-                   Timeout for non-interference check
+                   Timeout for non-interference check (in ms??)
   --low LOW        Low registers or memory addresses for noninter
   --stats FILE     Show all the statistics on the file passed as
                    an output (in JSON format), to get the results
@@ -230,7 +230,8 @@ run(PrgFile, Opts) :-
 	( member(use_dump, Options) -> UseDump = yes
 	; UseDump = no
 	),
-	( member(stats(StatsOut), Options) -> set_stats, init_general_stats % TODO: Clean file contents
+	( member(stats(StatsOut), Options) -> set_stats, init_general_stats, % TODO: Clean file contents
+	  open('/tmp/stats_paths.json', write, _) % Clean file
 	; true
 	),
 	( member(parse_unsupported, Options) ->

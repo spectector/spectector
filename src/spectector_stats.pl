@@ -42,9 +42,13 @@ new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	findall(F, list_stats(formulas_length, F), TL),
 	findall(J, list_stats(indirect_jumps, J), IJ),
 	ins_executed(IE),
-	assertz_fact(paths(N0=json([pc=json(PCFreqs), unsupported_ins=Unknown, unknown_labels=UL,
+	PATH = json([pc=json(PCFreqs), unsupported_ins=Unknown, unknown_labels=UL,
 	                        indirect_jumps=IJ, steps=IE,
-				formulas_length=TL|~append(Stats, ~findall(Stat, list_stats(path, Stat)))]))),
+				formulas_length=TL|~append(Stats, ~findall(Stat, list_stats(path, Stat)))]),
+	assertz_fact(paths(N0=PATH)),
+	json_to_string(PATH, StringJSON),
+	open('/tmp/stats_paths.json', append, Stream),
+	write_string(Stream, StringJSON),
 	restore_path_info.
 
 
