@@ -65,6 +65,8 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 		log('[program is unsafe]')
 	    ; ( Safe = unknown_noninter ->
 		  log('[unknown noninter]')
+	      ; Safe = global_timeout ->
+		  log('[global timeout reached]')
 	      ; log('[path is safe]') % TODO: change log?
 	      ),
 	      % For bounded analysis
@@ -107,6 +109,7 @@ collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
 	add_path_stat(concolic_stats=LConc),
 	( Safe = no(Mode) -> StatusStr = ~atom_codes(Mode)
 	; Safe = unknown_noninter -> StatusStr = "unknown_noninter" % TODO: change?
+	; Safe = global_timeout -> StatusStr = "global_timeout" % TODO: change?
 	; StatusStr = "safe"
 	),
 	new_path([status=string(StatusStr),time_trace=TimeP,time_solve=TimeC]),
@@ -134,6 +137,8 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 noninter_cex(_, _, _, _, Safe) :-
 	( noninter_status(_, unknown) -> % unknown safety if some get_model/2 returned unknown
 	    Safe = unknown_noninter
+	; noninter_status(_, global_timeout) ->
+	    Safe = global_timeout
 	; Safe = yes
 	).
 
@@ -165,7 +170,7 @@ noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
 	% Check MaxTime for possible timeouts
 	( check_maxtime_limit(MaxTime) ->
 	    !, % (stop search, remember status, and fail)
-	    assertz_fact(noninter_status(Mode, unknown)),
+	    assertz_fact(noninter_status(Mode, global_timeout)),
 	    fail
 	; true
 	),
