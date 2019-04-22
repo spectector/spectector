@@ -60,14 +60,13 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	    statistics(walltime, [TC, _]),
 	    last_time(LTC), TimeC is TC - LTC, set_last_time(TC), % SMT time
 	    collect_stats(Safe, Trace, TimeP, TimeC),
-	    ( Safe = no(_) ->
-	        !, % stop on first unsafe path
-		log('[program is unsafe]')
-	    ; ( Safe = unknown_noninter ->
+	    (
+	     ( Safe = unknown_noninter ->
 		  log('[unknown noninter]')
 	      ; Safe = global_timeout ->
 		  log('[global timeout reached]')
 	      ; log('[path is safe]') % TODO: change log?
+	  ; Safe = no(_) -> log('[path is unsafe]') ; log('[path is safe]') % TODO: change log?
 	      ),
 	      % For bounded analysis
 	      ( check_maxtime_limit(MaxTime) ->
