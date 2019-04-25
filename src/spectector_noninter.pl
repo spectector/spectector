@@ -34,6 +34,7 @@
 :- data time_control/1.
 :- data time_data/1.
 :- data time_trace/1.
+:- data termination/1.
 
 :- export(noninter_check/2).
 % `Low` is a list of register names or memory indices that are "low".
@@ -69,7 +70,8 @@ noninter_check(Low, C0) :-
 	    ; Safe = global_timeout ->
 	      log('[global timeout reached]')
 	    ; log('[path is safe]') % TODO: change log?
-	    ; Safe = no(_) -> log('[path is unsafe]') ; log('[path is safe]') % TODO: change log?
+	    ; Safe = no(Status) -> log('[path is unsafe]'), set_fact(termination(Status))
+	    ; log('[path is safe]')  % TODO: change log?
 	    ),
 	    % For bounded analysis
 	    ( check_maxtime_limit(MaxTime) ->
@@ -85,8 +87,9 @@ noninter_check(Low, C0) :-
 	    ; fail % go for next path
 	    )
 	  )
-	; log('[program is safe]'), % TODO: except for timeouts!
-	  new_analysis_stat(status=string("safe"))
+	; ( termination(T) -> true ; T = safe ),
+	  log(~atom_concat(~atom_concat('[program is ', T), ']')),
+	  new_analysis_stat(status=string(~atom_codes(T)))
 	).
 
 % Compute MaxTime for full timeout
