@@ -33,6 +33,7 @@
 
 :- data time_control/1.
 :- data time_data/1.
+:- data time_trace/1.
 
 :- export(noninter_check/2).
 % `Low` is a list of register names or memory indices that are "low".
@@ -43,43 +44,47 @@ noninter_check(Low, C0) :-
 	%
 	log('[exploring paths]'),
 	( % (failure-driven loop)
-	  set_fact(time_control(0)), set_fact(time_data(0)),
+	  set_fact(time_control(0)), set_fact(time_data(0)), set_fact(time_trace(0)),
 	  set_last_time(_),
-	  concrun(C0, (C, Trace)),
-	  last_time(LTP), set_last_time(TP), TimeP is TP - LTP, % Trace time
-			( member(timeout, Trace) ->
-					log('[maximum number of steps reached]'),
-	        message(warning, 'maximum number of steps reached -- ignoring remaining path')
-	    ; true
+	  ( concrun(C0, (C, Trace))
+	  ; all_conc_stats_unknown, % In the case there are paths and concrun fails, collect stats % TODO: the paths may not be unknown?
+	    collect_stats(conc_error, []), fail
+	  ),
+	  last_time(LTP), set_last_time(TP), TimeTrace is TP - LTP, % Trace time
+	  set_fact(time_trace(TimeTrace)),
+	  ( member(timeout, Trace) ->
+	    log('[maximum number of steps reached]'),
+	    message(warning, 'maximum number of steps reached -- ignoring remaining path')
+	  ; true
+	  ),
+	  log('[path found]'),
+	  pretty_print([triple(C0,Trace,C)]),
+	  log('[checking speculative non-interference]'),
+	  C0 = xc(_,C0n,_),
+	  noninter_cex(Low, C0n, Trace, MaxTime, Safe),
+	  collect_stats(Safe, Trace),
+	  (
+	    ( Safe = unknown_noninter ->
+	      log('[unknown noninter]')
+	    ; Safe = global_timeout ->
+	      log('[global timeout reached]')
+	    ; log('[path is safe]') % TODO: change log?
+	    ; Safe = no(_) -> log('[path is unsafe]') ; log('[path is safe]') % TODO: change log?
 	    ),
-	    log('[path found]'),
-	    pretty_print([triple(C0,Trace,C)]),
-	    log('[checking speculative non-interference]'),
-	    C0 = xc(_,C0n,_),
-	    noninter_cex(Low, C0n, Trace, MaxTime, Safe),
-	    collect_stats(Safe, Trace, TimeP),
-	    (
-	     ( Safe = unknown_noninter ->
-		  log('[unknown noninter]')
-	      ; Safe = global_timeout ->
-		  log('[global timeout reached]')
-	      ; log('[path is safe]') % TODO: change log?
-	  ; Safe = no(_) -> log('[path is unsafe]') ; log('[path is safe]') % TODO: change log?
-	      ),
-	      % For bounded analysis
-	      ( check_maxtime_limit(MaxTime) ->
-		  log('[full timeout reached, program is assumed as safe]'),
-		  !, % stop here
-		  collect_path_limit_stats
-	      ; explored_paths_left(N) -> % Fails if not initialized
-		  ( N > 1 -> new_explored_path, fail % go for next path
-		  ; log('[maximum number of paths reached, program is assumed as safe]'),
-		    !, % stop here
-		    collect_path_limit_stats
-		  )
-	      ; fail % go for next path
+	    % For bounded analysis
+	    ( check_maxtime_limit(MaxTime) ->
+	      log('[full timeout reached, program is assumed as safe]'),
+	      !, % stop here
+	      collect_path_limit_stats
+	    ; explored_paths_left(N) -> % Fails if not initialized
+	      ( N > 1 -> new_explored_path, fail % go for next path
+	      ; log('[maximum number of paths reached, program is assumed as safe]'),
+		!, % stop here
+		collect_path_limit_stats
 	      )
+	    ; fail % go for next path
 	    )
+	  )
 	; log('[program is safe]'), % TODO: except for timeouts!
 	  new_analysis_stat(status=string("safe"))
 	).
@@ -99,7 +104,7 @@ check_maxtime_limit(MaxTime) :-
 	statistics(walltime, [CurrTime, _]),
 	CurrTime > MaxTime.
 
-collect_stats(Safe, Trace, TimeP) :- stats, !,
+collect_stats(Safe, Trace) :- stats, !,
 	trace_length(Trace, TL),
 	add_path_stat(trace_length=TL),
 	findall(X, conc_stats_json(X), LConc),
@@ -107,12 +112,13 @@ collect_stats(Safe, Trace, TimeP) :- stats, !,
 	( Safe = no(Mode) -> StatusStr = ~atom_codes(Mode)
 	; Safe = unknown_noninter -> StatusStr = "unknown_noninter" % TODO: change?
 	; Safe = global_timeout -> StatusStr = "global_timeout" % TODO: change?
+	; Safe = conc_error -> StatusStr = "conc_error" % TODO: change?
 	; StatusStr = "safe"
 	),
-	time_data(TimeData), time_control(TimeControl),
-	new_path([status=string(StatusStr),time_trace=TimeP,time_data=TimeData,time_control=TimeControl]),
+	time_data(TimeData), time_control(TimeControl), time_trace(TimeTrace),
+	new_path([status=string(StatusStr),time_trace=TimeTrace,time_data=TimeData,time_control=TimeControl]),
 	( Safe = no(_) -> new_analysis_stat(status=string(StatusStr)) ; true ).
-collect_stats(_, _, _).
+collect_stats(_, _).
 
 conc_stats_json(json([len=ConcLen,time=ConcT,status=string(ConcStStr)])) :-
 	conc_stats(ConcLen, ConcT, ConcSt),
@@ -328,6 +334,13 @@ trace_length_([X|Xs], N0, N) :-
 	),
 	trace_length_(Xs, N1, N).
 
+all_conc_stats_unknown :-
+	findall(St, conc_stats(_,_,St), L),
+	L \= [],
+	all_conc_stats_unknown_(L).
+
+all_conc_stats_unknown_([unknown|L]) :- all_conc_stats_unknown_(L).
+all_conc_stats_unknown_([]).
 
 % ---------------------------------------------------------------------------
 % (log messages)
