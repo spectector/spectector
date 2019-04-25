@@ -100,6 +100,24 @@ check_maxtime_limit(MaxTime) :-
 	statistics(walltime, [CurrTime, _]),
 	CurrTime > MaxTime.
 
+% Compute MaxTime for noninter timeout
+get_noninter_maxtime(MaxTime) :-
+	( NoninterTO = ~get_limit(noninter_timeout),
+	  NoninterTO > 0 ->
+	    statistics(walltime, [Time0, _]),
+	    MaxTime is Time0 + NoninterTO
+	; MaxTime = 0 % no timeout
+	).
+
+% Remaining time for noninter timeout (0 for disabled and -1 if timeout reached)
+rem_noninter_time(MaxTime, TO) :- MaxTime > 0, !, % (disabled otherwise)
+	statistics(walltime, [CurrTime, _]),
+	TO1 is MaxTime - CurrTime,
+	( TO1 < 0 -> TO = -1
+	; TO = TO1
+	).
+rem_noninter_time(_, 0). % timeout disabled
+
 collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
 	trace_length(Trace, TL),
 	add_path_stat(trace_length=TL),
@@ -140,6 +158,7 @@ noninter_cex(_, _, _, _, Safe) :-
 noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
 	erase_and_dump_constrs(C0a, InGoalA),
 	erase_model([InGoalA,TraceA0]), % remove all other concrete assignments
+	get_noninter_maxtime(NoninterMaxTime),
 	( Mode = data ->
 	    % Data-based leak
 	    TraceA = TraceA0,
@@ -162,8 +181,10 @@ noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
 	    X = sym(cond(CondA)), Y = sym(cond(NegCondB))
 	; throw(unknown_mode(Mode))
 	),
-	% Check MaxTime for possible timeouts
-	( check_maxtime_limit(MaxTime) ->
+	rem_noninter_time(NoninterMaxTime, SolverTO),
+	( ( SolverTO = -1 % timeout w.r.t. NoninterMaxTime
+          ; check_maxtime_limit(MaxTime) % timeout w.r.t. MaxTime
+	  ) ->
 	    !, % (stop search, remember status, and fail)
 	    assertz_fact(noninter_status(Mode, unknown)),
 	    fail
@@ -176,7 +197,7 @@ noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
 		      ~append(~pathgoal(~sym_filter(TraceB)),
 		        ~append(LowGoal,DiffGoal))))),
 	add_formula_length(~length(Goal)),
-	set_solver_opt(timeout, ~get_limit(noninter_timeout)),
+	set_solver_opt(timeout, SolverTO),
 	get_model(Goal, Status),
 	assertz_fact(noninter_status(Mode, Status)),
 	Status = sat, % (fail otherwise)
