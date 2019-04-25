@@ -24,6 +24,7 @@
 :- use_module(engine(stream_basic), [open/3, close/1]).
 :- use_module(library(pillow/json), [json_to_string/2]).
 :- use_module(library(aggregates), [findall/3]).
+:- use_module(engine(runtime_control), [statistics/2]).
 %:- use_module(concolic(concolic_stats)).
 
 :- data paths_json/1.
@@ -107,7 +108,7 @@ inc_pc(PC) :-
 :- data last_time/1. % To measure times
 :- export(last_time/1).
 :- export(set_last_time/1).
-set_last_time(T) :- set_fact(last_time(T)).
+set_last_time(T) :- statistics(walltime, [T, _]), set_fact(last_time(T)).
 
 :- export(assert_analysis_stat/2). % Format and emit
 assert_analysis_stat(Entry, Output) :-

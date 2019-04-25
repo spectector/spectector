@@ -31,20 +31,22 @@
 :- use_module(concolic(concolic), [pathgoal/2, sym_filter/2, conc_stats/3, set_nextpath_timeout/1]).
 :- use_module(engine(runtime_control), [statistics/2]).
 
+:- data time_control/1.
+:- data time_data/1.
+
 :- export(noninter_check/2).
 % `Low` is a list of register names or memory indices that are "low".
 % `C0` is the initial configuration.
-noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
+noninter_check(Low, C0) :-
 	set_nextpath_timeout(~get_limit(nextpath_timeout)),
 	get_maxtime(MaxTime),
 	%
 	log('[exploring paths]'),
 	( % (failure-driven loop)
-	  statistics(walltime, [TP0, _]),
-	  set_last_time(TP0),
-	  concrun(C0, (C, Trace)), % TODO: Get number of steps done
-	  statistics(walltime, [TP, _]),
-	  last_time(LTP), TimeP is TP - LTP, set_last_time(TP), % Trace time
+	  set_fact(time_control(0)), set_fact(time_data(0)),
+	  set_last_time(_),
+	  concrun(C0, (C, Trace)),
+	  last_time(LTP), set_last_time(TP), TimeP is TP - LTP, % Trace time
 			( member(timeout, Trace) ->
 					log('[maximum number of steps reached]'),
 	        message(warning, 'maximum number of steps reached -- ignoring remaining path')
@@ -54,12 +56,8 @@ noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
 	    pretty_print([triple(C0,Trace,C)]),
 	    log('[checking speculative non-interference]'),
 	    C0 = xc(_,C0n,_),
-	    statistics(walltime, [TC0, _]),
-	    set_last_time(TC0),
-	    noninter_cex(Low, C0n, Trace, MaxTime, Safe), % TODO: Get the SMT length for the stats
-	    statistics(walltime, [TC, _]),
-	    last_time(LTC), TimeC is TC - LTC, set_last_time(TC), % SMT time
-	    collect_stats(Safe, Trace, TimeP, TimeC),
+	    noninter_cex(Low, C0n, Trace, MaxTime, Safe),
+	    collect_stats(Safe, Trace, TimeP),
 	    (
 	     ( Safe = unknown_noninter ->
 		  log('[unknown noninter]')
@@ -101,7 +99,7 @@ check_maxtime_limit(MaxTime) :-
 	statistics(walltime, [CurrTime, _]),
 	CurrTime > MaxTime.
 
-collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
+collect_stats(Safe, Trace, TimeP) :- stats, !,
 	trace_length(Trace, TL),
 	add_path_stat(trace_length=TL),
 	findall(X, conc_stats_json(X), LConc),
@@ -111,9 +109,10 @@ collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
 	; Safe = global_timeout -> StatusStr = "global_timeout" % TODO: change?
 	; StatusStr = "safe"
 	),
-	new_path([status=string(StatusStr),time_trace=TimeP,time_solve=TimeC]),
+	time_data(TimeData), time_control(TimeControl),
+	new_path([status=string(StatusStr),time_trace=TimeP,time_data=TimeData,time_control=TimeControl]),
 	( Safe = no(_) -> new_analysis_stat(status=string(StatusStr)) ; true ).
-collect_stats(_, _, _, _).
+collect_stats(_, _, _).
 
 conc_stats_json(json([len=ConcLen,time=ConcT,status=string(ConcStStr)])) :-
 	conc_stats(ConcLen, ConcT, ConcSt),
@@ -132,7 +131,24 @@ collect_path_limit_stats.
 noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	retractall_fact(noninter_status(_,_)),
 	( Mode = data ; Mode = control ),
-	\+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
+	% \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
+	set_last_time(_),
+	( \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime) ->
+	  last_time(Time0), set_last_time(Time),
+	  TotalTime is Time - Time0,
+	  ( Mode = data ->
+	      set_fact(time_data(TotalTime)),
+	      set_fact(time_control(0))
+	  ; Mode = control -> set_fact(time_control(TotalTime))
+	  )
+	; last_time(Time0), set_last_time(Time),
+	  TotalTime is Time - Time0,
+	  ( Mode = data -> set_fact(time_data(TotalTime))
+	  ; Mode = control -> set_fact(time_control(TotalTime))
+	  ),
+	  fail
+	),
+	!.
 noninter_cex(_, _, _, _, Safe) :-
 	( noninter_status(_, unknown) -> % unknown safety if some get_model/2 returned unknown
 	    Safe = unknown_noninter

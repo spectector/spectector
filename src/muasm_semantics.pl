@@ -54,7 +54,7 @@ concrun(C0) := CT :-
 	; C0 = xc(_,C1,_) -> InConf = C1
 	; fail
 	),
-	conc_call(mrun_(C0,C), InConf, Trace),
+	conc_call(mrun_(C0,C), InConf, Trace), % TODO: Produce stats if the call fails
 	CT = (C,Trace).
 
 % ---------------------------------------------------------------------------
