@@ -112,8 +112,8 @@ get_noninter_maxtime(MaxTime) :-
 % Remaining time for noninter timeout (0 for disabled and -1 if timeout reached)
 rem_noninter_time(MaxTime, TO) :- MaxTime > 0, !, % (disabled otherwise)
 	statistics(walltime, [CurrTime, _]),
-	TO1 is MaxTime - CurrTime,
-	( TO1 < 0 -> TO = -1
+	TO1 is ceiling(MaxTime - CurrTime), % (keep it as integer)
+	( TO1 =< 0 -> TO = -1
 	; TO = TO1
 	).
 rem_noninter_time(_, 0). % timeout disabled
