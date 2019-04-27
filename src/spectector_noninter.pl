@@ -161,6 +161,7 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	% \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
 	set_last_time(_),
 	( \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime) ->
+	  log(~atom_concat('[',~atom_concat(Mode, ' checked correctly]'))),
 	  last_time(Time0), set_last_time(Time),
 	  TotalTime is Time - Time0,
 	  ( Mode = data ->
@@ -168,7 +169,8 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	      set_fact(time_control(0))
 	  ; Mode = control -> set_fact(time_control(TotalTime))
 	  )
-	; last_time(Time0), set_last_time(Time),
+	; log(~atom_concat('[checking of ',~atom_concat(Mode, ' failed]'))),
+	  last_time(Time0), set_last_time(Time),
 	  TotalTime is Time - Time0,
 	  ( Mode = data -> set_fact(time_data(TotalTime))
 	  ; Mode = control -> set_fact(time_control(TotalTime))
