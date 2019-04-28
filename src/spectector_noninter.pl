@@ -35,6 +35,8 @@
 :- data time_data/1.
 :- data time_trace/1.
 :- data termination/1.
+:- data data_check/1.
+:- data control_check/1.
 
 :- export(noninter_check/2).
 % `Low` is a list of register names or memory indices that are "low".
@@ -46,6 +48,7 @@ noninter_check(Low, C0) :-
 	log('[exploring paths]'),
 	( % (failure-driven loop)
 	  set_fact(time_control(0)), set_fact(time_data(0)), set_fact(time_trace(0)),
+	  set_fact(data_check(false)), set_fact(control_check(false)),
 	  set_last_time(_),
 	  ( concrun(C0, (C, Trace))
 	  ; all_conc_stats_unknown, % In the case there are paths and concrun fails, collect stats % TODO: the paths may not be unknown?
@@ -137,7 +140,9 @@ collect_stats(Safe, Trace) :- stats, !,
 	; StatusStr = "safe"
 	),
 	time_data(TimeData), time_control(TimeControl), time_trace(TimeTrace),
-	new_path([status=string(StatusStr),time_trace=TimeTrace,time_data=TimeData,time_control=TimeControl]),
+	control_check(ControlCheck), data_check(DataCheck),
+	new_path([status=string(StatusStr),time_trace=TimeTrace,time_data=TimeData,time_control=TimeControl,
+	control_check=ControlCheck, data_check=DataCheck]),
 	( Safe = no(_) -> new_analysis_stat(status=string(StatusStr)) ; true ).
 collect_stats(_, _).
 
@@ -165,9 +170,10 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	  last_time(Time0), set_last_time(Time),
 	  TotalTime is Time - Time0,
 	  ( Mode = data ->
-	      set_fact(time_data(TotalTime)),
-	      set_fact(time_control(0))
-	  ; Mode = control -> set_fact(time_control(TotalTime))
+	    set_fact(data_check(true)),
+	    set_fact(time_data(TotalTime)),
+	    set_fact(time_control(0))
+	  ; Mode = control -> set_fact(time_control(TotalTime)), set_fact(control_check(true))
 	  )
 	; log(~atom_concat('[checking of ',~atom_concat(Mode, ' failed]'))),
 	  last_time(Time0), set_last_time(Time),
