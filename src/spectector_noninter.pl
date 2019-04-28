@@ -151,7 +151,8 @@ conc_stats_json(json([len=ConcLen,time=ConcT,status=string(ConcStStr)])) :-
 	ConcStStr = ~atom_codes(ConcSt).
 
 collect_path_limit_stats :- stats, !,
-	new_analysis_stat(status=string("safe_bound")). % TODO: Check if there are no paths to inspect left
+	( termination(T) -> true ; T = safe ), atom_concat(T, '_bound', TBound),
+	new_analysis_stat(status=string(~atom_codes(TBound))). % TODO: Check if there are no paths to inspect left
 collect_path_limit_stats.
 
 % Obtain a counter example for speculative non-interference.
@@ -173,7 +174,9 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	    set_fact(data_check(true)),
 	    set_fact(time_data(TotalTime)),
 	    set_fact(time_control(0))
-	  ; Mode = control -> set_fact(time_control(TotalTime)), set_fact(control_check(true))
+	  ; Mode = control ->
+	    set_fact(time_control(TotalTime)),
+	    set_fact(control_check(true))
 	  )
 	; log(~atom_concat('[checking of ',~atom_concat(Mode, ' failed]'))),
 	  last_time(Time0), set_last_time(Time),
