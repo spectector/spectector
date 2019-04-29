@@ -180,7 +180,7 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	% \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
 	set_last_time(_),
 	( \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime) ->
-		log(~atom_concat('[',~atom_concat(Mode, ' checked correctly]'))),
+		log(~atom_concat('[Found ',~atom_concat(Mode, ' leak]'))),
 		last_time(Time0), set_last_time(Time),
 		TotalTime is Time - Time0,
 		( Mode = data ->
@@ -191,7 +191,7 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 			set_fact(time_control(TotalTime)),
 			set_fact(control_check(true))
 		)
-	; log(~atom_concat('[checking of ',~atom_concat(Mode, ' failed]'))),
+	; log(~atom_concat('[No ',~atom_concat(Mode, ' leak]'))),
 		last_time(Time0), set_last_time(Time),
 		TotalTime is Time - Time0,
 		( Mode = data -> set_fact(time_data(TotalTime))
@@ -206,13 +206,13 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	set_last_time(_),
 	( perform_data ->
 	  ( \+ \+ noninter_cex_(data, Low, C0, Trace, MaxTime) ->
-	    log('[ data checked correctly]'),
+	    log('[Found data leak]'),
 	    last_time(TimeD0), set_last_time(TimeD),
 	    TotalTimeD is TimeD - TimeD0,
 	    set_fact(time_data(TotalTimeD)),
 	    set_fact(data_check(true)),
 	    Leak = data
-	  ; log('[checking of data failed]'),
+	  ; log('[No data leak]'),
 	    last_time(TimeD0), set_last_time(TimeD),
 	    TotalTimeD is TimeD - TimeD0,
 	    set_fact(time_data(TotalTimeD)) )
@@ -220,13 +220,13 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	),
 	( perform_control ->
 	  ( \+ \+ noninter_cex_(control, Low, C0, Trace, MaxTime) ->
-	    log('[control checked correctly]'),
+	    log('[Found control leak]'),
 	    last_time(TimeC0), set_last_time(TimeC),
 	    TotalTimeC is TimeC - TimeC0,
 	    set_fact(time_control(TotalTimeC)),
 	    set_fact(control_check(true)),
 	    ( var(Leak) -> Leak = control ; true )
-	  ; log('[checking of control failed]'),
+	  ; log('[No control leak]'),
 	    last_time(TimeC0), set_last_time(TimeC),
 	    TotalTimeC is TimeC - TimeC0,
 	    set_fact(time_control(TotalTimeC))
