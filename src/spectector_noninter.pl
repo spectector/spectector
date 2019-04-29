@@ -204,8 +204,9 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	retractall_fact(noninter_status(_,_)),
 	set_last_time(_),
-	( perform_data, \+ \+ noninter_cex_(data, Low, C0, Trace, MaxTime) ->
-	  ( log('[ data checked correctly]'),
+	( perform_data ->
+	  ( \+ \+ noninter_cex_(data, Low, C0, Trace, MaxTime) ->
+	    log('[ data checked correctly]'),
 	    last_time(Time0), set_last_time(Time),
 	    TotalTime is Time - Time0,
 	    set_fact(time_data(TotalTime)),
@@ -217,8 +218,9 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	    set_fact(time_data(TotalTime)) )
 	; true
 	),
-	( perform_control, \+ \+ noninter_cex_(control, Low, C0, Trace, MaxTime) ->
-	  ( log('[control checked correctly]'),
+	( perform_control ->
+	  ( \+ \+ noninter_cex_(control, Low, C0, Trace, MaxTime) ->
+	    log('[control checked correctly]'),
 	    last_time(Time0), set_last_time(Time),
 	    TotalTime is Time - Time0,
 	    set_fact(time_control(TotalTime)),
