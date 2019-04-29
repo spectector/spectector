@@ -72,7 +72,6 @@ noninter_check(Low, C0) :-
 	      log('[unknown noninter]')
 	    ; Safe = global_timeout ->
 	      log('[global timeout reached]')
-	    ; log('[path is safe]') % TODO: change log?
 	    ; Safe = no(Status) ->
 	      log('[path is unsafe]'),
 	      set_fact(termination(Status))
