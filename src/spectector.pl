@@ -103,8 +103,10 @@ show_help :-
   --track-all-pc   The program counters are stored on the statistics
   --weak           Check the security condition under the weak
                    specification (values in memory must match)
-  --only-control   Only checks for control leaks
-  --only-data      Only checks for data leaks
+  --only-control   Detect only speculative leaks caused by 
+                   control-flow operations
+  --only-data      Detect only speculative leaks caused by memory
+                   operations
   --stop-on-leak   When a leak is found, the analysis is stopped
 
 The input program can be a .muasm file (muAsm), a .asm file (Intel
