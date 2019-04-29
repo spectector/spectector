@@ -107,7 +107,8 @@ show_help :-
                    control-flow operations
   --only-data      Detect only speculative leaks caused by memory
                    operations
-  --stop-on-leak   When a leak is found, the analysis is stopped
+  --continue-on-leak
+                   The analysis continues although a leak is found
 
 The input program can be a .muasm file (muAsm), a .asm file (Intel
 syntax), or a .s file (gnu assembler).
@@ -181,7 +182,7 @@ opt('', '--parse-uns', As, As, [parse_unsupported]).
 opt('', '--skip-uns', As, As, [skip_unsupported]).
 opt('', '--only-control', As, As, [only_control]).
 opt('', '--only-data', As, As, [only_data]).
-opt('', '--stop-on-leak', As, As, [stop_on_leak]).
+opt('', '--continue-on-leak', As, As, [continue_on_leak]).
 
 parse_args([Arg|Args], Opts, File) :-
 	( opt(Arg, _, Args, Args0, OptsA) % short
@@ -236,8 +237,8 @@ run(PrgFile, Opts) :-
 	( member(weak, Options) -> set_weak_sni
 	; true
 	),
-	( member(stop_on_leak, Options) -> set_stop_on_leak
-	; true
+	( member(continue_on_leak, Options) -> true
+	; set_stop_on_leak
 	),
 	( member(only_data, Options) -> set_only_data
 	; member(only_control, Options) -> set_only_control
