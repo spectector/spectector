@@ -54,6 +54,9 @@ noninter_check(Low, C0) :-
 	  ; all_conc_stats_unknown, % In the case there are paths and concrun fails, collect stats % TODO: the paths may not be unknown?
 	    collect_stats(conc_error, []), fail
 	  ),
+	  set_fact(time_control(0)), set_fact(time_data(0)), set_fact(time_trace(0)),
+	  set_fact(data_check(false)), set_fact(control_check(false)),
+
 	  last_time(LTP), set_last_time(TP), TimeTrace is TP - LTP, % Trace time
 	  set_fact(time_trace(TimeTrace)),
 	  ( member(timeout, Trace) ->
