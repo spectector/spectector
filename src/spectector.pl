@@ -240,9 +240,9 @@ run(PrgFile, Opts) :-
 	( member(continue_on_leak, Options) -> true
 	; set_stop_on_leak
 	),
-	( member(only_data, Options) -> set_only_data
-	; member(only_control, Options) -> set_only_control
-	; set_only_control, set_only_data % If not, the 2 analysis are done
+	( member(only_data, Options) -> set_perform_data
+	; member(only_control, Options) -> set_perform_control
+	; set_perform_control, set_perform_data % If not, the 2 analysis are done
 	),
 	( member(use_dump, Options) -> UseDump = yes
 	; UseDump = no

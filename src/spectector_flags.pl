@@ -99,14 +99,14 @@ set_skip_unsupported :- set_fact(skip_unsupported).
 :- export(set_stop_on_leak/0).
 set_stop_on_leak :- set_fact(stop_on_leak).
 
-:- export(only_data/0).
-:- data only_data/0.
+:- export(perform_data/0).
+:- data perform_data/0.
 
-:- export(set_only_data/0).
-set_only_data :- set_fact(only_data).
+:- export(set_perform_data/0).
+set_perform_data :- set_fact(perform_data).
 
-:- export(only_control/0).
-:- data only_control/0.
+:- export(perform_control/0).
+:- data perform_control/0.
 
-:- export(set_only_control/0).
-set_only_control :- set_fact(only_control).
+:- export(set_perform_control/0).
+set_perform_control :- set_fact(perform_control).
