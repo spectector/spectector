@@ -84,7 +84,13 @@ noninter_check(Low, C0) :-
 	      !, % stop here
 	      collect_path_limit_stats
 	    ; explored_paths_left(N) -> % Fails if not initialized
-	      ( N > 1 -> new_explored_path, fail % go for next path
+	      ( N > 1 ->
+		new_explored_path,
+		( ( Mode = data ; Mode = control ), stop_on_leak, termination(Mode) ->
+		  % Check if should stop
+		  log('[program is unsafe]')
+		; fail % go for next path
+		)
 	      ; log('[maximum number of paths reached, program is assumed as safe]'),
 		!, % stop here
 		collect_path_limit_stats
