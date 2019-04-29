@@ -239,7 +239,7 @@ run(PrgFile, Opts) :-
 	),
 	( member(only_data, Options) -> set_only_data
 	; member(only_control, Options) -> set_only_control
-	; set_only_control, set_only_data % If not the 2 analysis are done
+	; set_only_control, set_only_data % If not, the 2 analysis are done
 	),
 	( member(use_dump, Options) -> UseDump = yes
 	; UseDump = no

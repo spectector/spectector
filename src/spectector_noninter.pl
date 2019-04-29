@@ -168,8 +168,7 @@ collect_path_limit_stats.
 
 noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	retractall_fact(noninter_status(_,_)),
-	( only_data -> Mode = data
-	; only_control -> Mode = control ),
+	( only_data, Mode = data ; only_control, Mode = control ),
 	% \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
 	set_last_time(_),
 	( \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime) ->
