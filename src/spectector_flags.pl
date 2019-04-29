@@ -92,3 +92,21 @@ new_explored_path :- explored_paths_left(N0), N is N0 - 1, set_fact(explored_pat
 
 :- export(set_skip_unsupported/0).
 set_skip_unsupported :- set_fact(skip_unsupported).
+
+:- export(stop_on_leak/0).
+:- data stop_on_leak/0.
+
+:- export(set_stop_on_leak/0).
+set_stop_on_leak :- set_fact(stop_on_leak).
+
+:- export(only_data/0).
+:- data only_data/0.
+
+:- export(set_only_data/0).
+set_only_data :- set_fact(only_data).
+
+:- export(only_control/0).
+:- data only_control/0.
+
+:- export(set_only_control/0).
+set_only_control :- set_fact(only_control).

@@ -103,6 +103,9 @@ show_help :-
   --track-all-pc   The program counters are stored on the statistics
   --weak           Check the security condition under the weak
                    specification (values in memory must match)
+  --only-control   Only checks for control leaks
+  --only-data      Only checks for data leaks
+  --stop-on-leak   When a leak is found, the analysis is stopped
 
 The input program can be a .muasm file (muAsm), a .asm file (Intel
 syntax), or a .s file (gnu assembler).
@@ -174,6 +177,9 @@ opt('', '--track-all-pc', As, As, [track_all_pc]).
 opt('', '--use-dump', As, As, [use_dump]).
 opt('', '--parse-uns', As, As, [parse_unsupported]).
 opt('', '--skip-uns', As, As, [skip_unsupported]).
+opt('', '--only-control', As, As, [only_control]).
+opt('', '--only-data', As, As, [only_data]).
+opt('', '--stop-on-leak', As, As, [stop_on_leak]).
 
 parse_args([Arg|Args], Opts, File) :-
 	( opt(Arg, _, Args, Args0, OptsA) % short
@@ -228,6 +234,13 @@ run(PrgFile, Opts) :-
 	( member(weak, Options) -> set_weak_sni
 	; true
 	),
+	( member(stop_on_leak, Options) -> set_stop_on_leak
+	; true
+	),
+	( member(only_data, Options) -> set_only_data
+	; member(only_control, Options) -> set_only_control
+	; set_only_control, set_only_data % If not the 2 analysis are done
+	),
 	( member(use_dump, Options) -> UseDump = yes
 	; UseDump = no
 	),
@@ -268,6 +281,7 @@ run(PrgFile, Opts) :-
 	( member(noninter_timeout(NonInterTO), Options) -> set_limit(noninter_timeout, NonInterTO)
 	; true % (use default)
 	),
+
 	( member(noinit, Options) -> InitMem = no ; InitMem = yes ),
 	statistics(walltime, [TParse0, _]),
 	( Ext = '.s' ->

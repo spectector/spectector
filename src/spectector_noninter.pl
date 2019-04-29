@@ -73,7 +73,9 @@ noninter_check(Low, C0) :-
 	    ; Safe = global_timeout ->
 	      log('[global timeout reached]')
 	    ; log('[path is safe]') % TODO: change log?
-	    ; Safe = no(Status) -> log('[path is unsafe]'), set_fact(termination(Status))
+	    ; Safe = no(Status) ->
+	      log('[path is unsafe]'),
+	      set_fact(termination(Status))
 	    ; log('[path is safe]')  % TODO: change log?
 	    ),
 	    % For bounded analysis
@@ -87,6 +89,9 @@ noninter_check(Low, C0) :-
 		!, % stop here
 		collect_path_limit_stats
 	      )
+	    ; ( Mode = data ; Mode = control ),
+		stop_on_leak, termination(Mode),
+		log('[program is unsafe]')
 	    ; fail % go for next path
 	    )
 	  )
@@ -163,7 +168,8 @@ collect_path_limit_stats.
 
 noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	retractall_fact(noninter_status(_,_)),
-	( Mode = data ; Mode = control ),
+	( only_data -> Mode = data
+	; only_control -> Mode = control ),
 	% \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
 	set_last_time(_),
 	( \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime) ->
@@ -171,9 +177,9 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	  last_time(Time0), set_last_time(Time),
 	  TotalTime is Time - Time0,
 	  ( Mode = data ->
-	    set_fact(data_check(true)),
 	    set_fact(time_data(TotalTime)),
-	    set_fact(time_control(0))
+	    set_fact(time_control(0)),
+	    set_fact(data_check(true))
 	  ; Mode = control ->
 	    set_fact(time_control(TotalTime)),
 	    set_fact(control_check(true))
