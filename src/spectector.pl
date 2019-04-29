@@ -80,9 +80,9 @@ show_help :-
   --timeout T
                    Timeout for the whole analysis (in ms)
   --nextpath-timeout T
-                   Timeout for computing next path (in ms??)
+                   Timeout for computing next path (in ms)
   --noninter-timeout T
-                   Timeout for non-interference check (in ms??)
+                   Timeout for non-interference check (in ms)
   --low LOW        Low registers or memory addresses for noninter
   --stats FILE     Show all the statistics on the file passed as
                    an output (in JSON format), to get the results
