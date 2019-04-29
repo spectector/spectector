@@ -172,32 +172,72 @@ collect_path_limit_stats.
 
 :- data noninter_status/2.
 
+
+% :- compilation_fact(short_circuit_cex).
+:- if(defined(short_circuit_cex)).
 noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	retractall_fact(noninter_status(_,_)),
 	( perform_data, Mode = data ; perform_control, Mode = control ),
 	% \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
 	set_last_time(_),
 	( \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime) ->
-	  log(~atom_concat('[',~atom_concat(Mode, ' checked correctly]'))),
-	  last_time(Time0), set_last_time(Time),
-	  TotalTime is Time - Time0,
-	  ( Mode = data ->
-	    set_fact(time_data(TotalTime)),
-	    set_fact(time_control(0)),
-	    set_fact(data_check(true))
-	  ; Mode = control ->
-	    set_fact(time_control(TotalTime)),
-	    set_fact(control_check(true))
-	  )
+		log(~atom_concat('[',~atom_concat(Mode, ' checked correctly]'))),
+		last_time(Time0), set_last_time(Time),
+		TotalTime is Time - Time0,
+		( Mode = data ->
+			set_fact(time_data(TotalTime)),
+			set_fact(time_control(0)),
+			set_fact(data_check(true))
+		; Mode = control ->
+			set_fact(time_control(TotalTime)),
+			set_fact(control_check(true))
+		)
 	; log(~atom_concat('[checking of ',~atom_concat(Mode, ' failed]'))),
-	  last_time(Time0), set_last_time(Time),
-	  TotalTime is Time - Time0,
-	  ( Mode = data -> set_fact(time_data(TotalTime))
-	  ; Mode = control -> set_fact(time_control(TotalTime))
-	  ),
-	  fail
+		last_time(Time0), set_last_time(Time),
+		TotalTime is Time - Time0,
+		( Mode = data -> set_fact(time_data(TotalTime))
+		; Mode = control -> set_fact(time_control(TotalTime))
+		),
+		fail
 	),
-	!.
+	!.		
+:- else.
+noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
+	retractall_fact(noninter_status(_,_)),
+	set_last_time(_),
+	( perform_data, \+ \+ noninter_cex_(data, Low, C0, Trace, MaxTime) ->
+			log('[ data checked correctly]'),
+			last_time(Time0), set_last_time(Time),
+			TotalTime is Time - Time0,
+			set_fact(time_data(TotalTime)),
+			set_fact(data_check(true)),
+			Leak = data
+		; 
+			log('[checking of data failed]'),
+			last_time(Time0), set_last_time(Time),
+			TotalTime is Time - Time0,
+			set_fact(time_data(TotalTime))
+	),
+	( perform_control, \+ \+ noninter_cex_(control, Low, C0, Trace, MaxTime) ->
+			log('[control checked correctly]'),
+			last_time(Time0), set_last_time(Time),
+			TotalTime is Time - Time0,
+			set_fact(time_control(TotalTime)),
+			set_fact(control_check(true)),
+			( var(Leak) -> Leak = control ; true )
+		; 
+			log('[checking of control failed]'),
+			last_time(Time0), set_last_time(Time),
+			TotalTime is Time - Time0,
+			set_fact(time_control(TotalTime))
+	),
+	nonvar(Leak),
+  !,
+  Mode = Leak.
+:- endif.
+
+
+
 noninter_cex(_, _, _, _, Safe) :-
 	( noninter_status(_, unknown) -> % unknown safety if some get_model/2 returned unknown
 	    Safe = unknown_noninter
