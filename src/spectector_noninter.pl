@@ -204,36 +204,38 @@ noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	retractall_fact(noninter_status(_,_)),
 	set_last_time(_),
-	( ( perform_data, \+ \+ noninter_cex_(data, Low, C0, Trace, MaxTime),
+	( perform_data ->
+	  ( \+ \+ noninter_cex_(data, Low, C0, Trace, MaxTime) ->
 	    log('[ data checked correctly]'),
-	    last_time(Time0), set_last_time(Time),
-	    TotalTime is Time - Time0,
-	    set_fact(time_data(TotalTime)),
+	    last_time(TimeD0), set_last_time(TimeD),
+	    TotalTimeD is TimeD - TimeD0,
+	    set_fact(time_data(TotalTimeD)),
 	    set_fact(data_check(true)),
 	    Leak = data
 	  ; log('[checking of data failed]'),
-	    last_time(Time0), set_last_time(Time),
-	    TotalTime is Time - Time0,
-	    set_fact(time_data(TotalTime)) )
+	    last_time(TimeD0), set_last_time(TimeD),
+	    TotalTimeD is TimeD - TimeD0,
+	    set_fact(time_data(TotalTimeD)) )
 	; true
 	),
-	( ( perform_control, \+ \+ noninter_cex_(control, Low, C0, Trace, MaxTime),
+	( perform_control ->
+	  ( \+ \+ noninter_cex_(control, Low, C0, Trace, MaxTime) ->
 	    log('[control checked correctly]'),
-	    last_time(Time0), set_last_time(Time),
-	    TotalTime is Time - Time0,
-	    set_fact(time_control(TotalTime)),
+	    last_time(TimeC0), set_last_time(TimeC),
+	    TotalTimeC is TimeC - TimeC0,
+	    set_fact(time_control(TotalTimeC)),
 	    set_fact(control_check(true)),
 	    ( var(Leak) -> Leak = control ; true )
 	  ; log('[checking of control failed]'),
-	    last_time(Time0), set_last_time(Time),
-	    TotalTime is Time - Time0,
-	    set_fact(time_control(TotalTime))
+	    last_time(TimeC0), set_last_time(TimeC),
+	    TotalTimeC is TimeC - TimeC0,
+	    set_fact(time_control(TotalTimeC))
 	  )
 	; true 
 	),
 	nonvar(Leak),
-  !,
-  Mode = Leak.
+	!,
+	Mode = Leak.
 :- endif.
 
 
