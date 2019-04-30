@@ -15,7 +15,7 @@
 
 :- module(_, [], [assertions, fsyntax, datafacts, dcg]).
 
-:- doc(title, "Speculative non-interference check").
+%:- doc(title, "Speculative non-interference check").
 
 :- use_module(library(aggregates)).
 :- use_module(library(lists)).
@@ -25,52 +25,140 @@
 :- use_module(muasm_semantics).
 :- use_module(muasm_program).
 :- use_module(muasm_print).
+:- use_module(spectector_flags).
+:- use_module(spectector_stats).
 :- use_module(concolic(symbolic)).
-:- use_module(concolic(concolic), [pathgoal/2, sym_filter/2]).
+:- use_module(concolic(concolic), [pathgoal/2, sym_filter/2, conc_stats/3, set_nextpath_timeout/1]).
+:- use_module(engine(runtime_control), [statistics/2]).
 
 :- export(noninter_check/2).
 % `Low` is a list of register names or memory indices that are "low".
 % `C0` is the initial configuration.
-noninter_check(Low, C0) :-
+noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
+	set_nextpath_timeout(~get_limit(nextpath_timeout)),
+	get_maxtime(MaxTime),
+	%
 	log('[exploring paths]'),
 	( % (failure-driven loop)
-	  (C,Trace) = ~concrun(C0),
-	    ( member(timeout, Trace) ->
-	        log('[timeout... exploring new path]'),
-	        message(warning, 'timeout -- ignoring large path (refine initial configuration or assume unsafe)'),
-		fail
+	  statistics(walltime, [TP0, _]),
+	  set_last_time(TP0),
+	  concrun(C0, (C, Trace)), % TODO: Get number of steps done
+	  statistics(walltime, [TP, _]),
+	  last_time(LTP), TimeP is TP - LTP, set_last_time(TP), % Trace time
+			( member(timeout, Trace) ->
+					log('[maximum number of steps reached]'),
+	        message(warning, 'maximum number of steps reached -- ignoring remaining path')
 	    ; true
 	    ),
 	    log('[path found]'),
 	    pretty_print([triple(C0,Trace,C)]),
 	    log('[checking speculative non-interference]'),
 	    C0 = xc(_,C0n,_),
-	    noninter_cex(Low, C0n, Trace, Safe), % TODO: Time this operation (for each path)
-	    ( Safe = no ->
+	    statistics(walltime, [TC0, _]),
+	    set_last_time(TC0),
+	    noninter_cex(Low, C0n, Trace, MaxTime, Safe), % TODO: Get the SMT length for the stats
+	    statistics(walltime, [TC, _]),
+	    last_time(LTC), TimeC is TC - LTC, set_last_time(TC), % SMT time
+	    collect_stats(Safe, Trace, TimeP, TimeC),
+	    ( Safe = no(_) ->
 	        !, % stop on first unsafe path
 		log('[program is unsafe]')
-	    ; log('[path is safe]'),
-	      fail % go for next path
+	    ; ( Safe = unknown_noninter ->
+		  log('[unknown noninter]')
+	      ; log('[path is safe]') % TODO: change log?
+	      ),
+	      % For bounded analysis
+	      ( check_maxtime_limit(MaxTime) ->
+		  log('[full timeout reached, program is assumed as safe]'),
+		  !, % stop here
+		  collect_path_limit_stats
+	      ; explored_paths_left(N) -> % Fails if not initialized
+		  ( N > 1 -> new_explored_path, fail % go for next path
+		  ; log('[maximum number of paths reached, program is assumed as safe]'),
+		    !, % stop here
+		    collect_path_limit_stats
+		  )
+	      ; fail % go for next path
+	      )
 	    )
-	; log('[program is safe]')
+	; log('[program is safe]'), % TODO: except for timeouts!
+	  new_analysis_stat(status=string("safe"))
 	).
 
+% Compute MaxTime for full timeout
+get_maxtime(MaxTime) :-
+	( FullTO = ~get_limit(full_timeout),
+	  FullTO > 0 ->
+	    statistics(walltime, [Time0, _]),
+	    MaxTime is Time0 + FullTO
+	; MaxTime = 0 % no timeout
+	).
+
+% Check if we have reached the MaxTime limit (full timeout)
+check_maxtime_limit(MaxTime) :-
+	MaxTime > 0, % (disabled otherwise)
+	statistics(walltime, [CurrTime, _]),
+	CurrTime > MaxTime.
+
+% Compute MaxTime for noninter timeout
+get_noninter_maxtime(MaxTime) :-
+	( NoninterTO = ~get_limit(noninter_timeout),
+	  NoninterTO > 0 ->
+	    statistics(walltime, [Time0, _]),
+	    MaxTime is Time0 + NoninterTO
+	; MaxTime = 0 % no timeout
+	).
+
+% Remaining time for noninter timeout (0 for disabled and -1 if timeout reached)
+rem_noninter_time(MaxTime, TO) :- MaxTime > 0, !, % (disabled otherwise)
+	statistics(walltime, [CurrTime, _]),
+	TO1 is ceiling(MaxTime - CurrTime), % (keep it as integer)
+	( TO1 =< 0 -> TO = -1
+	; TO = TO1
+	).
+rem_noninter_time(_, 0). % timeout disabled
+
+collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
+	trace_length(Trace, TL),
+	add_path_stat(trace_length=TL),
+	findall(X, conc_stats_json(X), LConc),
+	add_path_stat(concolic_stats=LConc),
+	( Safe = no(Mode) -> StatusStr = ~atom_codes(Mode)
+	; Safe = unknown_noninter -> StatusStr = "unknown_noninter" % TODO: change?
+	; StatusStr = "safe"
+	),
+	new_path([status=string(StatusStr),time_trace=TimeP,time_solve=TimeC]),
+	( Safe = no(_) -> new_analysis_stat(status=string(StatusStr)) ; true ).
+collect_stats(_, _, _, _).
+
+conc_stats_json(json([len=ConcLen,time=ConcT,status=string(ConcStStr)])) :-
+	conc_stats(ConcLen, ConcT, ConcSt),
+	ConcStStr = ~atom_codes(ConcSt).
+
+collect_path_limit_stats :- stats, !,
+	new_analysis_stat(status=string("safe_bound")). % TODO: Check if there are no paths to inspect left
+collect_path_limit_stats.
 
 % Obtain a counter example for speculative non-interference.
 % NOTE: see the paper for details, this check works on a single trace
 %   at a time.
 
-noninter_cex(Low, C0, Trace, Safe) :-
-	( Mode = data ; Mode = control ),
-	noninter_cex_(Mode, Low, C0, Trace),
-	!,
-	Safe = no.
-noninter_cex(_, _, _, Safe) :-
-	Safe = yes.
+:- data noninter_status/2.
 
-noninter_cex_(Mode, Low, C0a, TraceA0) :-
+noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
+	retractall_fact(noninter_status(_,_)),
+	( Mode = data ; Mode = control ),
+	\+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
+noninter_cex(_, _, _, _, Safe) :-
+	( noninter_status(_, unknown) -> % unknown safety if some get_model/2 returned unknown
+	    Safe = unknown_noninter
+	; Safe = yes
+	).
+
+noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
 	erase_and_dump_constrs(C0a, InGoalA),
 	erase_model([InGoalA,TraceA0]), % remove all other concrete assignments
+	get_noninter_maxtime(NoninterMaxTime),
 	( Mode = data ->
 	    % Data-based leak
 	    TraceA = TraceA0,
@@ -83,6 +171,7 @@ noninter_cex_(Mode, Low, C0a, TraceA0) :-
 	    DiffGoal = [~or_cond(OrCond) = 1]
 	; Mode = control ->
 	    % Control-based leak
+	    % (nondet)
 	    select_spec_cond(TraceA0, TraceA, CondA), % select cond/1 in speculative fragments
 	    rename_symspec(Low,
 	                   C0a, InGoalA, TraceA, CondA,
@@ -92,13 +181,26 @@ noninter_cex_(Mode, Low, C0a, TraceA0) :-
 	    X = sym(cond(CondA)), Y = sym(cond(NegCondB))
 	; throw(unknown_mode(Mode))
 	),
+	rem_noninter_time(NoninterMaxTime, SolverTO),
+	( ( SolverTO = -1 % timeout w.r.t. NoninterMaxTime
+          ; check_maxtime_limit(MaxTime) % timeout w.r.t. MaxTime
+	  ) ->
+	    !, % (stop search, remember status, and fail)
+	    assertz_fact(noninter_status(Mode, unknown)),
+	    fail
+	; true
+	),
 	% Get input model for two different heaps
 	Goal = ~append(InGoalA,
 	          ~append(~pathgoal(~sym_filter(TraceA)),
 		    ~append(InGoalB,
 		      ~append(~pathgoal(~sym_filter(TraceB)),
 		        ~append(LowGoal,DiffGoal))))),
-	get_model(Goal),
+	add_formula_length(~length(Goal)),
+	set_solver_opt(timeout, SolverTO),
+	get_model(Goal, Status),
+	assertz_fact(noninter_status(Mode, Status)),
+	Status = sat, % (fail otherwise)
 	%
 	show_cex(C0a, TraceA, C0b, TraceB, X, Y).
 
@@ -111,7 +213,7 @@ show_cex(C0a, _TraceA, C0b, _TraceB, X, Y) :-
 	  msg('Case B:'),
 	  (C0b,[Y]) % TODO: where?
 	  % (C0b,~append(TraceB, [Y]))
-		     ]).
+        ]).
 
 % Obtain a copy of the trace, unifying:
 %  - variables corresponding to low memory and registers
@@ -149,6 +251,7 @@ unif_obs([], []).
 unif_obs([X|Xs], [Y|Ys]) :-
 	( X = load(A) -> Y = load(A)
 	; X = store(A) -> Y = store(A)
+	; weak_sni, X = value(A) -> Y = value(A) % For weak speculative non-interference, we consider also value(N) observations in the non-speculative trace
 	; true
 	),
 	unif_obs(Xs,Ys).
@@ -180,7 +283,7 @@ differdisj([X|Xs], [Y|Ys], OrCond) :-
 
 or_cond([X]) := R :- !, R = X.
 or_cond([X|Xs]) := X\/(~or_cond(Xs)).
-	
+
 differ(load(A), load(B), (A\=B)) :- A \== B.
 differ(store(A), store(B), (A\=B)) :- A \== B.
 
@@ -209,6 +312,23 @@ only_specmarks([X|Xs], [X|Ys]) :-
 	only_specmarks(Xs, Ys).
 only_specmarks([_|Xs], Ys) :-
 	only_specmarks(Xs, Ys).
+
+:- export(trace_length/2).
+trace_length(Xs, N) :-
+	trace_length_(Xs, 0, N).
+
+trace_length_([], N, N).
+trace_length_([X|Xs], N0, N) :-
+	( X = sym(cond(_)) ->
+	    N1 is N0 + 1
+	; X = load(_) ->
+	    N1 is N0 + 1
+	; X = store(_) ->
+	    N1 is N0 + 1
+	; N1 = N0
+	),
+	trace_length_(Xs, N1, N).
+
 
 % ---------------------------------------------------------------------------
 % (log messages)

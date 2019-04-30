@@ -25,19 +25,28 @@
 :- export(p/2).
 :- data p/2.
 
-:- export(load_program/1).
-% load_program(+Ins): 
+:- export(loc/2).
+:- data loc/2.
+
+:- export(load_program/2).
+% load_program(+Ins,+Locs): 
 %   Load a program from Ins, filling instruction addresses and
 %   resolving labels.
-load_program(Ins) :-
+load_program(Ins,Locs) :-
 	muasm_operators,
 	retractall_fact(p(_,_)),
+	retractall_fact(loc(_,_)),
 	asm(Ins, 0, PIns),
 	( ground(PIns) -> true
 	; message(warning, 'the program contains unresolved labels')
 	),
 	( member(p(Addr,I), PIns),
 	    assertz_fact(p(Addr,I)),
+	    fail
+	; true
+	),
+	( member(Name=Addr, Locs),
+	    assertz_fact(loc(Name,Addr)),
 	    fail
 	; true
 	).
@@ -57,6 +66,11 @@ asm([I|Is], Addr, [I2|Is2]) :-
 show_program :-
 	( p(Addr,I),
 	    display('  '), display(Addr), display(': '), write(I), nl,
+	    fail
+	; true
+	),
+	( loc(Name,Addr),
+	    display('sym '), display(Name), display('='), write(Addr), nl,
 	    fail
 	; true
 	).
