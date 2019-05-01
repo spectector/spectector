@@ -1,7 +1,3 @@
----------------------------------------------------------------------------
-prg='p_2_5.muasm', nospec, solver=z3, ana=reach1
-m=[0=0,1=1,2=2,10=0]
-a=[pc=0,y=0]
 program:
   0: load(x,0)
   1: load(v,1)
@@ -14,11 +10,15 @@ program:
   8: store(y,w)
   9: jmp(11)
   10: load(y,v)
+---------------------------------------------------------------------------
+prg='p_2_5.muasm', nospec, entry=0, ana=reach1
+m=[0=0,1=1,2=2,10=0,251658240= -1]
+a=[pc=0,y=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=1,C=2,D=1]
 initial conf:
-  m=[0=0,1=1,2=2,10=0]
-  a=[pc=0,y=0]
+  m=[0=0,1=1,2=2,10=0,0xf000000=-1]
+  a=[pc=0,y=0,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(0)
   # element(0,A)
@@ -35,12 +35,8 @@ trace:
   10:  load(B)
   # element(B,D)
 final conf:
-  m=[0=0,1=1,2=0,10=0]
-  a=[pc=11,y=D,x=A,v=B,w=C]
----------------------------------------------------------------------------
-prg='p_2_5.muasm', nospec, solver=z3, ana=reach1
-m=[0=0,1=10,2=2,10=0]
-a=[pc=0,y=0]
+  m=[0=0,1=1,2=0,10=0,0xf000000=-1]
+  a=[pc=11,y=D,pc=0,sp=0xf000000,bp=0xf00000,x=A,v=B,w=C]
 program:
   0: load(x,0)
   1: load(v,1)
@@ -53,11 +49,15 @@ program:
   8: store(y,w)
   9: jmp(11)
   10: load(y,v)
+---------------------------------------------------------------------------
+prg='p_2_5.muasm', nospec, entry=0, ana=reach1
+m=[0=0,1=10,2=2,10=0,251658240= -1]
+a=[pc=0,y=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=10,C=2,D=0]
 initial conf:
-  m=[0=0,1=10,2=2,10=0]
-  a=[pc=0,y=0]
+  m=[0=0,1=10,2=2,10=0,0xf000000=-1]
+  a=[pc=0,y=0,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(0)
   # element(0,A)
@@ -74,12 +74,8 @@ trace:
   10:  load(B)
   # element(B,D)
 final conf:
-  m=[0=0,1=10,2=0,10=0]
-  a=[pc=11,y=D,x=A,v=B,w=C]
----------------------------------------------------------------------------
-prg='p_2_5.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[0=0,1=1,2=2,10=0]
-a=[pc=0,y=0]
+  m=[0=0,1=10,2=0,10=0,0xf000000=-1]
+  a=[pc=11,y=D,pc=0,sp=0xf000000,bp=0xf00000,x=A,v=B,w=C]
 program:
   0: load(x,0)
   1: load(v,1)
@@ -92,12 +88,16 @@ program:
   8: store(y,w)
   9: jmp(11)
   10: load(y,v)
+---------------------------------------------------------------------------
+prg='p_2_5.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[0=0,1=1,2=2,10=0,251658240= -1]
+a=[pc=0,y=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=1,C=2,D=1,E=1]
+  [A=0,B=1,C=2,D=1,E=1,F=1]
 initial conf:
   i=0
-  m=[0=0,1=1,2=2,10=0]
-  a=[pc=0,y=0]
+  m=[0=0,1=1,2=2,10=0,0xf000000=-1]
+  a=[pc=0,y=0,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
   0:  load(0)
@@ -113,39 +113,40 @@ trace:
   # element(B,D)
   5:  start(1)
   pc(7)
+  7:  commit(1)
   7:  # cond(A=0)
   start(2)
   pc(8)
-  8:  commit(1)
   8:  # update(C,D)
   store(C)
-  9:  rollback(2)
+  9:  start(3)
+  pc(11)
+  11:  commit(3)
+  11:  rollback(2)
   pc(10)
-  10:  rollback(0)
+  10:  load(B)
+  # element(B,E)
+  11:  rollback(0)
   pc(6)
   6:  # update(C,0)
   store(C)
   7:  # cond(A=0)
-  start(3)
+  start(4)
   pc(8)
   8:  # update(C,0)
   store(C)
-  9:  start(4)
+  9:  start(5)
   pc(11)
-  11:  commit(4)
-  11:  rollback(3)
+  11:  commit(5)
+  11:  rollback(4)
   pc(10)
   10:  load(B)
-  # element(B,E)
+  # element(B,F)
 final conf:
-  i=5
-  m=[0=0,1=1,2=0,10=0]
-  a=[pc=11,y=E,x=A,v=B,w=C]
+  i=6
+  m=[0=0,1=1,2=0,10=0,0xf000000=-1]
+  a=[pc=11,y=F,pc=0,sp=0xf000000,bp=0xf00000,x=A,v=B,w=C]
   s=[]
----------------------------------------------------------------------------
-prg='p_2_5.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[0=0,1=10,2=2,10=0]
-a=[pc=0,y=0]
 program:
   0: load(x,0)
   1: load(v,1)
@@ -158,12 +159,16 @@ program:
   8: store(y,w)
   9: jmp(11)
   10: load(y,v)
+---------------------------------------------------------------------------
+prg='p_2_5.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[0=0,1=10,2=2,10=0,251658240= -1]
+a=[pc=0,y=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=10,C=2,D=0,E=0]
+  [A=0,B=10,C=2,D=0,E=0,F=0]
 initial conf:
   i=0
-  m=[0=0,1=10,2=2,10=0]
-  a=[pc=0,y=0]
+  m=[0=0,1=10,2=2,10=0,0xf000000=-1]
+  a=[pc=0,y=0,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
   0:  load(0)
@@ -179,39 +184,40 @@ trace:
   # element(B,D)
   5:  start(1)
   pc(7)
+  7:  commit(1)
   7:  # cond(A=0)
   start(2)
   pc(8)
-  8:  commit(1)
   8:  # update(C,D)
   store(C)
-  9:  rollback(2)
+  9:  start(3)
+  pc(11)
+  11:  commit(3)
+  11:  rollback(2)
   pc(10)
-  10:  rollback(0)
+  10:  load(B)
+  # element(B,E)
+  11:  rollback(0)
   pc(6)
   6:  # update(C,0)
   store(C)
   7:  # cond(A=0)
-  start(3)
+  start(4)
   pc(8)
   8:  # update(C,0)
   store(C)
-  9:  start(4)
+  9:  start(5)
   pc(11)
-  11:  commit(4)
-  11:  rollback(3)
+  11:  commit(5)
+  11:  rollback(4)
   pc(10)
   10:  load(B)
-  # element(B,E)
+  # element(B,F)
 final conf:
-  i=5
-  m=[0=0,1=10,2=0,10=0]
-  a=[pc=11,y=E,x=A,v=B,w=C]
+  i=6
+  m=[0=0,1=10,2=0,10=0,0xf000000=-1]
+  a=[pc=11,y=F,pc=0,sp=0xf000000,bp=0xf00000,x=A,v=B,w=C]
   s=[]
----------------------------------------------------------------------------
-prg='p_2_5.muasm', nospec, solver=z3, ana=reach1
-m=[]
-a=[pc=0]
 program:
   0: load(x,0)
   1: load(v,1)
@@ -224,11 +230,15 @@ program:
   8: store(y,w)
   9: jmp(11)
   10: load(y,v)
+---------------------------------------------------------------------------
+prg='p_2_5.muasm', nospec, entry=0, ana=reach1
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=0,D=0,E=0,F=0,G=0,H=0]
 initial conf:
-  m=[0=A,1=C,2=E]
-  a=[pc=0,y=G]
+  m=[0xf000000=-1,0=A,1=C,2=E]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,y=G]
 trace:
   0:  load(0)
   # element(0,B)
@@ -245,12 +255,8 @@ trace:
   10:  load(D)
   # element(D,H)
 final conf:
-  m=[0=G,1=C,2=E]
-  a=[pc=11,x=B,v=D,w=F,y=H]
----------------------------------------------------------------------------
-prg='p_2_5b.muasm', nospec, solver=z3, ana=reach1
-m=[]
-a=[pc=0]
+  m=[0xf000000=-1,0=G,1=C,2=E]
+  a=[pc=11,sp=0xf000000,bp=0xf00000,x=B,v=D,w=F,y=H]
 program:
   0: load(j,2)
   1: u<-1
@@ -267,11 +273,15 @@ program:
   12: store(y,w)
   13: jmp(15)
   14: load(y,v)
+---------------------------------------------------------------------------
+prg='p_2_5b.muasm', nospec, entry=0, ana=reach1
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=1,D=0,E=0,F=0,G=2,H=1]
 initial conf:
-  m=[2=A,1=D]
-  a=[pc=0]
+  m=[0xf000000=-1,2=A,1=D]
+  a=[pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(2)
   # element(2,B)
@@ -295,12 +305,8 @@ trace:
   store(F)
   13:  pc(15)
 final conf:
-  m=[2=A,0=H,1=D]
-  a=[pc=15,j=B,u=1,x=G,v=E,w=F,y=H]
----------------------------------------------------------------------------
-prg='p_2_5b.muasm', nospec, solver=z3, ana=reach1
-m=[2=0]
-a=[pc=0]
+  m=[0xf000000=-1,2=A,0=H,1=D]
+  a=[pc=15,sp=0xf000000,bp=0xf00000,j=B,u=1,x=G,v=E,w=F,y=H]
 program:
   0: load(j,2)
   1: u<-1
@@ -317,11 +323,15 @@ program:
   12: store(y,w)
   13: jmp(15)
   14: load(y,v)
+---------------------------------------------------------------------------
+prg='p_2_5b.muasm', nospec, entry=0, ana=reach1
+m=[2=0,251658240= -1]
+a=[pc=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=1,C=0,D=0,E=0,F=2,G=1]
 initial conf:
-  m=[2=0,1=C]
-  a=[pc=0]
+  m=[2=0,0xf000000=-1,1=C]
+  a=[pc=0,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(2)
   # element(2,A)
@@ -345,12 +355,8 @@ trace:
   store(E)
   13:  pc(15)
 final conf:
-  m=[2=0,0=G,1=C]
-  a=[pc=15,j=A,u=1,x=F,v=D,w=E,y=G]
----------------------------------------------------------------------------
-prg='p_2_5b.muasm', nospec, solver=z3, ana=reach1
-m=[2=2]
-a=[pc=0]
+  m=[2=0,0xf000000=-1,0=G,1=C]
+  a=[pc=15,pc=0,sp=0xf000000,bp=0xf00000,j=A,u=1,x=F,v=D,w=E,y=G]
 program:
   0: load(j,2)
   1: u<-1
@@ -367,11 +373,15 @@ program:
   12: store(y,w)
   13: jmp(15)
   14: load(y,v)
+---------------------------------------------------------------------------
+prg='p_2_5b.muasm', nospec, entry=0, ana=reach1
+m=[2=2,251658240= -1]
+a=[pc=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=2,B=0,C=0,D=0,E=0,F=1,G=1,H=0]
 initial conf:
-  m=[2=2,0=B,1=D]
-  a=[pc=0]
+  m=[2=2,0xf000000=-1,0=B,1=D]
+  a=[pc=0,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(2)
   # element(2,A)
@@ -395,12 +405,8 @@ trace:
   store(F)
   13:  pc(15)
 final conf:
-  m=[2=1,0=B,1=H]
-  a=[pc=15,j=A,u=1,x=G,v=E,w=F,y=H]
----------------------------------------------------------------------------
-prg='p_2_5b.muasm', nospec, solver=z3, ana=reach1
-m=[0= -1,2=2]
-a=[pc=0]
+  m=[2=1,0xf000000=-1,0=B,1=H]
+  a=[pc=15,pc=0,sp=0xf000000,bp=0xf00000,j=A,u=1,x=G,v=E,w=F,y=H]
 program:
   0: load(j,2)
   1: u<-1
@@ -417,11 +423,15 @@ program:
   12: store(y,w)
   13: jmp(15)
   14: load(y,v)
+---------------------------------------------------------------------------
+prg='p_2_5b.muasm', nospec, entry=0, ana=reach1
+m=[0= -1,2=2,251658240= -1]
+a=[pc=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [B=2,C=0xffffffffffffffff,D=0,E=0,F=1,G=0,H=0xffffffffffffffff]
 initial conf:
-  m=[0=-1,2=2,1=D]
-  a=[pc=0,y=A]
+  m=[0=-1,2=2,0xf000000=-1,1=D]
+  a=[pc=0,pc=0,sp=0xf000000,bp=0xf00000,y=A]
 trace:
   0:  load(2)
   # element(2,B)
@@ -443,23 +453,23 @@ trace:
   14:  load(E)
   # element(E,H)
 final conf:
-  m=[0=-1,2=1,1=A]
-  a=[pc=15,j=B,u=1,x=G,v=E,w=F,y=H]
----------------------------------------------------------------------------
-prg='p_10.muasm', nospec, solver=z3, ana=reach1
-m=[]
-a=[pc=0,in=0,bound=1]
+  m=[0=-1,2=1,0xf000000=-1,1=A]
+  a=[pc=15,pc=0,sp=0xf000000,bp=0xf00000,j=B,u=1,x=G,v=E,w=F,y=H]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
   2: jmp(5)
   3: load(secret,in)
   4: load(z,secret)
+---------------------------------------------------------------------------
+prg='p_10.muasm', nospec, entry=0, ana=reach1
+m=[251658240= -1]
+a=[pc=0,in=0,bound=1,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=0,D=0]
 initial conf:
-  m=[0=B]
-  a=[pc=0,in=0,bound=1]
+  m=[0xf000000=-1,0=B]
+  a=[pc=0,in=0,bound=1,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  # A=(0>=1)
   1:  # cond(A=0)
@@ -469,47 +479,47 @@ trace:
   4:  load(C)
   # element(C,D)
 final conf:
-  m=[0=B]
-  a=[pc=5,in=0,bound=1,x=A,secret=C,z=D]
----------------------------------------------------------------------------
-prg='p_10.muasm', nospec, solver=z3, ana=reach1
-m=[]
-a=[pc=0,in=2,bound=1]
+  m=[0xf000000=-1,0=B]
+  a=[pc=5,in=0,bound=1,pc=0,sp=0xf000000,bp=0xf00000,x=A,secret=C,z=D]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
   2: jmp(5)
   3: load(secret,in)
   4: load(z,secret)
+---------------------------------------------------------------------------
+prg='p_10.muasm', nospec, entry=0, ana=reach1
+m=[251658240= -1]
+a=[pc=0,in=2,bound=1,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=1]
 initial conf:
-  m=[]
-  a=[pc=0,in=2,bound=1]
+  m=[0xf000000=-1]
+  a=[pc=0,in=2,bound=1,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  # A=(2>=1)
   1:  # cond(A\=0)
   pc(2)
   2:  pc(5)
 final conf:
-  m=[]
-  a=[pc=5,in=2,bound=1,x=A]
----------------------------------------------------------------------------
-prg='p_10.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[]
-a=[pc=0,in=0,bound=1]
+  m=[0xf000000=-1]
+  a=[pc=5,in=2,bound=1,pc=0,sp=0xf000000,bp=0xf00000,x=A]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
   2: jmp(5)
   3: load(secret,in)
   4: load(z,secret)
+---------------------------------------------------------------------------
+prg='p_10.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[251658240= -1]
+a=[pc=0,in=0,bound=1,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=0,D=0]
 initial conf:
   i=0
-  m=[0=B]
-  a=[pc=0,in=0,bound=1]
+  m=[0xf000000=-1,0=B]
+  a=[pc=0,in=0,bound=1,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
   0:  # A=(0>=1)
@@ -527,25 +537,25 @@ trace:
   # element(C,D)
 final conf:
   i=2
-  m=[0=B]
-  a=[pc=5,in=0,bound=1,x=A,secret=C,z=D]
+  m=[0xf000000=-1,0=B]
+  a=[pc=5,in=0,bound=1,pc=0,sp=0xf000000,bp=0xf00000,x=A,secret=C,z=D]
   s=[]
----------------------------------------------------------------------------
-prg='p_10.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[]
-a=[pc=0,in=2,bound=1]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
   2: jmp(5)
   3: load(secret,in)
   4: load(z,secret)
+---------------------------------------------------------------------------
+prg='p_10.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[251658240= -1]
+a=[pc=0,in=2,bound=1,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=1,B=0,C=0,D=0,E=0]
 initial conf:
   i=0
-  m=[2=B,0=D]
-  a=[pc=0,in=2,bound=1]
+  m=[0xf000000=-1,2=B,0=D]
+  a=[pc=0,in=2,bound=1,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
   0:  # A=(2>=1)
@@ -563,48 +573,48 @@ trace:
   5:  commit(1)
 final conf:
   i=2
-  m=[2=B,0=D]
-  a=[pc=5,in=2,bound=1,x=A]
+  m=[0xf000000=-1,2=B,0=D]
+  a=[pc=5,in=2,bound=1,pc=0,sp=0xf000000,bp=0xf00000,x=A]
   s=[]
----------------------------------------------------------------------------
-prg='p_10.muasm', nospec, solver=z3, ana=reach1
-m=[]
-a=[pc=0]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
   2: jmp(5)
   3: load(secret,in)
   4: load(z,secret)
+---------------------------------------------------------------------------
+prg='p_10.muasm', nospec, entry=0, ana=reach1
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=1]
 initial conf:
-  m=[]
-  a=[pc=0,in=A,bound=B]
+  m=[0xf000000=-1]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
 trace:
   0:  # C=(A>=B)
   1:  # cond(C\=0)
   pc(2)
   2:  pc(5)
 final conf:
-  m=[]
-  a=[pc=5,in=A,bound=B,x=C]
----------------------------------------------------------------------------
-prg='p_10.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[]
-a=[pc=0]
+  m=[0xf000000=-1]
+  a=[pc=5,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
   2: jmp(5)
   3: load(secret,in)
   4: load(z,secret)
+---------------------------------------------------------------------------
+prg='p_10.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=1,D=0,E=0,F=0]
 initial conf:
   i=0
-  m=[0=D]
-  a=[pc=0,in=A,bound=B]
+  m=[0xf000000=-1,0=D]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
   s=[]
 trace:
   0:  # C=(A>=B)
@@ -622,13 +632,9 @@ trace:
   5:  commit(1)
 final conf:
   i=2
-  m=[0=D]
-  a=[pc=5,in=A,bound=B,x=C]
+  m=[0xf000000=-1,0=D]
+  a=[pc=5,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C]
   s=[]
----------------------------------------------------------------------------
-prg='p_2_5.muasm', nospec, solver=z3, ana=reach
-m=[]
-a=[pc=0]
 program:
   0: load(x,0)
   1: load(v,1)
@@ -641,11 +647,15 @@ program:
   8: store(y,w)
   9: jmp(11)
   10: load(y,v)
+---------------------------------------------------------------------------
+prg='p_2_5.muasm', nospec, entry=0, ana=reach
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=0,D=0,E=0,F=0,G=0,H=0]
 initial conf:
-  m=[0=A,1=C,2=E]
-  a=[pc=0,y=G]
+  m=[0xf000000=-1,0=A,1=C,2=E]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,y=G]
 trace:
   0:  load(0)
   # element(0,B)
@@ -662,17 +672,17 @@ trace:
   10:  load(D)
   # element(D,H)
 final conf:
-  m=[0=G,1=C,2=E]
-  a=[pc=11,x=B,v=D,w=F,y=H]
+  m=[0xf000000=-1,0=G,1=C,2=E]
+  a=[pc=11,sp=0xf000000,bp=0xf00000,x=B,v=D,w=F,y=H]
 [concolic] negating last path condition and computing new model...
 [concolic] no model found, negate previous condition...
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0xffffffffffffffff,B=0xffffffffffffffff,C=0xffffffffffffffff,D=0xffffffffffffffff,E=0xffffffffffffffff,F=0xffffffffffffffff,G=0,H=0]
+  [A=0xffffffffffffffff,B=0xffffffffffffffff,C=1,D=1,E=0xffffffffffffffff,F=0xffffffffffffffff,G=0,H=0]
 initial conf:
-  m=[0=C,1=B,2=A,0xffffffffffffffff=G]
-  a=[pc=0]
+  m=[0xf000000=-1,0=C,1=B,2=A,0xffffffffffffffff=G]
+  a=[pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(0)
   # element(0,D)
@@ -691,41 +701,41 @@ trace:
   store(F)
   9:  pc(11)
 final conf:
-  m=[0=C,1=B,2=A,0xffffffffffffffff=H]
-  a=[pc=11,x=D,v=E,w=F,y=H]
+  m=[0xf000000=-1,0=C,1=B,2=A,0xffffffffffffffff=H]
+  a=[pc=11,sp=0xf000000,bp=0xf00000,x=D,v=E,w=F,y=H]
 [concolic] negating last path condition and computing new model...
 [concolic] no model found, negate previous condition...
 [concolic] finished, no more conditions to negate
----------------------------------------------------------------------------
-prg='p_10.muasm', nospec, solver=z3, ana=reach
-m=[]
-a=[pc=0]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
   2: jmp(5)
   3: load(secret,in)
   4: load(z,secret)
+---------------------------------------------------------------------------
+prg='p_10.muasm', nospec, entry=0, ana=reach
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=1]
 initial conf:
-  m=[]
-  a=[pc=0,in=A,bound=B]
+  m=[0xf000000=-1]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
 trace:
   0:  # C=(A>=B)
   1:  # cond(C\=0)
   pc(2)
   2:  pc(5)
 final conf:
-  m=[]
-  a=[pc=5,in=A,bound=B,x=C]
+  m=[0xf000000=-1]
+  a=[pc=5,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
   [A=0x8000000000000000,B=0x8000000000000001,C=0,D=0,E=0,F=0,G=0]
 initial conf:
-  m=[0x8000000000000000=D,0=F]
-  a=[pc=0,in=A,bound=B]
+  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
 trace:
   0:  # C=(A>=B)
   1:  # cond(C=0)
@@ -735,13 +745,9 @@ trace:
   4:  load(E)
   # element(E,G)
 final conf:
-  m=[0x8000000000000000=D,0=F]
-  a=[pc=5,in=A,bound=B,x=C,secret=E,z=G]
+  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  a=[pc=5,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C,secret=E,z=G]
 [concolic] finished, no more conditions to negate
----------------------------------------------------------------------------
-prg='p_1010.muasm', nospec, solver=z3, ana=reach
-m=[]
-a=[pc=0]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
@@ -753,11 +759,15 @@ program:
   7: jmp(10)
   8: load(secret,in)
   9: load(z,secret)
+---------------------------------------------------------------------------
+prg='p_1010.muasm', nospec, entry=0, ana=reach
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=1,D=0,E=0,F=1]
 initial conf:
-  m=[]
-  a=[pc=0,in=A,bound=B,in2=D,bound2=E]
+  m=[0xf000000=-1]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B,in2=D,bound2=E]
 trace:
   0:  # C=(A>=B)
   1:  # cond(C\=0)
@@ -768,15 +778,15 @@ trace:
   pc(7)
   7:  pc(10)
 final conf:
-  m=[]
-  a=[pc=10,in=A,bound=B,x=C,in2=D,bound2=E,x2=F]
+  m=[0xf000000=-1]
+  a=[pc=10,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C,in2=D,bound2=E,x2=F]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
   [A=0x8000000000000000,B=0x8000000000000000,C=0x8000000000000001,D=0x8000000000000000,E=1,F=0,G=0,H=0,I=0,J=0]
 initial conf:
-  m=[0x8000000000000000=G,0=I]
-  a=[pc=0,in=B,bound=D,in2=A,bound2=C]
+  m=[0xf000000=-1,0x8000000000000000=G,0=I]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=B,bound=D,in2=A,bound2=C]
 trace:
   0:  # E=(B>=D)
   1:  # cond(E\=0)
@@ -790,15 +800,15 @@ trace:
   9:  load(H)
   # element(H,J)
 final conf:
-  m=[0x8000000000000000=G,0=I]
-  a=[pc=10,in=B,bound=D,in2=A,bound2=C,x=E,x2=F,secret=H,z=J]
+  m=[0xf000000=-1,0x8000000000000000=G,0=I]
+  a=[pc=10,sp=0xf000000,bp=0xf00000,in=B,bound=D,in2=A,bound2=C,x=E,x2=F,secret=H,z=J]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
   [A=0x8000000000000000,B=0x8000000000000001,C=0,D=0,E=0,F=0,G=0,H=0,I=0,J=1]
 initial conf:
-  m=[0x8000000000000000=D,0=F]
-  a=[pc=0,in=A,bound=B,in2=H,bound2=I]
+  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B,in2=H,bound2=I]
 trace:
   0:  # C=(A>=B)
   1:  # cond(C=0)
@@ -812,15 +822,15 @@ trace:
   pc(7)
   7:  pc(10)
 final conf:
-  m=[0x8000000000000000=D,0=F]
-  a=[pc=10,in=A,bound=B,x=C,secret=E,z=G,in2=H,bound2=I,x2=J]
+  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  a=[pc=10,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C,secret=E,z=G,in2=H,bound2=I,x2=J]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0x8000000000000000,B=0x8000000000000000,C=0x8000000000000001,D=0x8000000000000001,E=0,F=0,G=0,H=0,I=0,J=0,K=0,L=0]
+  [A=0x8000000000000000,B=0x8000000000000000,C=0x8000000000000001,D=0x8000000000000001,E=0xffffffffffffffff,F=0xffffffffffffffff,G=0,H=0xffffffffffffffff,I=0xffffffffffffffff,J=0,K=0xffffffffffffffff,L=0xffffffffffffffff]
 initial conf:
-  m=[0x8000000000000000=F,0=E]
-  a=[pc=0,in=B,bound=D,in2=A,bound2=C]
+  m=[0xf000000=-1,0x8000000000000000=F,0xffffffffffffffff=E]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=B,bound=D,in2=A,bound2=C]
 trace:
   0:  # G=(B>=D)
   1:  # cond(G=0)
@@ -837,23 +847,23 @@ trace:
   9:  load(K)
   # element(K,L)
 final conf:
-  m=[0x8000000000000000=F,0=E]
-  a=[pc=10,in=B,bound=D,in2=A,bound2=C,x=G,secret=K,z=L,x2=J]
+  m=[0xf000000=-1,0x8000000000000000=F,0xffffffffffffffff=E]
+  a=[pc=10,sp=0xf000000,bp=0xf00000,in=B,bound=D,in2=A,bound2=C,x=G,secret=K,z=L,x2=J]
 [concolic] finished, no more conditions to negate
----------------------------------------------------------------------------
-prg='p_cmov.muasm', nospec, solver=z3, ana=reach
-m=[]
-a=[pc=0]
 program:
   0: z<-0
   1: cmov(x=y,z<-1)
   2: beqz(z,4)
   3: load(1,v)
+---------------------------------------------------------------------------
+prg='p_cmov.muasm', nospec, entry=0, ana=reach
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=1,D=0,E=0,F=0]
 initial conf:
-  m=[0=E]
-  a=[pc=0,x=A,y=B,v=D]
+  m=[0xf000000=-1,0=E]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,x=A,y=B,v=D]
 trace:
   0:  1:  # C=ite(A=B,1,0)
   2:  # cond(C\=0)
@@ -862,41 +872,41 @@ trace:
   # element(D,F)
   # update(1,F)
 final conf:
-  m=[0=E]
-  a=[pc=4,z=C,x=A,y=B,v=D,1=F]
+  m=[0xf000000=-1,0=E]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,z=C,x=A,y=B,v=D,1=F]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
   [A=0,B=0xffffffffffffffff,C=0]
 initial conf:
-  m=[]
-  a=[pc=0,x=B,y=A]
+  m=[0xf000000=-1]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,x=B,y=A]
 trace:
   0:  1:  # C=ite(B=A,1,0)
   2:  # cond(C=0)
   pc(4)
 final conf:
-  m=[]
-  a=[pc=4,x=B,y=A,z=C]
+  m=[0xf000000=-1]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,x=B,y=A,z=C]
 [concolic] finished, no more conditions to negate
----------------------------------------------------------------------------
-prg='p_10.muasm', spec, window_size=4, solver=z3, ana=noninter([])
-m=[]
-a=[pc=0]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
   2: jmp(5)
   3: load(secret,in)
   4: load(z,secret)
+---------------------------------------------------------------------------
+prg='p_10.muasm', spec, window_size=4, entry=0, ana=noninter([])
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 [exploring paths]
 [path found]
 Assignments:
   [A=0,B=0,C=1,D=0,E=0,F=0]
 initial conf:
   i=0
-  m=[0=D]
-  a=[pc=0,in=A,bound=B]
+  m=[0xf000000=-1,0=D]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
   s=[]
 trace:
   0:  # C=(A>=B)
@@ -914,64 +924,62 @@ trace:
   5:  commit(1)
 final conf:
   i=2
-  m=[0=D]
-  a=[pc=5,in=A,bound=B,x=C]
+  m=[0xf000000=-1,0=D]
+  a=[pc=5,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C]
   s=[]
 [checking speculative non-interference]
 [path is unsafe, showing counter-example initial configurations A and B]
 Assignments:
-  [A=0x8000000000000000,B=0x8000000000000000,C=0,D=0,E=0xffffffffffffffff,F=0xffffffffffffffff,G=0xffffffffffffffff]
+  [A=0,B=0,C=0,D=1,E=1]
 Case A:
 conf:
-  m=[0=G,0x8000000000000000=F,0xffffffffffffffff=E]
-  a=[pc=0,in=A,bound=B]
+  m=[0xf000000=-1,0=E,1=D]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
 trace:
-  load(F)
 Case B:
 conf:
-  m=[0=D,0x8000000000000000=C]
-  a=[pc=0,in=A,bound=B]
+  m=[0xf000000=-1,0=C]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
 trace:
-  load(C)
 [program is unsafe]
----------------------------------------------------------------------------
-prg='spectre_lfence.muasm', nospec, solver=z3, ana=reach1
-m=[0=7,1=1,2=2,4=2,13=4,10=0]
-a=[pc=0,y=10,v=13]
 program:
   0: x<-v<y
   1: beqz(x,5)
   2: spbarr
   3: load(v,v)
   4: load(v,v)
+---------------------------------------------------------------------------
+prg='spectre_lfence.muasm', nospec, entry=0, ana=reach1
+m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
+a=[pc=0,y=10,v=13,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0]
 initial conf:
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=0,y=10,v=13]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  # A=(13<10)
   1:  # cond(A=0)
   pc(5)
 final conf:
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=5,y=10,v=13,x=A]
----------------------------------------------------------------------------
-prg='spectre_lfence.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[0=7,1=1,2=2,4=2,13=4,10=0]
-a=[pc=0,y=10,v=4]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=5,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000,x=A]
 program:
   0: x<-v<y
   1: beqz(x,5)
   2: spbarr
   3: load(v,v)
   4: load(v,v)
+---------------------------------------------------------------------------
+prg='spectre_lfence.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
+a=[pc=0,y=10,v=4,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=1,B=2,C=2]
 initial conf:
   i=0
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=0,y=10,v=4]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=0,y=10,v=4,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
   0:  # A=(4<10)
@@ -986,25 +994,25 @@ trace:
   # element(B,C)
 final conf:
   i=1
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=5,y=10,v=C,x=A]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=5,y=10,v=C,pc=0,sp=0xf000000,bp=0xf00000,x=A]
   s=[]
----------------------------------------------------------------------------
-prg='spectre_lfence.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[0=7,1=1,2=2,4=2,13=4,10=0]
-a=[pc=0,y=10,v=13]
 program:
   0: x<-v<y
   1: beqz(x,5)
   2: spbarr
   3: load(v,v)
   4: load(v,v)
+---------------------------------------------------------------------------
+prg='spectre_lfence.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
+a=[pc=0,y=10,v=13,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0]
 initial conf:
   i=0
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=0,y=10,v=13]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
   0:  # A=(13<10)
@@ -1015,13 +1023,9 @@ trace:
   pc(5)
 final conf:
   i=1
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=5,y=10,v=13,x=A]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=5,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000,x=A]
   s=[]
----------------------------------------------------------------------------
-prg='spectre_slh.muasm', nospec, solver=z3, ana=reach1
-m=[0=7,1=1,2=2,4=2,13=4,10=0]
-a=[pc=0,y=10,v=13]
 program:
   0: u<-268435455
   1: x<-v<y
@@ -1029,22 +1033,22 @@ program:
   3: cmov(v>=y,u<-0)
   4: load(v,v)
   5: load(v,v/\u)
+---------------------------------------------------------------------------
+prg='spectre_slh.muasm', nospec, entry=0, ana=reach1
+m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
+a=[pc=0,y=10,v=13,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0]
 initial conf:
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=0,y=10,v=13]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  1:  # A=(13<10)
   2:  # cond(A=0)
   pc(6)
 final conf:
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=6,y=10,v=13,u=0xfffffff,x=A]
----------------------------------------------------------------------------
-prg='spectre_slh.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[0=7,1=1,2=2,4=2,13=4,10=0]
-a=[pc=0,y=10,v=4]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=6,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000,u=0xfffffff,x=A]
 program:
   0: u<-268435455
   1: x<-v<y
@@ -1052,12 +1056,16 @@ program:
   3: cmov(v>=y,u<-0)
   4: load(v,v)
   5: load(v,v/\u)
+---------------------------------------------------------------------------
+prg='spectre_slh.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
+a=[pc=0,y=10,v=4,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=1,B=0xfffffff,C=2,D=2]
 initial conf:
   i=0
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=0,y=10,v=4]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=0,y=10,v=4,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
   0:  1:  # A=(4<10)
@@ -1073,13 +1081,9 @@ trace:
   # element(C/\B,D)
 final conf:
   i=1
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=6,y=10,v=D,u=B,x=A]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=6,y=10,v=D,pc=0,sp=0xf000000,bp=0xf00000,u=B,x=A]
   s=[]
----------------------------------------------------------------------------
-prg='spectre_slh.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[0=7,1=1,2=2,4=2,13=4,10=0]
-a=[pc=0,y=10,v=13]
 program:
   0: u<-268435455
   1: x<-v<y
@@ -1087,12 +1091,16 @@ program:
   3: cmov(v>=y,u<-0)
   4: load(v,v)
   5: load(v,v/\u)
+---------------------------------------------------------------------------
+prg='spectre_slh.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
+a=[pc=0,y=10,v=13,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=4,D=7]
 initial conf:
   i=0
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=0,y=10,v=13]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
   0:  1:  # A=(13<10)
@@ -1108,45 +1116,45 @@ trace:
   pc(6)
 final conf:
   i=1
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=6,y=10,v=13,u=0xfffffff,x=A]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=6,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000,u=0xfffffff,x=A]
   s=[]
----------------------------------------------------------------------------
-prg='spectre.muasm', nospec, solver=z3, ana=reach1
-m=[0=7,1=1,2=2,4=2,13=4,10=0]
-a=[pc=0,y=10,v=13]
 program:
   0: x<-v<y
   1: beqz(x,4)
   2: load(v,v)
   3: load(v,v)
+---------------------------------------------------------------------------
+prg='spectre.muasm', nospec, entry=0, ana=reach1
+m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
+a=[pc=0,y=10,v=13,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0]
 initial conf:
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=0,y=10,v=13]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  # A=(13<10)
   1:  # cond(A=0)
   pc(4)
 final conf:
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=4,y=10,v=13,x=A]
----------------------------------------------------------------------------
-prg='spectre.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[0=7,1=1,2=2,4=2,13=4,10=0]
-a=[pc=0,y=10,v=4]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=4,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000,x=A]
 program:
   0: x<-v<y
   1: beqz(x,4)
   2: load(v,v)
   3: load(v,v)
+---------------------------------------------------------------------------
+prg='spectre.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
+a=[pc=0,y=10,v=4,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=1,B=2,C=2]
 initial conf:
   i=0
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=0,y=10,v=4]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=0,y=10,v=4,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
   0:  # A=(4<10)
@@ -1161,24 +1169,24 @@ trace:
   # element(B,C)
 final conf:
   i=1
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=4,y=10,v=C,x=A]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=4,y=10,v=C,pc=0,sp=0xf000000,bp=0xf00000,x=A]
   s=[]
----------------------------------------------------------------------------
-prg='spectre.muasm', spec, window_size=4, solver=z3, ana=reach1
-m=[0=7,1=1,2=2,4=2,13=4,10=0]
-a=[pc=0,y=10,v=13]
 program:
   0: x<-v<y
   1: beqz(x,4)
   2: load(v,v)
   3: load(v,v)
+---------------------------------------------------------------------------
+prg='spectre.muasm', spec, window_size=4, entry=0, ana=reach1
+m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
+a=[pc=0,y=10,v=13,pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=4,C=2]
 initial conf:
   i=0
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=0,y=10,v=13]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
   0:  # A=(13<10)
@@ -1193,38 +1201,38 @@ trace:
   pc(4)
 final conf:
   i=1
-  m=[0=7,1=1,2=2,4=2,13=4,10=0]
-  a=[pc=4,y=10,v=13,x=A]
+  m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
+  a=[pc=4,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000,x=A]
   s=[]
----------------------------------------------------------------------------
-prg='spectre_lfence.muasm', nospec, solver=z3, ana=reach
-m=[]
-a=[pc=0]
 program:
   0: x<-v<y
   1: beqz(x,5)
   2: spbarr
   3: load(v,v)
   4: load(v,v)
+---------------------------------------------------------------------------
+prg='spectre_lfence.muasm', nospec, entry=0, ana=reach
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=0]
 initial conf:
-  m=[]
-  a=[pc=0,v=A,y=B]
+  m=[0xf000000=-1]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
   0:  # C=(A<B)
   1:  # cond(C=0)
   pc(5)
 final conf:
-  m=[]
-  a=[pc=5,v=A,y=B,x=C]
+  m=[0xf000000=-1]
+  a=[pc=5,sp=0xf000000,bp=0xf00000,v=A,y=B,x=C]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
   [A=0x8000000000000000,B=0x8000000000000001,C=1,D=0,E=0,F=0,G=0]
 initial conf:
-  m=[0x8000000000000000=D,0=F]
-  a=[pc=0,v=A,y=B]
+  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
   0:  # C=(A<B)
   1:  # cond(C\=0)
@@ -1234,13 +1242,9 @@ trace:
   4:  load(E)
   # element(E,G)
 final conf:
-  m=[0x8000000000000000=D,0=F]
-  a=[pc=5,v=G,y=B,x=C]
+  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  a=[pc=5,sp=0xf000000,bp=0xf00000,v=G,y=B,x=C]
 [concolic] finished, no more conditions to negate
----------------------------------------------------------------------------
-prg='spectre_slh.muasm', nospec, solver=z3, ana=reach
-m=[]
-a=[pc=0]
 program:
   0: u<-268435455
   1: x<-v<y
@@ -1248,25 +1252,29 @@ program:
   3: cmov(v>=y,u<-0)
   4: load(v,v)
   5: load(v,v/\u)
+---------------------------------------------------------------------------
+prg='spectre_slh.muasm', nospec, entry=0, ana=reach
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=0]
 initial conf:
-  m=[]
-  a=[pc=0,v=A,y=B]
+  m=[0xf000000=-1]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
   0:  1:  # C=(A<B)
   2:  # cond(C=0)
   pc(6)
 final conf:
-  m=[]
-  a=[pc=6,u=0xfffffff,v=A,y=B,x=C]
+  m=[0xf000000=-1]
+  a=[pc=6,sp=0xf000000,bp=0xf00000,u=0xfffffff,v=A,y=B,x=C]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
   [A=0x8000000000000000,B=0x8000000000000001,C=1,D=0xfffffff,E=0,F=0,G=0,H=0]
 initial conf:
-  m=[0x8000000000000000=E,0=G]
-  a=[pc=0,v=A,y=B]
+  m=[0xf000000=-1,0x8000000000000000=E,0=G]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
   0:  1:  # C=(A<B)
   2:  # cond(C\=0)
@@ -1277,37 +1285,37 @@ trace:
   5:  load(F/\D)
   # element(F/\D,H)
 final conf:
-  m=[0x8000000000000000=E,0=G]
-  a=[pc=6,v=H,y=B,u=D,x=C]
+  m=[0xf000000=-1,0x8000000000000000=E,0=G]
+  a=[pc=6,sp=0xf000000,bp=0xf00000,v=H,y=B,u=D,x=C]
 [concolic] finished, no more conditions to negate
----------------------------------------------------------------------------
-prg='spectre.muasm', nospec, solver=z3, ana=reach
-m=[]
-a=[pc=0]
 program:
   0: x<-v<y
   1: beqz(x,4)
   2: load(v,v)
   3: load(v,v)
+---------------------------------------------------------------------------
+prg='spectre.muasm', nospec, entry=0, ana=reach
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0,C=0]
 initial conf:
-  m=[]
-  a=[pc=0,v=A,y=B]
+  m=[0xf000000=-1]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
   0:  # C=(A<B)
   1:  # cond(C=0)
   pc(4)
 final conf:
-  m=[]
-  a=[pc=4,v=A,y=B,x=C]
+  m=[0xf000000=-1]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,v=A,y=B,x=C]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
   [A=0x8000000000000000,B=0x8000000000000001,C=1,D=0,E=0,F=0,G=0]
 initial conf:
-  m=[0x8000000000000000=D,0=F]
-  a=[pc=0,v=A,y=B]
+  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
   0:  # C=(A<B)
   1:  # cond(C\=0)
@@ -1317,38 +1325,38 @@ trace:
   3:  load(E)
   # element(E,G)
 final conf:
-  m=[0x8000000000000000=D,0=F]
-  a=[pc=4,v=G,y=B,x=C]
+  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,v=G,y=B,x=C]
 [concolic] finished, no more conditions to negate
----------------------------------------------------------------------------
-prg='pload.muasm', nospec, solver=z3, ana=reach
-m=[]
-a=[pc=0]
 program:
   0: beqz(x,2)
   1: load(v1,16)
   2: beqz(y,4)
   3: load(v2,17)
+---------------------------------------------------------------------------
+prg='pload.muasm', nospec, entry=0, ana=reach
+m=[251658240= -1]
+a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
   [A=0,B=0]
 initial conf:
-  m=[]
-  a=[pc=0,x=A,y=B]
+  m=[0xf000000=-1]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,x=A,y=B]
 trace:
   0:  # cond(A=0)
   pc(2)
   2:  # cond(B=0)
   pc(4)
 final conf:
-  m=[]
-  a=[pc=4,x=A,y=B]
+  m=[0xf000000=-1]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,x=A,y=B]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
   [A=0xffffffffffffffff,B=0,C=0,D=0]
 initial conf:
-  m=[0x11=C]
-  a=[pc=0,x=B,y=A]
+  m=[0xf000000=-1,0x11=C]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,x=B,y=A]
 trace:
   0:  # cond(B=0)
   pc(2)
@@ -1357,15 +1365,15 @@ trace:
   3:  load(17)
   # element(17,D)
 final conf:
-  m=[0x11=C]
-  a=[pc=4,x=B,y=A,v2=D]
+  m=[0xf000000=-1,0x11=C]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,x=B,y=A,v2=D]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
   [A=0xffffffffffffffff,B=0,C=0,D=0]
 initial conf:
-  m=[0x10=B]
-  a=[pc=0,x=A,y=D]
+  m=[0xf000000=-1,0x10=B]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,x=A,y=D]
 trace:
   0:  # cond(A\=0)
   pc(1)
@@ -1374,15 +1382,15 @@ trace:
   2:  # cond(D=0)
   pc(4)
 final conf:
-  m=[0x10=B]
-  a=[pc=4,x=A,v1=C,y=D]
+  m=[0xf000000=-1,0x10=B]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,x=A,v1=C,y=D]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0xffffffffffffffff,B=0xffffffffffffffff,C=0,D=0,E=0,F=0]
+  [A=0xffffffffffffffff,B=0xffffffffffffffff,C=0xffffffffffffffff,D=0xffffffffffffffff,E=0,F=0]
 initial conf:
-  m=[0x10=C,0x11=E]
-  a=[pc=0,x=B,y=A]
+  m=[0xf000000=-1,0x10=C,0x11=E]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,x=B,y=A]
 trace:
   0:  # cond(B\=0)
   pc(1)
@@ -1393,62 +1401,6 @@ trace:
   3:  load(17)
   # element(17,F)
 final conf:
-  m=[0x10=C,0x11=E]
-  a=[pc=4,x=B,y=A,v1=D,v2=F]
-[concolic] finished, no more conditions to negate
----------------------------------------------------------------------------
-prg='loadsym.muasm', nospec, solver=z3, ana=reach
-m=[]
-a=[pc=0]
-program:
-  0: v<-0+0
-  1: store(v,0)
-  2: v<-100+0
-  3: store(v,1)
-  4: load(r,x/\1)
-  5: beqz(r,8)
-  6: v1<-256
-  7: jmp(9)
-  8: v1<-257
-Assignments:
-  [A=0,B=0x64,C=0,D=0]
-initial conf:
-  m=[]
-  a=[pc=0,x=C]
-trace:
-  0:  # A=0+0
-  1:  # update(0,A)
-  store(0)
-  2:  # B=100+0
-  3:  # update(1,B)
-  store(1)
-  4:  load(C/\1)
-  # element(C/\1,D)
-  5:  # cond(D=0)
-  pc(8)
-  8:final conf:
-  m=[0=A,1=B]
-  a=[pc=9,v=B,x=C,r=D,v1=0x101]
-[concolic] negating last path condition and computing new model...
-[concolic] new input model found
-Assignments:
-  [A=1,B=0,C=0x64,D=0x64]
-initial conf:
-  m=[]
-  a=[pc=0,x=A]
-trace:
-  0:  # B=0+0
-  1:  # update(0,B)
-  store(0)
-  2:  # C=100+0
-  3:  # update(1,C)
-  store(1)
-  4:  load(A/\1)
-  # element(A/\1,D)
-  5:  # cond(D\=0)
-  pc(6)
-  6:  7:  pc(9)
-final conf:
-  m=[0=B,1=C]
-  a=[pc=9,x=A,v=C,r=D,v1=0x100]
+  m=[0xf000000=-1,0x10=C,0x11=E]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,x=B,y=A,v1=D,v2=F]
 [concolic] finished, no more conditions to negate
