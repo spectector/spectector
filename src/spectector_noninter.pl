@@ -31,58 +31,81 @@
 :- use_module(concolic(concolic), [pathgoal/2, sym_filter/2, conc_stats/3, set_nextpath_timeout/1]).
 :- use_module(engine(runtime_control), [statistics/2]).
 
+:- data time_control/1.
+:- data time_data/1.
+:- data time_trace/1.
+:- data termination/1.
+:- data data_check/1.
+:- data control_check/1.
+
 :- export(noninter_check/2).
 % `Low` is a list of register names or memory indices that are "low".
 % `C0` is the initial configuration.
-noninter_check(Low, C0) :- % TODO: Keep track of number of paths -> safe*
+noninter_check(Low, C0) :-
 	set_nextpath_timeout(~get_limit(nextpath_timeout)),
 	get_maxtime(MaxTime),
 	%
 	log('[exploring paths]'),
 	( % (failure-driven loop)
-	  statistics(walltime, [TP0, _]),
-	  set_last_time(TP0),
-	  concrun(C0, (C, Trace)), % TODO: Get number of steps done
-	  statistics(walltime, [TP, _]),
-	  last_time(LTP), TimeP is TP - LTP, set_last_time(TP), % Trace time
-			( member(timeout, Trace) ->
-					log('[maximum number of steps reached]'),
-	        message(warning, 'maximum number of steps reached -- ignoring remaining path')
-	    ; true
+	  set_fact(time_control(0)), set_fact(time_data(0)), set_fact(time_trace(0)),
+	  set_fact(data_check(false)), set_fact(control_check(false)),
+	  set_last_time(_),
+	  ( concrun(C0, (C, Trace))
+	  ; all_conc_stats_unknown, % In the case there are paths and concrun fails, collect stats % TODO: the paths may not be unknown?
+	    collect_stats(conc_error, []), fail
+	  ),
+	  set_fact(time_control(0)), set_fact(time_data(0)), set_fact(time_trace(0)),
+	  set_fact(data_check(false)), set_fact(control_check(false)),
+
+	  last_time(LTP), set_last_time(TP), TimeTrace is TP - LTP, % Trace time
+	  set_fact(time_trace(TimeTrace)),
+	  ( member(timeout, Trace) ->
+	    log('[maximum number of steps reached]'),
+	    message(warning, 'maximum number of steps reached -- ignoring remaining path')
+	  ; true
+	  ),
+	  log('[path found]'),
+	  pretty_print([triple(C0,Trace,C)]),
+	  log('[checking speculative non-interference]'),
+	  C0 = xc(_,C0n,_),
+	  noninter_cex(Low, C0n, Trace, MaxTime, Safe),
+	  collect_stats(Safe, Trace),
+	  (
+	    ( Safe = unknown_noninter ->
+	      log('[unknown noninter]')
+	    ; Safe = global_timeout ->
+	      log('[global timeout reached]')
+	    ; Safe = no(Status) ->
+	      log('[path is unsafe]'),
+	      set_fact(termination(Status))
+	    ; log('[path is safe]')  % TODO: change log?
 	    ),
-	    log('[path found]'),
-	    pretty_print([triple(C0,Trace,C)]),
-	    log('[checking speculative non-interference]'),
-	    C0 = xc(_,C0n,_),
-	    statistics(walltime, [TC0, _]),
-	    set_last_time(TC0),
-	    noninter_cex(Low, C0n, Trace, MaxTime, Safe), % TODO: Get the SMT length for the stats
-	    statistics(walltime, [TC, _]),
-	    last_time(LTC), TimeC is TC - LTC, set_last_time(TC), % SMT time
-	    collect_stats(Safe, Trace, TimeP, TimeC),
-	    ( Safe = no(_) ->
-	        !, % stop on first unsafe path
-		log('[program is unsafe]')
-	    ; ( Safe = unknown_noninter ->
-		  log('[unknown noninter]')
-	      ; log('[path is safe]') % TODO: change log?
-	      ),
-	      % For bounded analysis
-	      ( check_maxtime_limit(MaxTime) ->
-		  log('[full timeout reached, program is assumed as safe]'),
-		  !, % stop here
-		  collect_path_limit_stats
-	      ; explored_paths_left(N) -> % Fails if not initialized
-		  ( N > 1 -> new_explored_path, fail % go for next path
-		  ; log('[maximum number of paths reached, program is assumed as safe]'),
-		    !, % stop here
-		    collect_path_limit_stats
-		  )
-	      ; fail % go for next path
+	    % For bounded analysis
+	    ( check_maxtime_limit(MaxTime) ->
+	      log('[full timeout reached, program is assumed as safe]'),
+	      !, % stop here
+	      collect_path_limit_stats
+	    ; explored_paths_left(N) -> % Fails if not initialized
+	      ( N > 1 ->
+		new_explored_path,
+		( ( Mode = data ; Mode = control ), stop_on_leak, termination(Mode) ->
+		  % Check if should stop
+		  log('[program is unsafe]')
+		; fail % go for next path
+		)
+	      ; log('[maximum number of paths reached, program is assumed as safe]'),
+		!, % stop here
+		collect_path_limit_stats
 	      )
+	    ; ( Mode = data ; Mode = control ),
+		stop_on_leak, termination(Mode),
+		log('[program is unsafe]')
+	    ; fail % go for next path
 	    )
-	; log('[program is safe]'), % TODO: except for timeouts!
-	  new_analysis_stat(status=string("safe"))
+	  )
+	; ( termination(T) -> true ; T = safe ),
+	  log(~atom_concat(~atom_concat('[program is ', T), ']')),
+	  new_analysis_stat(status=string(~atom_codes(T)))
 	).
 
 % Compute MaxTime for full timeout
@@ -118,25 +141,31 @@ rem_noninter_time(MaxTime, TO) :- MaxTime > 0, !, % (disabled otherwise)
 	).
 rem_noninter_time(_, 0). % timeout disabled
 
-collect_stats(Safe, Trace, TimeP, TimeC) :- stats, !,
+collect_stats(Safe, Trace) :- stats, !,
 	trace_length(Trace, TL),
 	add_path_stat(trace_length=TL),
 	findall(X, conc_stats_json(X), LConc),
 	add_path_stat(concolic_stats=LConc),
 	( Safe = no(Mode) -> StatusStr = ~atom_codes(Mode)
 	; Safe = unknown_noninter -> StatusStr = "unknown_noninter" % TODO: change?
+	; Safe = global_timeout -> StatusStr = "global_timeout" % TODO: change?
+	; Safe = conc_error -> StatusStr = "conc_error" % TODO: change?
 	; StatusStr = "safe"
 	),
-	new_path([status=string(StatusStr),time_trace=TimeP,time_solve=TimeC]),
+	time_data(TimeData), time_control(TimeControl), time_trace(TimeTrace),
+	control_check(ControlCheck), data_check(DataCheck),
+	new_path([status=string(StatusStr),time_trace=TimeTrace,time_data=TimeData,time_control=TimeControl,
+	control_check=ControlCheck, data_check=DataCheck]),
 	( Safe = no(_) -> new_analysis_stat(status=string(StatusStr)) ; true ).
-collect_stats(_, _, _, _).
+collect_stats(_, _).
 
 conc_stats_json(json([len=ConcLen,time=ConcT,status=string(ConcStStr)])) :-
 	conc_stats(ConcLen, ConcT, ConcSt),
 	ConcStStr = ~atom_codes(ConcSt).
 
 collect_path_limit_stats :- stats, !,
-	new_analysis_stat(status=string("safe_bound")). % TODO: Check if there are no paths to inspect left
+	( termination(T) -> true ; T = safe ), atom_concat(T, '_bound', TBound),
+	new_analysis_stat(status=string(~atom_codes(TBound))). % TODO: Check if there are no paths to inspect left
 collect_path_limit_stats.
 
 % Obtain a counter example for speculative non-interference.
@@ -145,13 +174,80 @@ collect_path_limit_stats.
 
 :- data noninter_status/2.
 
+
+% :- compilation_fact(short_circuit_cex).
+:- if(defined(short_circuit_cex)).
 noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
 	retractall_fact(noninter_status(_,_)),
-	( Mode = data ; Mode = control ),
-	\+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
+	( perform_data, Mode = data ; perform_control, Mode = control ),
+	% \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime), !.
+	set_last_time(_),
+	( \+ \+ noninter_cex_(Mode, Low, C0, Trace, MaxTime) ->
+		log(~atom_concat('[Found ',~atom_concat(Mode, ' leak]'))),
+		last_time(Time0), set_last_time(Time),
+		TotalTime is Time - Time0,
+		( Mode = data ->
+			set_fact(time_data(TotalTime)),
+			set_fact(time_control(0)),
+			set_fact(data_check(true))
+		; Mode = control ->
+			set_fact(time_control(TotalTime)),
+			set_fact(control_check(true))
+		)
+	; log(~atom_concat('[No ',~atom_concat(Mode, ' leak]'))),
+		last_time(Time0), set_last_time(Time),
+		TotalTime is Time - Time0,
+		( Mode = data -> set_fact(time_data(TotalTime))
+		; Mode = control -> set_fact(time_control(TotalTime))
+		),
+		fail
+	),
+	!.		
+:- else.
+noninter_cex(Low, C0, Trace, MaxTime, no(Mode)) :-
+	retractall_fact(noninter_status(_,_)),
+	set_last_time(_),
+	( perform_data ->
+	  ( \+ \+ noninter_cex_(data, Low, C0, Trace, MaxTime) ->
+	    log('[Found data leak]'),
+	    last_time(TimeD0), set_last_time(TimeD),
+	    TotalTimeD is TimeD - TimeD0,
+	    set_fact(time_data(TotalTimeD)),
+	    set_fact(data_check(true)),
+	    Leak = data
+	  ; log('[No data leak]'),
+	    last_time(TimeD0), set_last_time(TimeD),
+	    TotalTimeD is TimeD - TimeD0,
+	    set_fact(time_data(TotalTimeD)) )
+	; true
+	),
+	( perform_control ->
+	  ( \+ \+ noninter_cex_(control, Low, C0, Trace, MaxTime) ->
+	    log('[Found control leak]'),
+	    last_time(TimeC0), set_last_time(TimeC),
+	    TotalTimeC is TimeC - TimeC0,
+	    set_fact(time_control(TotalTimeC)),
+	    set_fact(control_check(true)),
+	    ( var(Leak) -> Leak = control ; true )
+	  ; log('[No control leak]'),
+	    last_time(TimeC0), set_last_time(TimeC),
+	    TotalTimeC is TimeC - TimeC0,
+	    set_fact(time_control(TotalTimeC))
+	  )
+	; true 
+	),
+	nonvar(Leak),
+	!,
+	Mode = Leak.
+:- endif.
+
+
+
 noninter_cex(_, _, _, _, Safe) :-
 	( noninter_status(_, unknown) -> % unknown safety if some get_model/2 returned unknown
 	    Safe = unknown_noninter
+	; noninter_status(_, global_timeout) ->
+	    Safe = global_timeout
 	; Safe = yes
 	).
 
@@ -186,7 +282,7 @@ noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
           ; check_maxtime_limit(MaxTime) % timeout w.r.t. MaxTime
 	  ) ->
 	    !, % (stop search, remember status, and fail)
-	    assertz_fact(noninter_status(Mode, unknown)),
+	    assertz_fact(noninter_status(Mode, global_timeout)),
 	    fail
 	; true
 	),
@@ -329,6 +425,13 @@ trace_length_([X|Xs], N0, N) :-
 	),
 	trace_length_(Xs, N1, N).
 
+all_conc_stats_unknown :-
+	findall(St, conc_stats(_,_,St), L),
+	L \= [],
+	all_conc_stats_unknown_(L).
+
+all_conc_stats_unknown_([unknown|L]) :- all_conc_stats_unknown_(L).
+all_conc_stats_unknown_([]).
 
 % ---------------------------------------------------------------------------
 % (log messages)

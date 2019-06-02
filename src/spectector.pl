@@ -29,6 +29,7 @@
 :- use_module(library(read)).
 :- use_module(library(system), [file_exists/1]).
 :- use_module(library(terms_io), [file_to_terms/2]).
+:- use_module(engine(basic_props), [num/1]).
 
 %:- use_module(concolic(symbolic), [set_ext_solver/1, get_ext_solver/1]).
 %:- use_module(concolic(concolic), [conc_stats/3]).
@@ -77,11 +78,11 @@ show_help :-
         noninter: non-interference check (default)
   --steps N        Execution step limit
   --timeout T
-                   Timeout for the whole analysis
+                   Timeout for the whole analysis (in ms)
   --nextpath-timeout T
-                   Timeout for computing next path
+                   Timeout for computing next path (in ms)
   --noninter-timeout T
-                   Timeout for non-interference check
+                   Timeout for non-interference check (in ms)
   --low LOW        Low registers or memory addresses for noninter
   --stats FILE     Show all the statistics on the file passed as
                    an output (in JSON format), to get the results
@@ -102,6 +103,12 @@ show_help :-
   --track-all-pc   The program counters are stored on the statistics
   --weak           Check the security condition under the weak
                    specification (values in memory must match)
+  --only-control   Detect only speculative leaks caused by 
+                   control-flow operations
+  --only-data      Detect only speculative leaks caused by memory
+                   operations
+  --continue-on-leak
+                   The analysis continues although a leak is found
 
 The input program can be a .muasm file (muAsm), a .asm file (Intel
 syntax), or a .s file (gnu assembler).
@@ -173,6 +180,9 @@ opt('', '--track-all-pc', As, As, [track_all_pc]).
 opt('', '--use-dump', As, As, [use_dump]).
 opt('', '--parse-uns', As, As, [parse_unsupported]).
 opt('', '--skip-uns', As, As, [skip_unsupported]).
+opt('', '--only-control', As, As, [only_control]).
+opt('', '--only-data', As, As, [only_data]).
+opt('', '--continue-on-leak', As, As, [continue_on_leak]).
 
 parse_args([Arg|Args], Opts, File) :-
 	( opt(Arg, _, Args, Args0, OptsA) % short
@@ -227,10 +237,22 @@ run(PrgFile, Opts) :-
 	( member(weak, Options) -> set_weak_sni
 	; true
 	),
+	( member(continue_on_leak, Options) -> true
+	; set_stop_on_leak
+	),
+	( member(only_data, Options) -> set_perform_data
+	; member(only_control, Options) -> set_perform_control
+	; set_perform_control, set_perform_data % If not, the 2 analysis are done
+	),
 	( member(use_dump, Options) -> UseDump = yes
 	; UseDump = no
 	),
-	( member(stats(StatsOut), Options) -> set_stats, init_general_stats % TODO: Clean file contents
+	( member(stats(StatsOut), Options) -> set_stats, init_general_stats, % TODO: Clean file contents
+	  atom_concat(StatsOut, '_paths', PathsJSON),
+	  set_paths_json(PathsJSON),
+	  open(PathsJSON, write, TempStream), % Clean file
+	  write_string(TempStream, "["),
+	  close(TempStream)
 	; true
 	),
 	( member(parse_unsupported, Options) ->
@@ -262,6 +284,7 @@ run(PrgFile, Opts) :-
 	( member(noninter_timeout(NonInterTO), Options) -> set_limit(noninter_timeout, NonInterTO)
 	; true % (use default)
 	),
+
 	( member(noinit, Options) -> InitMem = no ; InitMem = yes ),
 	statistics(walltime, [TParse0, _]),
 	( Ext = '.s' ->
@@ -326,7 +349,11 @@ analyze([Entry|Entries],Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assign
 	Time is T - T0,
 	( stats ->
 	  new_analysis_stat(total_time=Time),
-	  assert_analysis_stat(Entry, StatsOut)
+	  ( num(Entry) ->
+	    atom_codes(AtomEntry, ~number_codes(Entry))
+	  ; AtomEntry = Entry
+	  ),
+	  assert_analysis_stat(AtomEntry, StatsOut)
 	; true
 	),
 	analyze(Entries,Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut,c(Memory, Assignments),PrgFile,PrgNameExt,SpecOpt,Ana).

@@ -18,12 +18,19 @@
 %:- doc(title, "Spectector statistics").
 
 :- use_module(library(stream_utils), [write_string/2]).
+:- use_module(library(write), [write/2]).
 :- use_module(library(streams), [nl/0]).
 :- use_module(library(lists), [select/3, append/3]).
 :- use_module(engine(stream_basic), [open/3, close/1]).
 :- use_module(library(pillow/json), [json_to_string/2]).
 :- use_module(library(aggregates), [findall/3]).
+:- use_module(engine(runtime_control), [statistics/2]).
 %:- use_module(concolic(concolic_stats)).
+
+:- data paths_json/1.
+
+:- export(set_paths_json/1).
+set_paths_json(JSON) :- set_fact(paths_json(JSON)).
 
 % Main structure, it's a list, which element has the statistics of the path
 :- data paths/1.
@@ -42,9 +49,18 @@ new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
 	findall(F, list_stats(formulas_length, F), TL),
 	findall(J, list_stats(indirect_jumps, J), IJ),
 	ins_executed(IE),
-	assertz_fact(paths(N0=json([pc=json(PCFreqs), unsupported_ins=Unknown, unknown_labels=UL,
+	PATH = json([pc=json(PCFreqs), unsupported_ins=Unknown, unknown_labels=UL,
 	                        indirect_jumps=IJ, steps=IE,
-				formulas_length=TL|~append(Stats, ~findall(Stat, list_stats(path, Stat)))]))),
+				formulas_length=TL|~append(Stats, ~findall(Stat, list_stats(path, Stat)))]),
+	assertz_fact(paths(N0=PATH)),
+	json_to_string(PATH, StringJSON),
+	open(~paths_json, append, Stream),
+	write_string(Stream, "\"path"),
+	write(Stream, N0),
+	write_string(Stream, "\"="),
+	write_string(Stream, StringJSON),
+	write_string(Stream, ","),
+	close(Stream),
 	restore_path_info.
 
 
@@ -92,7 +108,7 @@ inc_pc(PC) :-
 :- data last_time/1. % To measure times
 :- export(last_time/1).
 :- export(set_last_time/1).
-set_last_time(T) :- set_fact(last_time(T)).
+set_last_time(T) :- statistics(walltime, [T, _]), set_fact(last_time(T)).
 
 :- export(assert_analysis_stat/2). % Format and emit
 assert_analysis_stat(Entry, Output) :-
