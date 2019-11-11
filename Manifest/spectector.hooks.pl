@@ -10,10 +10,10 @@
 
 % (hook)
 '$builder_hook'(custom_run(bindist, [])) :- !,
-	% Create a binary distribution
-	Script = ~bundle_path(spectector, 'Manifest/make_distro.sh'),
-	ThirdParty = ~path_concat(~ciao_root, 'third-party'),
-	Env = ['THIRDPARTY' = ThirdParty],
-	sh_process_call(Script, [], [env(Env)]).
+        % Create a binary distribution
+        Script = ~bundle_path(spectector, 'Manifest/make_distro.sh'),
+        ThirdParty = ~path_concat(~ciao_root, 'third-party'),
+        Env = ['THIRDPARTY' = ThirdParty],
+        sh_process_call(Script, [], [env(Env)]).
 
-	
+        

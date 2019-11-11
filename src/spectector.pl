@@ -47,20 +47,20 @@
 
 :- export(main/1).
 main(Args) :-
-	( parse_args(Args, Opts, Files) ->
-	    ( member(help, Opts) ->
-	        show_help
-	    ; Files = [File] ->
-  	        run(File, Opts)
-	    ; short_help, halt(1)
-	    )
-	; short_help, halt(1)
-	).
+        ( parse_args(Args, Opts, Files) ->
+            ( member(help, Opts) ->
+                show_help
+            ; Files = [File] ->
+                run(File, Opts)
+            ; short_help, halt(1)
+            )
+        ; short_help, halt(1)
+        ).
 
 % ---------------------------------------------------------------------------
 
 show_help :-
-	write_string(
+        write_string(
 "Usage: spectector [<options>...] <file>
 
   -h,--help        Show this help
@@ -120,7 +120,7 @@ syntax), or a .s file (gnu assembler).
 %        z3:        Z3 SMT (default)
 
 short_help :-
-	write_string(
+        write_string(
 "Unrecognized arguments, use '-h' for help\n"
 ).
 
@@ -131,46 +131,46 @@ opt('', '--noinit', As, As, [noinit]).
 %opt('', '--solver', [Solver|As], As, [solver(Solver)]).
 opt('', '--conf-file', [ConfFile|As], As, [conf_file(ConfFile)]).
 opt('-c', '--conf', [ConfAtm|As], As, [Opt]) :-
-	atom_codes(ConfAtm, ConfStr),
-	read_from_string_atmvars(ConfStr, Conf),
-	( Conf = c(M,A) -> true
-	; throw(wrong_conf(ConfAtm))
-	),
-	Opt = c(M,A).
+        atom_codes(ConfAtm, ConfStr),
+        read_from_string_atmvars(ConfStr, Conf),
+        ( Conf = c(M,A) -> true
+        ; throw(wrong_conf(ConfAtm))
+        ),
+        Opt = c(M,A).
 opt('', '--stack', [StackAtm|As], As, [Opt]) :-
-	atom_codes(StackAtm, StackStr),
-	read_from_string_atmvars(StackStr, Stack),
-	( Stack = stack(B,S,R) -> true
-	; throw(wrong_stack(StackAtm))
-	),
-	Opt = stack(B,S,R).
+        atom_codes(StackAtm, StackStr),
+        read_from_string_atmvars(StackStr, Stack),
+        ( Stack = stack(B,S,R) -> true
+        ; throw(wrong_stack(StackAtm))
+        ),
+        Opt = stack(B,S,R).
 opt('-w', '--window', [NAtm|As], As, [Opt]) :-
-	Opt = window(~atom_number(NAtm)).
+        Opt = window(~atom_number(NAtm)).
 opt('', '--bound-paths', [NAtm|As], As, [Opt]) :-
-	Opt = bound_paths(~atom_number(NAtm)).
+        Opt = bound_paths(~atom_number(NAtm)).
 opt('-e', '--entries', [EntriesAtm|As], As, [entries(Entries)]) :-
-	atom_codes(EntriesAtm, EntriesStr),
-	read_from_string_atmvars(EntriesStr, Entries),
-	( list(Entries) -> true
-	; throw(wrong_list(EntriesAtm))
-	). % TODO: Setup for numeric entry points?
+        atom_codes(EntriesAtm, EntriesStr),
+        read_from_string_atmvars(EntriesStr, Entries),
+        ( list(Entries) -> true
+        ; throw(wrong_list(EntriesAtm))
+        ). % TODO: Setup for numeric entry points?
 opt('', '--steps', [NAtm|As], As, [Opt]) :-
-	Opt = step(~atom_number(NAtm)).
+        Opt = step(~atom_number(NAtm)).
 opt('', '--timeout', [NAtm|As], As, [Opt]) :-
-	Opt = full_timeout(~atom_number(NAtm)).
+        Opt = full_timeout(~atom_number(NAtm)).
 opt('', '--nextpath-timeout', [NAtm|As], As, [Opt]) :-
-	Opt = nextpath_timeout(~atom_number(NAtm)).
+        Opt = nextpath_timeout(~atom_number(NAtm)).
 opt('', '--noninter-timeout', [NAtm|As], As, [Opt]) :-
-	Opt = noninter_timeout(~atom_number(NAtm)).
+        Opt = noninter_timeout(~atom_number(NAtm)).
 opt('', '--heap', [NAtm|As], As, [Opt]) :-
-	Opt = heap(~atom_number(NAtm)).
+        Opt = heap(~atom_number(NAtm)).
 opt('-a', '--analysis', [Ana|As], As, [ana(Ana)]).
 opt('', '--keep-sym', [IgnAtm|As], As, [keep_sym(Ign)]) :-
-	atom_codes(IgnAtm, IgnStr),
-	read_from_string_atmvars(IgnStr, Ign).
+        atom_codes(IgnAtm, IgnStr),
+        read_from_string_atmvars(IgnStr, Ign).
 opt('', '--low', [LowAtm|As], As, [low(Low)]) :-
-	atom_codes(LowAtm, LowStr),
-	read_from_string_atmvars(LowStr, Low).
+        atom_codes(LowAtm, LowStr),
+        read_from_string_atmvars(LowStr, Low).
 opt('-r', '--reduce', As, As, [reduce]).
 opt('', '--term-stop-spec', As, As, [term_stop_spec]).
 opt('', '--weak', As, As, [weak]).
@@ -185,14 +185,14 @@ opt('', '--only-data', As, As, [only_data]).
 opt('', '--continue-on-leak', As, As, [continue_on_leak]).
 
 parse_args([Arg|Args], Opts, File) :-
-	( opt(Arg, _, Args, Args0, OptsA) % short
-	; opt(_, Arg, Args, Args0, OptsA) % long
-	),
-	!,
-	append(OptsA, Opts0, Opts),
-	parse_args(Args0, Opts0, File).
+        ( opt(Arg, _, Args, Args0, OptsA) % short
+        ; opt(_, Arg, Args, Args0, OptsA) % long
+        ),
+        !,
+        append(OptsA, Opts0, Opts),
+        parse_args(Args0, Opts0, File).
 parse_args([F|Args], Opts, [F|Files]) :- !,
-	parse_args(Args, Opts, Files).
+        parse_args(Args, Opts, Files).
 parse_args([], [], []).
 
 % ---------------------------------------------------------------------------
@@ -201,194 +201,194 @@ parse_args([], [], []).
 %   - allow max_paths (max number of explored paths) -> Use the flag
 :- export(run/2).
 run(PrgFile, Opts) :-
-	path_split(PrgFile, Path, PrgNameExt),
-	path_splitext(PrgNameExt, _PrgBasename, Ext),
-	( ConfContents = ~file_to_terms(~get_conf_file(Opts,Path))
-	; ConfContents = []
-	),
-	Options = ~flatten([Opts, ConfContents]),
-	% Initial configurations
-	extract_query(c(M0,A0), Options, [[],[]]),
-	% Specification of the analysis
-	extract_query(ana(Ana0), Options, [noninter]),
-	% Set up heap direction
-	extract_query(heap(HeapDir), Options, [1024]),
-	% Ignore specified variable initializations
-	extract_query(keep_sym(KeepS), Options, [[]]),
-	% Entry points
-	extract_query(entries(Entries), Options, [[0]]),
-	% Set up stack
-	extract_query(stack(Bp, Sp, Return), [Options], [0xf00000, 0xf000000, -1]),
-	( Ana0 = noninter ->
-	  extract_query(low(Low), Options, [[]]),
-	  Ana = noninter(Low)
-	; Ana = Ana0
-	),
-	( member(term_stop_spec, Options) -> set_term_stop_spec
-	; true % (use default)
-	),
-	( member(bound_paths(BoundPaths), Options) ->
-	  set_explored_paths_left(BoundPaths)
-	; true % (use default)
-	),
-	( member(track_all_pc, Options) -> set_track_all_pc
-	; true % (use default)
-	),
-	( member(weak, Options) -> set_weak_sni
-	; true
-	),
-	( member(continue_on_leak, Options) -> true
-	; set_stop_on_leak
-	),
-	( member(only_data, Options) -> set_perform_data
-	; member(only_control, Options) -> set_perform_control
-	; set_perform_control, set_perform_data % If not, the 2 analysis are done
-	),
-	( member(use_dump, Options) -> UseDump = yes
-	; UseDump = no
-	),
-	( member(stats(StatsOut), Options) -> set_stats, init_general_stats, % TODO: Clean file contents
-	  atom_concat(StatsOut, '_paths', PathsJSON),
-	  set_paths_json(PathsJSON),
-	  open(PathsJSON, write, TempStream), % Clean file
-	  write_string(TempStream, "["),
-	  close(TempStream)
-	; true
-	),
-	( member(parse_unsupported, Options) ->
-	  init_unsupported_instructions,
-	  ( member(skip_unsupported, Options) ->
-	    set_skip_unsupported
-	  ; true
-	  )
-	; true
-	),
-	% ( member(solver(Solver), Options) -> set_ext_solver(Solver)
-	% ; true % (use default)
-	% ),
-	( member(window(WSize), Options) -> set_window_size(WSize)
-	; true % (use default)
-	),
-	( member(no_show_def, Options) -> true
-	; set_print_defs % (use default)
-	),
-	( member(step(SLimit), Options) -> set_limit(step, SLimit)
-	; true % (use default)
-	),
-	( member(full_timeout(FullTO), Options) -> set_limit(full_timeout, FullTO)
-	; true % (use default)
-	),
-	( member(nextpath_timeout(NextPathTO), Options) -> set_limit(nextpath_timeout, NextPathTO)
-	; true % (use default)
-	),
-	( member(noninter_timeout(NonInterTO), Options) -> set_limit(noninter_timeout, NonInterTO)
-	; true % (use default)
-	),
+        path_split(PrgFile, Path, PrgNameExt),
+        path_splitext(PrgNameExt, _PrgBasename, Ext),
+        ( ConfContents = ~file_to_terms(~get_conf_file(Opts,Path))
+        ; ConfContents = []
+        ),
+        Options = ~flatten([Opts, ConfContents]),
+        % Initial configurations
+        extract_query(c(M0,A0), Options, [[],[]]),
+        % Specification of the analysis
+        extract_query(ana(Ana0), Options, [noninter]),
+        % Set up heap direction
+        extract_query(heap(HeapDir), Options, [1024]),
+        % Ignore specified variable initializations
+        extract_query(keep_sym(KeepS), Options, [[]]),
+        % Entry points
+        extract_query(entries(Entries), Options, [[0]]),
+        % Set up stack
+        extract_query(stack(Bp, Sp, Return), [Options], [0xf00000, 0xf000000, -1]),
+        ( Ana0 = noninter ->
+          extract_query(low(Low), Options, [[]]),
+          Ana = noninter(Low)
+        ; Ana = Ana0
+        ),
+        ( member(term_stop_spec, Options) -> set_term_stop_spec
+        ; true % (use default)
+        ),
+        ( member(bound_paths(BoundPaths), Options) ->
+          set_explored_paths_left(BoundPaths)
+        ; true % (use default)
+        ),
+        ( member(track_all_pc, Options) -> set_track_all_pc
+        ; true % (use default)
+        ),
+        ( member(weak, Options) -> set_weak_sni
+        ; true
+        ),
+        ( member(continue_on_leak, Options) -> true
+        ; set_stop_on_leak
+        ),
+        ( member(only_data, Options) -> set_perform_data
+        ; member(only_control, Options) -> set_perform_control
+        ; set_perform_control, set_perform_data % If not, the 2 analysis are done
+        ),
+        ( member(use_dump, Options) -> UseDump = yes
+        ; UseDump = no
+        ),
+        ( member(stats(StatsOut), Options) -> set_stats, init_general_stats, % TODO: Clean file contents
+          atom_concat(StatsOut, '_paths', PathsJSON),
+          set_paths_json(PathsJSON),
+          open(PathsJSON, write, TempStream), % Clean file
+          write_string(TempStream, "["),
+          close(TempStream)
+        ; true
+        ),
+        ( member(parse_unsupported, Options) ->
+          init_unsupported_instructions,
+          ( member(skip_unsupported, Options) ->
+            set_skip_unsupported
+          ; true
+          )
+        ; true
+        ),
+        % ( member(solver(Solver), Options) -> set_ext_solver(Solver)
+        % ; true % (use default)
+        % ),
+        ( member(window(WSize), Options) -> set_window_size(WSize)
+        ; true % (use default)
+        ),
+        ( member(no_show_def, Options) -> true
+        ; set_print_defs % (use default)
+        ),
+        ( member(step(SLimit), Options) -> set_limit(step, SLimit)
+        ; true % (use default)
+        ),
+        ( member(full_timeout(FullTO), Options) -> set_limit(full_timeout, FullTO)
+        ; true % (use default)
+        ),
+        ( member(nextpath_timeout(NextPathTO), Options) -> set_limit(nextpath_timeout, NextPathTO)
+        ; true % (use default)
+        ),
+        ( member(noninter_timeout(NonInterTO), Options) -> set_limit(noninter_timeout, NonInterTO)
+        ; true % (use default)
+        ),
 
-	( member(noinit, Options) -> InitMem = no ; InitMem = yes ),
-	statistics(walltime, [TParse0, _]),
-	( Ext = '.s' ->
-	    Prg = ~translate_x86_to_muasm(gas, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
-	; Ext = '.asm' ->
-	    Prg = ~translate_x86_to_muasm(intel, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
-	; Ext = '.muasm' ->
-	    Prg = ~(muasm_parser:parse_file(PrgFile, Dic)),
-	    Memory0 = [], Locs0 = [] % TODO: allow init mem and symbols?
-	; throw(unsupported_extension(PrgFile))
-	), % TODO: Introduce to Prg "[label(end), stop]"
-	statistics(walltime, [TParse, _]),
-	( member(noinit, Options) -> Memory=[], Locs=Locs0
-	; Memory=Memory0, Locs=Locs0
-	),
-	TimeParse is TParse - TParse0,
-	load_program(Prg,Locs), % (This instantiates labels too)
-	( print_defs ->
-	    write('program:'), nl,
-	    show_program
-	; true
-	),
-	( stats ->
-	  new_general_stat(time_parse=TimeParse),
-	  new_general_stat(name=string(~atom_codes(PrgFile)))
-	; true
-	),
-	analyze(Entries,Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, []), PrgFile, PrgNameExt, Opts, Ana).
+        ( member(noinit, Options) -> InitMem = no ; InitMem = yes ),
+        statistics(walltime, [TParse0, _]),
+        ( Ext = '.s' ->
+            Prg = ~translate_x86_to_muasm(gas, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
+        ; Ext = '.asm' ->
+            Prg = ~translate_x86_to_muasm(intel, PrgFile, UseDump, Dic, KeepS, InitMem, HeapDir, memlocs(Memory0, Locs0))
+        ; Ext = '.muasm' ->
+            Prg = ~(muasm_parser:parse_file(PrgFile, Dic)),
+            Memory0 = [], Locs0 = [] % TODO: allow init mem and symbols?
+        ; throw(unsupported_extension(PrgFile))
+        ), % TODO: Introduce to Prg "[label(end), stop]"
+        statistics(walltime, [TParse, _]),
+        ( member(noinit, Options) -> Memory=[], Locs=Locs0
+        ; Memory=Memory0, Locs=Locs0
+        ),
+        TimeParse is TParse - TParse0,
+        load_program(Prg,Locs), % (This instantiates labels too)
+        ( print_defs ->
+            write('program:'), nl,
+            show_program
+        ; true
+        ),
+        ( stats ->
+          new_general_stat(time_parse=TimeParse),
+          new_general_stat(name=string(~atom_codes(PrgFile)))
+        ; true
+        ),
+        analyze(Entries,Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, []), PrgFile, PrgNameExt, Opts, Ana).
 
 analyze([],_Prg,_Dic,_C0,_Bp,_Return,_Sp,_StatsOut,_C,_PrgFile,_PrgNameExt, _Opts, _Ana).
 analyze([Entry|Entries],Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut, c(Memory, Assignments), PrgFile, PrgNameExt, Opts, Ana) :-
-	init_paths, % Initialize number of paths traced
-	init_analysis_stats,
-	( member(nospec, Opts) -> SpecOpt = nospec
-	; SpecOpt = spec % (default)
-	),
-	M1 = ~append(M0, [Sp=Return|Memory]),
-	A1 = ~append(A0, [pc=Entry, sp=Sp, bp=Bp|Assignments]),
-	translate_labels(M1, Dic, M),
-	translate_labels(A1, Dic, A),
-	% write(labels(Dic)), nl,
-	%
-	write('---------------------------------------------------------------------------'), nl,
-	write('prg='), writeq(PrgNameExt), write(', '), % program
-	write(SpecOpt), write(', '), % spec or nonspec
-	( SpecOpt = spec -> write('window_size='), write(~get_window_size), write(', ') % speculative window size
-	; true
-	),
-	write('entry='),  write(Entry), write(', '), % speculative window size
-	% write('solver='), write(~get_ext_solver), write(', '), % external solver
-	write('ana='), write(Ana), nl, % kind of analysis
-	( print_defs ->
-	    write('m='), write(M), nl, % initial memory
-	    write('a='), write(A), nl % initial registers
-	; true
-	),
-	%
-	C0 = ~initc(SpecOpt, M, A),
-	statistics(walltime, [T0, _]),
-	runtest2(Ana, C0),
-	statistics(walltime,[T, _]),
-	Time is T - T0,
-	( stats ->
-	  new_analysis_stat(total_time=Time),
-	  ( num(Entry) ->
-	    atom_codes(AtomEntry, ~number_codes(Entry))
-	  ; AtomEntry = Entry
-	  ),
-	  assert_analysis_stat(AtomEntry, StatsOut)
-	; true
-	),
-	analyze(Entries,Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut,c(Memory, Assignments),PrgFile,PrgNameExt,SpecOpt,Ana).
+        init_paths, % Initialize number of paths traced
+        init_analysis_stats,
+        ( member(nospec, Opts) -> SpecOpt = nospec
+        ; SpecOpt = spec % (default)
+        ),
+        M1 = ~append(M0, [Sp=Return|Memory]),
+        A1 = ~append(A0, [pc=Entry, sp=Sp, bp=Bp|Assignments]),
+        translate_labels(M1, Dic, M),
+        translate_labels(A1, Dic, A),
+        % write(labels(Dic)), nl,
+        %
+        write('---------------------------------------------------------------------------'), nl,
+        write('prg='), writeq(PrgNameExt), write(', '), % program
+        write(SpecOpt), write(', '), % spec or nonspec
+        ( SpecOpt = spec -> write('window_size='), write(~get_window_size), write(', ') % speculative window size
+        ; true
+        ),
+        write('entry='),  write(Entry), write(', '), % speculative window size
+        % write('solver='), write(~get_ext_solver), write(', '), % external solver
+        write('ana='), write(Ana), nl, % kind of analysis
+        ( print_defs ->
+            write('m='), write(M), nl, % initial memory
+            write('a='), write(A), nl % initial registers
+        ; true
+        ),
+        %
+        C0 = ~initc(SpecOpt, M, A),
+        statistics(walltime, [T0, _]),
+        runtest2(Ana, C0),
+        statistics(walltime,[T, _]),
+        Time is T - T0,
+        ( stats ->
+          new_analysis_stat(total_time=Time),
+          ( num(Entry) ->
+            atom_codes(AtomEntry, ~number_codes(Entry))
+          ; AtomEntry = Entry
+          ),
+          assert_analysis_stat(AtomEntry, StatsOut)
+        ; true
+        ),
+        analyze(Entries,Prg,Dic,c(M0,A0),Bp,Return,Sp,StatsOut,c(Memory, Assignments),PrgFile,PrgNameExt,SpecOpt,Ana).
 
 translate_labels([], _, []).
 translate_labels([K=V|KVs], Dic, [K=V2|KVs2]) :-
-	( dic_get(Dic, V, V1) -> V2 = V1
-	; V2 = V
-	),
-	translate_labels(KVs, Dic, KVs2).
+        ( dic_get(Dic, V, V1) -> V2 = V1
+        ; V2 = V
+        ),
+        translate_labels(KVs, Dic, KVs2).
 
 initc(nospec, M, A) := ~new_c(M, A).
 initc(spec, M, A) := ~new_xc(M, A).
 
 runtest2(none, _C0) :- !.
 runtest2(reach, C0) :- !,
-	( % (failure-driven loop)
-	  (C,Trace) = ~concrun(C0),
-	     %display(user_error, t), ( conc_stats(Len,T,St), display(user_error, [Len,T,St]), fail ; true ), nl(user_error),
-	     pretty_print([triple(C0,Trace,C)]),
-	     fail
-	; true
-	).
+        ( % (failure-driven loop)
+          (C,Trace) = ~concrun(C0),
+             %display(user_error, t), ( conc_stats(Len,T,St), display(user_error, [Len,T,St]), fail ; true ), nl(user_error),
+             pretty_print([triple(C0,Trace,C)]),
+             fail
+        ; true
+        ).
 runtest2(reach1, C0) :- !,
-	( (C,Trace) = ~mrun(C0) -> true ; fail ), % (only first path)
-	pretty_print([triple(C0,Trace,C)]).
+        ( (C,Trace) = ~mrun(C0) -> true ; fail ), % (only first path)
+        pretty_print([triple(C0,Trace,C)]).
 runtest2(noninter(Low), C0) :- !,
-	noninter_check(Low, C0).
+        noninter_check(Low, C0).
 
 get_conf_file(Opts,Path) := ConfFile :-
-	( member(conf_file(ConfFile), Opts) ->
-	    true
-	; path_concat(Path, 'config', ConfFile),
-	  file_exists(ConfFile)
-	).
+        ( member(conf_file(ConfFile), Opts) ->
+            true
+        ; path_concat(Path, 'config', ConfFile),
+          file_exists(ConfFile)
+        ).
 
 % Query on the list of lists, if there's no coincidence, returns a default value
 :- export(extract_query/3).
