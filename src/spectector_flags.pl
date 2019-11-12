@@ -21,26 +21,26 @@
 
 :- export(set_window_size/1).
 set_window_size(N) :-
-        set_fact(window_size(N)).
+    set_fact(window_size(N)).
 
 :- export(get_window_size/1).
 get_window_size(N) :-
-        ( window_size(N0) -> N0 = N
-        ; N = 200 % default
-        ).
+    ( window_size(N0) -> N0 = N
+    ; N = 200 % default
+    ).
 
 :- data limit_value/2.
 
 :- export(set_limit/2).
 set_limit(Name, Val) :-
-        retractall_fact(limit_value(Name, _)),
-        assertz_fact(limit_value(Name, Val)).
+    retractall_fact(limit_value(Name, _)),
+    assertz_fact(limit_value(Name, Val)).
 
 :- export(get_limit/2).
 get_limit(Name, Val) :-
-        ( limit_value(Name, Val0) -> Val = Val0
-        ; default_limit(Name, Val)
-        ).
+    ( limit_value(Name, Val0) -> Val = Val0
+    ; default_limit(Name, Val)
+    ).
 
 default_limit(step, 100000).
 default_limit(full_timeout, 0). % no timeout

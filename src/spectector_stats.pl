@@ -38,30 +38,30 @@ set_paths_json(JSON) :- set_fact(paths_json(JSON)).
 :- export(init_paths/0).
 init_paths :- retractall_fact(paths(_)), set_fact(n_paths(0)), restore_path_info.
 restore_path_info :- init_pc_freq, init_unsupported_instructions,
-        init_path_stats, init_unknown_labels, init_formulas_length,
-        init_indirect_jumps, restart_ins_executed.
+    init_path_stats, init_unknown_labels, init_formulas_length,
+    init_indirect_jumps, restart_ins_executed.
 :- export(new_path/1).
 new_path(Stats) :- % Input must be a list with the format [k1=v1,k2=v2...]
-        findall(PC=Val, pc_freq(PC, Val), PCFreqs),
-        n_paths(N0), N1 is N0 + 1, set_fact(n_paths(N1)),
-        unsupported_instructions(Unknown),
-        findall(L, list_stats(unknown_labels, L), UL),
-        findall(F, list_stats(formulas_length, F), TL),
-        findall(J, list_stats(indirect_jumps, J), IJ),
-        ins_executed(IE),
-        PATH = json([pc=json(PCFreqs), unsupported_ins=Unknown, unknown_labels=UL,
-                                indirect_jumps=IJ, steps=IE,
-                                formulas_length=TL|~append(Stats, ~findall(Stat, list_stats(path, Stat)))]),
-        assertz_fact(paths(N0=PATH)),
-        json_to_string(PATH, StringJSON),
-        open(~paths_json, append, Stream),
-        write_string(Stream, "\"path"),
-        write(Stream, N0),
-        write_string(Stream, "\"="),
-        write_string(Stream, StringJSON),
-        write_string(Stream, ","),
-        close(Stream),
-        restore_path_info.
+    findall(PC=Val, pc_freq(PC, Val), PCFreqs),
+    n_paths(N0), N1 is N0 + 1, set_fact(n_paths(N1)),
+    unsupported_instructions(Unknown),
+    findall(L, list_stats(unknown_labels, L), UL),
+    findall(F, list_stats(formulas_length, F), TL),
+    findall(J, list_stats(indirect_jumps, J), IJ),
+    ins_executed(IE),
+    PATH = json([pc=json(PCFreqs), unsupported_ins=Unknown, unknown_labels=UL,
+                            indirect_jumps=IJ, steps=IE,
+                            formulas_length=TL|~append(Stats, ~findall(Stat, list_stats(path, Stat)))]),
+    assertz_fact(paths(N0=PATH)),
+    json_to_string(PATH, StringJSON),
+    open(~paths_json, append, Stream),
+    write_string(Stream, "\"path"),
+    write(Stream, N0),
+    write_string(Stream, "\"="),
+    write_string(Stream, StringJSON),
+    write_string(Stream, ","),
+    close(Stream),
+    restore_path_info.
 
 
 :- data list_stats/2.
@@ -99,11 +99,11 @@ new_indirect_jump(Reg) :- assertz_fact(list_stats(indirect_jumps, Reg)).
 init_pc_freq :- retractall_fact(pc_freq(_,_)).
 :- export(inc_pc/1).
 inc_pc(PC) :-
-        ( retract_fact(pc_freq(PC, N0)) ->
-            N1 is N0 + 1,
-            assertz_fact(pc_freq(PC,N1))
-        ; assertz_fact(pc_freq(PC, 1))
-        ).
+    ( retract_fact(pc_freq(PC, N0)) ->
+        N1 is N0 + 1,
+        assertz_fact(pc_freq(PC,N1))
+    ; assertz_fact(pc_freq(PC, 1))
+    ).
 
 :- data last_time/1. % To measure times
 :- export(last_time/1).
@@ -112,21 +112,21 @@ set_last_time(T) :- statistics(walltime, [T, _]), set_fact(last_time(T)).
 
 :- export(assert_analysis_stat/2). % Format and emit
 assert_analysis_stat(Entry, Output) :-
-        ( Output = stdout -> % If stdout
-          OutStream = user_output,
-          File=false
-        ; open(Output, append, OutStream),
-          File=string(~atom_codes(Output))
-        ),
-        n_paths(L),
-        Paths = [length=L|~findall(PATHS, paths(PATHS))],
-        Stats = ~append(~findall(AS, list_stats(analysis_stats, AS)),
-                        ~findall(GS, list_stats(general_stats, GS))),
-        JSONcontents = [file=File,paths=json(Paths),entry=string(~atom_codes(Entry))|Stats],
-        json_to_string(json(JSONcontents), Str),
-        write_string(OutStream, Str),
-        write_string(OutStream, ","), nl,
-        close(OutStream).
+    ( Output = stdout -> % If stdout
+        OutStream = user_output,
+        File=false
+    ; open(Output, append, OutStream),
+      File=string(~atom_codes(Output))
+    ),
+    n_paths(L),
+    Paths = [length=L|~findall(PATHS, paths(PATHS))],
+    Stats = ~append(~findall(AS, list_stats(analysis_stats, AS)),
+                    ~findall(GS, list_stats(general_stats, GS))),
+    JSONcontents = [file=File,paths=json(Paths),entry=string(~atom_codes(Entry))|Stats],
+    json_to_string(json(JSONcontents), Str),
+    write_string(OutStream, Str),
+    write_string(OutStream, ","), nl,
+    close(OutStream).
 
 :- data unsupported_instructions/1.
 :- export(unsupported_instructions/1).
@@ -134,8 +134,8 @@ assert_analysis_stat(Entry, Output) :-
 init_unsupported_instructions :- set_fact(unsupported_instructions(0)).
 :- export(increment_unsupported_instructions/0).
 increment_unsupported_instructions :-
-        unsupported_instructions(N0), N1 is N0 + 1,
-        set_fact(unsupported_instructions(N1)).
+    unsupported_instructions(N0), N1 is N0 + 1,
+    set_fact(unsupported_instructions(N1)).
 
 :- data ins_executed/1.
 :- export(restart_ins_executed/0).

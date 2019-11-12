@@ -30,17 +30,17 @@
 % preserved in the output.
 :- export(pretty_print/1).
 pretty_print(CTs) :-
-        \+ \+ pretty_print_(CTs).
+    \+ \+ pretty_print_(CTs).
 
 pretty_print_(CTs0) :-
-        CTs1 = ~remap(CTs0),
-        CTs = ~noarr(CTs1),
-        varset(CTs, Vars),
-        unassign(Vars, Map),
-        numbervars(Vars, 0, _),
-        write('Assignments:'), nl,
-        write('  '), write_map(Map), nl,
-        print_items(CTs).
+    CTs1 = ~remap(CTs0),
+    CTs = ~noarr(CTs1),
+    varset(CTs, Vars),
+    unassign(Vars, Map),
+    numbervars(Vars, 0, _),
+    write('Assignments:'), nl,
+    write('  '), write_map(Map), nl,
+    print_items(CTs).
 
 % turn dic into map
 remap([]) := [].
@@ -74,41 +74,41 @@ noarr_sym(update(_,K,_,_)) :- atom(K), !. % (ignore)
 % print items
 print_items([]).
 print_items([X|Xs]) :-
-        print_item(X),
-        print_items(Xs).
+    print_item(X),
+    print_items(Xs).
 
 print_item(msg(Msg)) :- !,
-        lformat(Msg), nl.
+    lformat(Msg), nl.
 print_item((C,T)) :- !,
-        write('conf:'), nl, print_conf(C),
-        write('trace:'), nl, print_trace(T).
+    write('conf:'), nl, print_conf(C),
+    write('trace:'), nl, print_trace(T).
 print_item(triple(C0,T,C)) :- !,
-        write('initial conf:'), nl, print_conf(C0),
-        write('trace:'), nl, print_trace(T),
-        write('final conf:'), nl, print_conf(C).
+    write('initial conf:'), nl, print_conf(C0),
+    write('trace:'), nl, print_trace(T),
+    write('final conf:'), nl, print_conf(C).
 
 print_conf(c(M,A)) :-
-        print_defs, !,
-        write('  m='), write_map(M), nl,
-        write('  a='), write_map(A), nl.
+    print_defs, !,
+    write('  m='), write_map(M), nl,
+    write('  a='), write_map(A), nl.
 print_conf(xc(I,c(M,A),S)) :-
-        print_defs, !,
-        write('  i='), writeq(I), nl,
-        write('  m='), write_map(M), nl,
-        write('  a='), write_map(A), nl,
-        write('  s='), writeq(S), nl.
+    print_defs, !,
+    write('  i='), writeq(I), nl,
+    write('  m='), write_map(M), nl,
+    write('  a='), write_map(A), nl,
+    write('  s='), writeq(S), nl.
 print_conf(_).
 
 print_trace([]).
 print_trace([X|Xs]) :-
-        write('  '),
-        ( integer(X) ->
-            write(X), write(:)
-        ; X = sym(X0) ->
-            write('# '), writeq(X0), nl
-        ; writeq(X), nl
-        ),
-        print_trace(Xs).
+    write('  '),
+    ( integer(X) ->
+        write(X), write(:)
+    ; X = sym(X0) ->
+        write('# '), writeq(X0), nl
+    ; writeq(X), nl
+    ),
+    print_trace(Xs).
 
 write_map(Map) :- write('['), write_map_(Map), write(']').
 
