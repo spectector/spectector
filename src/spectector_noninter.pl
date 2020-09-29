@@ -391,9 +391,9 @@ select_spec_cond([start(I)|Xs], Trace, C) :-
     ( % obtain cond and drop the rest of spec
       append(BeforeC, [sym(cond(C))|AfterC], Spec),
       Trace = ~append([start(I)|BeforeC], Trace0),
-      Trace0 = ~only_specmarks(~append(AfterC, Rest)) % drop all (wrong, not enough)
+%      Trace0 = ~only_specmarks(~append(AfterC, Rest)) % drop all (wrong, not enough)
       Trace0 = ~append(~only_specmarks(AfterC), [End|Rest]) % drop spec (it should be fine)
-      Trace0 = ~append(AfterC, [End|Rest]) % drop spec (spurious during spec, is it fine?)
+%      Trace0 = ~append(AfterC, [End|Rest]) % drop spec (spurious during spec, is it fine?)
     ; % continue with other speculative fragment
       append([start(I)|Spec], [End|Trace0], Trace),
       select_spec_cond(Rest, Trace0, C)
