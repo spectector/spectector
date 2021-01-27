@@ -27,7 +27,7 @@
 :- use_module(muasm_print).
 :- use_module(spectector_flags).
 :- use_module(spectector_stats).
-:- use_module(concolic(symbolic)).
+:- use_module(concolic(ciaosmt)).
 :- use_module(concolic(concolic), [pathgoal/2, sym_filter/2, conc_stats/3, set_nextpath_timeout/1]).
 :- use_module(engine(runtime_control), [statistics/2]).
 
@@ -251,8 +251,8 @@ noninter_cex(_, _, _, _, Safe) :-
     ).
 
 noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
-    erase_and_dump_constrs(C0a, InGoalA),
-    erase_model([InGoalA,TraceA0]), % remove all other concrete assignments
+    erase_constraints(C0a, InGoalA, _),
+    erase_constraints(TraceA0, _, _), % remove all other concrete assignments
     get_noninter_maxtime(NoninterMaxTime),
     ( Mode = data ->
         % Data-based leak
@@ -263,7 +263,9 @@ noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
                        LowGoal),
         differdisj(TraceA, TraceB, OrCond),
         \+ OrCond = [], % (just fail)
-        DiffGoal = [~or_cond(OrCond) = 1]
+        % DiffGoal = [~or_cond(OrCond)], % TODO: fixme, allow \/ on booleans
+        DiffGoal = [~or_cond(OrCond) = bv(1,64)],
+        WhereA = [], WhereB = [] % TODO: where?
     ; Mode = control ->
         % Control-based leak
         % (nondet)
@@ -272,8 +274,8 @@ noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
                        C0a, InGoalA, TraceA, CondA,
                        C0b, InGoalB, TraceB, CondB,
                        LowGoal),
-        NegCondB = ~negcond(CondB), DiffGoal = [CondA,NegCondB],
-        X = sym(cond(CondA)), Y = sym(cond(NegCondB))
+        NegCondB = ~negbool(CondB), DiffGoal = [CondA,NegCondB],
+        WhereA = [sym(cond(CondA))], WhereB = [sym(cond(NegCondB))]
     ; throw(unknown_mode(Mode))
     ),
     rem_noninter_time(NoninterMaxTime, SolverTO),
@@ -293,21 +295,22 @@ noninter_cex_(Mode, Low, C0a, TraceA0, MaxTime) :-
                     ~append(LowGoal,DiffGoal))))),
     add_formula_length(~length(Goal)),
     set_solver_opt(timeout, SolverTO),
-    get_model(Goal, Status),
+    add_constraints(Goal),
+    try_solve(Status),
     assertz_fact(noninter_status(Mode, Status)),
     Status = sat, % (fail otherwise)
     %
-    show_cex(C0a, TraceA, C0b, TraceB, X, Y).
+    show_cex(C0a, TraceA, C0b, TraceB, WhereA, WhereB).
 
-show_cex(C0a, _TraceA, C0b, _TraceB, X, Y) :-
+show_cex(C0a, _TraceA, C0b, _TraceB, WhereA, WhereB) :-
     log('[path is unsafe, showing counter-example initial configurations A and B]'),
     pretty_print([
       msg('Case A:'),
-      (C0a,[X]), % TODO: where?
-      % (C0a,~append(TraceA, [X])),
+      (C0a,WhereA), % TODO: where?
+      % (C0a,~append(TraceA, WhereA)),
       msg('Case B:'),
-      (C0b,[Y]) % TODO: where?
-      % (C0b,~append(TraceB, [Y]))
+      (C0b,WhereB) % TODO: where?
+      % (C0b,~append(TraceB, WhereB))
     ]).
 
 % Obtain a copy of the trace, unifying:
@@ -379,8 +382,9 @@ differdisj([X|Xs], [Y|Ys], OrCond) :-
 or_cond([X]) := R :- !, R = X.
 or_cond([X|Xs]) := X\/(~or_cond(Xs)).
 
-differ(load(A), load(B), (A\=B)) :- A \== B.
-differ(store(A), store(B), (A\=B)) :- A \== B.
+% TODO: use booleans instead of bitvectors
+differ(load(A), load(B), ite(A\=B, bv(1,64), bv(0,64))) :- A \== B.
+differ(store(A), store(B), ite(A\=B, bv(1,64), bv(0,64))) :- A \== B.
 
 % Obtain trace prefixes before a C cond(_) during speculation (fail if
 % there are no more prefixes)

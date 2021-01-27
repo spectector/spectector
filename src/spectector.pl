@@ -31,7 +31,7 @@
 :- use_module(library(terms_io), [file_to_terms/2]).
 :- use_module(engine(basic_props), [num/1]).
 
-%:- use_module(concolic(symbolic), [set_ext_solver/1, get_ext_solver/1]).
+%:- use_module(concolic(ciaosmt), [set_ext_solver/1, get_ext_solver/1]).
 %:- use_module(concolic(concolic), [conc_stats/3]).
 :- use_module(muasm_translator(muasm_parser)).
 :- use_module(muasm_translator(x86_to_muasm)).

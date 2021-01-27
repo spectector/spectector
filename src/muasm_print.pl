@@ -22,7 +22,7 @@
 :- use_module(library(write)).
 :- use_module(library(streams)).
 :- use_module(library(format)).
-:- use_module(concolic(symbolic), [unassign/2, sym_to_map/2]).
+:- use_module(concolic(ciaosmt), [erase_constraints/3, array_elems/2]).
 :- use_module(spectector_flags, [print_defs/0]).
 
 % Pretty print configuration and traces with symbolic information and
@@ -36,7 +36,7 @@ pretty_print_(CTs0) :-
     CTs1 = ~remap(CTs0),
     CTs = ~noarr(CTs1),
     varset(CTs, Vars),
-    unassign(Vars, Map),
+    erase_constraints(CTs, _, Map),
     numbervars(Vars, 0, _),
     write('Assignments:'), nl,
     write('  '), write_map(Map), nl,
@@ -50,8 +50,8 @@ remap1((C,T)) := (~remap_conf(C),T) :- !.
 remap1(triple(C0,T,C)) := triple(~remap_conf(C0),T,~remap_conf(C)) :- !.
 remap1(X) := X.
 
-remap_conf(xc(I,c(M,A),S)) := xc(I,c(~sym_to_map(M),~sym_to_map(A)),S) :- !.
-remap_conf(c(M,A)) := c(~sym_to_map(M),~sym_to_map(A)) :- !.
+remap_conf(xc(I,c(M,A),S)) := xc(I,c(~array_elems(M),~array_elems(A)),S) :- !.
+remap_conf(c(M,A)) := c(~array_elems(M),~array_elems(A)) :- !.
 
 % remove array variables from symbolic constraints % TODO: make it optional
 noarr([]) := [].
@@ -67,7 +67,6 @@ noarr_trace([sym(element(_,K,V))|Xs]) := [sym(element(K,V))| ~noarr_trace(Xs)] :
 noarr_trace([sym(update(_,K,V,_))|Xs]) := [sym(update(K,V))| ~noarr_trace(Xs)] :- !.
 noarr_trace([X|Xs]) := [X| ~noarr_trace(Xs)].
 
-noarr_sym(update0(_,_)) :- !. % (ignore)
 noarr_sym(element(_,K,_)) :- atom(K), !. % (ignore)
 noarr_sym(update(_,K,_,_)) :- atom(K), !. % (ignore)
 

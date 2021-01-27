@@ -21,7 +21,7 @@
 :- use_module(muasm_program).
 :- use_module(spectector_flags).
 :- use_module(concolic(concolic)).
-:- use_module(concolic(symbolic)).
+:- use_module(concolic(ciaosmt)).
 :- use_module(spectector_stats).
 :- use_module(engine(messages_basic), [message/2]).
 
@@ -35,11 +35,12 @@ mrun(C0) := CT :-
     CT = (C,Trace).
 
 % Run c/2 or xc/3 configurations
-mrun_(C0) := C :- C0 = c(_,_), !, C = ~run(C0, ~get_limit(step)).
-mrun_(C0) := C :- C0 = xc(_,_,_), !, C = ~xrun(C0, ~get_limit(step)).
+mrun_(C0) := ~run(C0, ~get_limit(step)) :- C0 = c(_,_), !.
+mrun_(C0) := ~xrun(C0, ~get_limit(step)) :- C0 = xc(_,_,_), !.
 
 :- export(new_c/3).
-new_c(M,A) := c(~map_to_sym(M), ~map_to_sym(A)).
+new_c(M,A) := c(~new_array(bitvec(64), bitvec(64), M),
+                ~new_array(regs, bitvec(64), A)). % TODO: 'regs' type is dummy here
 
 :- export(new_xc/3).
 new_xc(M,A) := xc(0,~new_c(M,A),[]).
@@ -76,10 +77,13 @@ conf(c(_M,_A)).
 % expressions.
 
 ev(X,_A) := R :- var(X), !, R=X.
-ev(pc,A) := R :- !, R = ~element0(A,pc). % TODO: slow if we use element/2, fix?
-ev(X,_A) := R :- loc(X,N0), !, R = N0. % TODO: resolve symbol location statically instead?
-ev(X,A) := R :- reg(X), !, R = ~elementF(A,X). % TODO: can we use element/2?
-ev(N,_A) := N :- integer(N), !.
+ev(pc,A) := R :- !, R = ~element(A,pc).
+ev(X,_A) := R :- loc(X,N0), !,
+    % TODO: resolve symbol location statically instead?
+    ( integer(N0) -> R = bv(N0,64) ; R = N0 ).
+ev(X,A) := R :- reg(X), !, R = ~element(A,X).
+ev(N,_A) := bv(N,64) :- integer(N), !.
+%ev(N,_A) := N :- integer(N), !.
 ev(+X,A) := ~ev(X,A) :- !.
 ev(-X,A) := R :- !, R = -(~ev(X,A)).
 ev(X+Y,A) := R :- !, R = ~ev(X,A) + ~ev(Y,A).
@@ -131,13 +135,13 @@ run1(Conf) := Conf2 :-
     Conf = c(_,A),
     Conf2 = ~run_(~p(~pc(A)),Conf).
 
-%run_(I,C) := _ :- display(i(I,C)), nl, fail.
+%run_(I,C) := _ :- display(user_error, i(I,C)), nl(user_error), fail.
 % Skip
 run_(skip,c(M,A)) := c(M,A2) :-
-    A2 = ~update0(A,pc,~incpc(A)).
+    A2 = ~update(A,pc,bv(~incpc(A),64)).
 % Stop instruction
 run_(stop_ins,c(M,A)) := c(M,A2) :-
-    A2 = ~update0(A,pc,-1). % TODO: Standard site to jump?
+    A2 = ~update(A,pc,bv(-1,64)). % TODO: Standard site to jump?
 % Unknown
 run_(unsupported_ins(I),C0) := C :-
     message(warning, ['Pass through an unsupported instruction! ', I]),
@@ -157,68 +161,82 @@ run_(indirect_jump(L),C0) := C :-
 % 
 % Barrier
 run_(spbarr,c(M,A)) := c(M,A2) :-
-    A2 = ~update0(A,pc,~incpc(A)).
+    A2 = ~update(A,pc,bv(~incpc(A),64)).
 % Assign
 run_(X<-E,c(M,A)) := c(M,A2) :-
-    symtmp(~ev(E,A), Tmp),
+    Ev = ~ev(E,A),
+    ( is_const_exp(Ev) ->
+        Tmp = Ev
+    ; is_bool_exp(Ev) ->
+        % Make sure that E is bitvec(64)
+        assign(Tmp, ite(Ev,bv(1,64),bv(0,64)))
+    ; assign(Tmp, Ev)
+    ),
     A1 = ~update(A,X,Tmp),
-    A2 = ~update0(A1,pc,~incpc(A1)).
+    A2 = ~update(A1,pc,bv(~incpc(A1),64)).
 % ConditionalUpdate (depending on the contition EP, it does 1 or 2)
 run_(cmov(EP,X<-E),C0) := C :- !,
-    C = ~run_(X<-ite(~bv(EP),E,X), C0).
+    C = ~run_(X<-ite(~ensure_bool(EP),E,X), C0).
 % Load
 run_(load(X,E),c(M,A)) := c(M,A2) :-
     N = ~ev(E,A),
-    trace(load(N)),
+    trace(load(~bv2int(N))),
     V = ~element(M,N),
     ( weak_sni -> trace(value(V))
     ; true
     ),
-    A1 = ~update(A,X,V),
-    A2 = ~update0(A1,pc,~incpc(A1)).
+    ( integer(X) -> X1=bv(X,64) % TODO: use ev(X,A) for regs instead?
+    ; X1=X
+    ),
+    A1 = ~update(A,X1,V),
+    A2 = ~update(A1,pc,bv(~incpc(A1),64)).
 % Store % TODO: Notify about possible injection on stack (return direction)
 run_(store(X,E),c(M,A)) := c(M2,A2) :-
     Xv = ~ev(X,A),
     Ev = ~ev(E,A),
     M2 = ~update(M,Ev,Xv),
-    trace(store(Ev)),
-    ( weak_sni -> trace(value(Xv))
+    trace(store(~bv2int(Ev))),
+    ( weak_sni -> trace(value(~bv2int(Xv)))
     ; true
     ),
-    A2 = ~update0(A,pc,~incpc(A)).
+    A2 = ~update(A,pc,bv(~incpc(A),64)).
 % Beqz-1 and Beqz-2
 run_(beqz(X,L),c(M,A)) := c(M,A2) :-
     Xv = ~ev(X,A),
-    V = ~conc_cond(Xv=0),
-    ( V=1 -> L2 = L ; L2 = ~incpc(A) ),
+%    V = ~conc_cond(Xv=0),
+    V = ~conc_cond(Xv=bv(0,64)),
+    ( V=true -> L2 = bv(L,64) ; L2 = bv(~incpc(A),64) ),
     trace_pc(L2), track_branch(L2),
-    A2 = ~update0(A,pc,L2).
+    A2 = ~update(A,pc,L2).
 % Jmp   
 run_(jmp(E),c(M,A)) := c(M,A2) :-
     La = ~ev(E,A), % TODO: useful? it will show indirect jumps more easily
     trace_pc(La),
-    L = ~concretize(La), % TODO: make symbolic if E is symbolic -> warning when is symbolic?
+    % TODO: make symbolic if E is symbolic -> warning when is symbolic?
+    concretize(La), % (make sure that La has a concrete value assigned)
+    L = ~bv2int(~eval(La)), % evaluate La
     track_branch(L),
-    A2 = ~update0(A,pc,L).
+    A2 = ~update(A,pc,bv(L,64)).
 
-pc(A) := ~concretize(~ev(pc,A)).
+pc(A) := L :-
+    Ev = ~ev(pc,A),
+    concretize(Ev),
+    L = ~bv2int(~eval(Ev)).
 
-incpc(A) := ~concretize(~ev(pc+1,A)). % TODO: Numeric labels as pc counters?
+incpc(A) := L :-
+    Ev = ~ev(pc+1,A),
+    concretize(Ev),
+    L = ~bv2int(~eval(Ev)). % TODO: Numeric labels as pc counters?
 
 % make sure that the expression is boolean
-bv(A) := A :- nonvar(A), bv_(A), !.
-bv(A) := (A\=0).
+ensure_bool(A) := A :- is_bool_exp(A), !.
+ensure_bool(A) := (A\=bv(0,64)). % E.g., for flag registers
+%ensure_bool(A) := (A\=0).
 
-bv_(_=_).
-bv_(_\=_).
-bv_(uge(_,_)).
-bv_(ug(_,_)).
-bv_(ul(_,_)).
-bv_(ule(_,_)).
-bv_(_>=_).
-bv_(_>_).
-bv_(_<_).
-bv_(_=<_).
+% extract integer from bitvec, keep unchanged otherwise
+bv2int(X) := Y :- nonvar(X), X=bv(Y0,_), !, Y=Y0.
+bv2int(X) := X.
+%bv2int(X) := _ :- throw(error(not_bv(X), bv2int/2)).
 
 % ---------------------------------------------------------------------------
 :- doc(section, "Preliminaries for speculative execution").
@@ -271,25 +289,28 @@ bp(xc(_Ctr,c(_M,A),S)) := t(L, N, GoodL) :-
 bp_(beqz(X,L),A,L2,N,GoodL2, S) :-
     reg(X),
     Xv = ~ev(X,A),
-    V = ~conc_cond(Xv=0),
+%    V = ~conc_cond(Xv=0),
+    V = ~conc_cond(Xv=bv(0,64)),
     % Miss-prediction all the time
-    ( V=0 -> L2 = L ; L2 = ~incpc(A) ),
-    ( V=1 -> GoodL2 = L ; GoodL2 = ~incpc(A) ), % (keep it)
+    ( V=false -> L2 = L ; L2 = ~incpc(A) ),
+    ( V=true -> GoodL2 = L ; GoodL2 = ~incpc(A) ), % (keep it)
     N = ~window(S).
 :- else.
 % Beqz-1 and Beqz-2
 bp_(beqz(X,L),A,L2,N,L2, _) :-
     reg(X),
     Xv = ~ev(X,A),
-    V = ~conc_cond(Xv=0),
+%    V = ~conc_cond(Xv=0),
+    V = ~conc_cond(Xv=bv(0,64)),
     % Good prediction
-    ( V=1 -> L2 = L ; L2 = ~incpc(A) ),
+    ( V=true -> L2 = L ; L2 = ~incpc(A) ),
     N = 1. % (irrelevant if we predict correctly)
 :- endif.
 % Jmp   
 bp_(jmp(E),A,L,N,L, _) :-
     Ev = ~ev(E,A),
-    L = ~concretize(Ev), N = 0.
+    L = ~bv2int(~eval(Ev)),
+    N = 0.
 
 % ---------------------------------------------------------------------------
 :- doc(section, "Speculative execution").
@@ -332,7 +353,7 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
     !,
     trace(start(Ctr)), trace_pc(L), track_branch(L),
     Conf = c(M,A),
-    Conf2 = c(M,~update0(A,pc,L)), % TODO: it was mset/3 before
+    Conf2 = c(M,~update(A,pc,bv(L,64))), % TODO: it was mset/3 before
     Ctr1 is Ctr + 1,
     XC2 = xc(Ctr1,Conf2,[spec(Ctr,N,L,Conf,GoodL) | S]).
 % Se-Commit
@@ -353,12 +374,11 @@ xrun1(xc(Ctr,Conf,S)) := XC2 :-
     !,
     trace_rawpc(Conf),
     trace(rollback(Id)),
-    ConfPrime = c(M,A0), A = ~update0(A0,pc,GoodL),
+    ConfPrime = c(M,A0), A = ~update(A0,pc,bv(GoodL,64)),
     trace_pc(GoodL), track_branch(GoodL),
     XC2 = xc(Ctr,c(M,A),S2).
 
-
-trace_pc(L) :- trace(pc(L)).
+trace_pc(L) :- trace(pc(~bv2int(L))).
 
 % Keep statistic and counters for executed instructions
 track_ins(Conf) :-

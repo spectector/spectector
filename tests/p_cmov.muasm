@@ -2,6 +2,6 @@
     z<-0
     cmov x=y,z<-1
     beqz z,End
-    load 1,v
+    load v,1
 End:
 

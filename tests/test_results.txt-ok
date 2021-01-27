@@ -15,28 +15,28 @@ prg='p_2_5.muasm', nospec, entry=0, ana=reach1
 m=[0=0,1=1,2=2,10=0,251658240= -1]
 a=[pc=0,y=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=1,C=2,D=1]
+  []
 initial conf:
   m=[0=0,1=1,2=2,10=0,0xf000000=-1]
   a=[pc=0,y=0,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(0)
-  # element(0,A)
+  # element(bv(0,64),bv(0,64))
   1:  load(1)
-  # element(1,B)
+  # element(bv(1,64),bv(1,64))
   2:  load(2)
-  # element(2,C)
-  3:  # cond(A=0)
+  # element(bv(2,64),bv(2,64))
+  3:  # cond(bv(0,64)=bv(0,64))
   pc(6)
-  6:  # update(C,0)
-  store(C)
-  7:  # cond(A=0)
+  6:  # update(bv(2,64),bv(0,64))
+  store(2)
+  7:  # cond(bv(0,64)=bv(0,64))
   pc(10)
-  10:  load(B)
-  # element(B,D)
+  10:  load(1)
+  # element(bv(1,64),bv(1,64))
 final conf:
   m=[0=0,1=1,2=0,10=0,0xf000000=-1]
-  a=[pc=11,y=D,pc=0,sp=0xf000000,bp=0xf00000,x=A,v=B,w=C]
+  a=[pc=11,y=1,pc=0,sp=0xf000000,bp=0xf00000,x=0,v=1,w=2]
 program:
   0: load(x,0)
   1: load(v,1)
@@ -54,28 +54,28 @@ prg='p_2_5.muasm', nospec, entry=0, ana=reach1
 m=[0=0,1=10,2=2,10=0,251658240= -1]
 a=[pc=0,y=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=10,C=2,D=0]
+  []
 initial conf:
   m=[0=0,1=10,2=2,10=0,0xf000000=-1]
   a=[pc=0,y=0,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(0)
-  # element(0,A)
+  # element(bv(0,64),bv(0,64))
   1:  load(1)
-  # element(1,B)
+  # element(bv(1,64),bv(10,64))
   2:  load(2)
-  # element(2,C)
-  3:  # cond(A=0)
+  # element(bv(2,64),bv(2,64))
+  3:  # cond(bv(0,64)=bv(0,64))
   pc(6)
-  6:  # update(C,0)
-  store(C)
-  7:  # cond(A=0)
+  6:  # update(bv(2,64),bv(0,64))
+  store(2)
+  7:  # cond(bv(0,64)=bv(0,64))
   pc(10)
-  10:  load(B)
-  # element(B,D)
+  10:  load(10)
+  # element(bv(10,64),bv(0,64))
 final conf:
   m=[0=0,1=10,2=0,10=0,0xf000000=-1]
-  a=[pc=11,y=D,pc=0,sp=0xf000000,bp=0xf00000,x=A,v=B,w=C]
+  a=[pc=11,y=0,pc=0,sp=0xf000000,bp=0xf00000,x=0,v=10,w=2]
 program:
   0: load(x,0)
   1: load(v,1)
@@ -93,7 +93,7 @@ prg='p_2_5.muasm', spec, window_size=4, entry=0, ana=reach1
 m=[0=0,1=1,2=2,10=0,251658240= -1]
 a=[pc=0,y=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=1,C=2,D=1,E=1,F=1]
+  []
 initial conf:
   i=0
   m=[0=0,1=1,2=2,10=0,0xf000000=-1]
@@ -101,51 +101,51 @@ initial conf:
   s=[]
 trace:
   0:  load(0)
-  # element(0,A)
+  # element(bv(0,64),bv(0,64))
   1:  load(1)
-  # element(1,B)
+  # element(bv(1,64),bv(1,64))
   2:  load(2)
-  # element(2,C)
-  3:  # cond(A=0)
+  # element(bv(2,64),bv(2,64))
+  3:  # cond(bv(0,64)=bv(0,64))
   start(0)
   pc(4)
-  4:  load(B)
-  # element(B,D)
+  4:  load(1)
+  # element(bv(1,64),bv(1,64))
   5:  start(1)
   pc(7)
   7:  commit(1)
-  7:  # cond(A=0)
+  7:  # cond(bv(0,64)=bv(0,64))
   start(2)
   pc(8)
-  8:  # update(C,D)
-  store(C)
+  8:  # update(bv(2,64),bv(1,64))
+  store(2)
   9:  start(3)
   pc(11)
   11:  commit(3)
   11:  rollback(2)
   pc(10)
-  10:  load(B)
-  # element(B,E)
+  10:  load(1)
+  # element(bv(1,64),bv(1,64))
   11:  rollback(0)
   pc(6)
-  6:  # update(C,0)
-  store(C)
-  7:  # cond(A=0)
+  6:  # update(bv(2,64),bv(0,64))
+  store(2)
+  7:  # cond(bv(0,64)=bv(0,64))
   start(4)
   pc(8)
-  8:  # update(C,0)
-  store(C)
+  8:  # update(bv(2,64),bv(0,64))
+  store(2)
   9:  start(5)
   pc(11)
   11:  commit(5)
   11:  rollback(4)
   pc(10)
-  10:  load(B)
-  # element(B,F)
+  10:  load(1)
+  # element(bv(1,64),bv(1,64))
 final conf:
   i=6
   m=[0=0,1=1,2=0,10=0,0xf000000=-1]
-  a=[pc=11,y=F,pc=0,sp=0xf000000,bp=0xf00000,x=A,v=B,w=C]
+  a=[pc=11,y=1,pc=0,sp=0xf000000,bp=0xf00000,x=0,v=1,w=2]
   s=[]
 program:
   0: load(x,0)
@@ -164,7 +164,7 @@ prg='p_2_5.muasm', spec, window_size=4, entry=0, ana=reach1
 m=[0=0,1=10,2=2,10=0,251658240= -1]
 a=[pc=0,y=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=10,C=2,D=0,E=0,F=0]
+  []
 initial conf:
   i=0
   m=[0=0,1=10,2=2,10=0,0xf000000=-1]
@@ -172,51 +172,51 @@ initial conf:
   s=[]
 trace:
   0:  load(0)
-  # element(0,A)
+  # element(bv(0,64),bv(0,64))
   1:  load(1)
-  # element(1,B)
+  # element(bv(1,64),bv(10,64))
   2:  load(2)
-  # element(2,C)
-  3:  # cond(A=0)
+  # element(bv(2,64),bv(2,64))
+  3:  # cond(bv(0,64)=bv(0,64))
   start(0)
   pc(4)
-  4:  load(B)
-  # element(B,D)
+  4:  load(10)
+  # element(bv(10,64),bv(0,64))
   5:  start(1)
   pc(7)
   7:  commit(1)
-  7:  # cond(A=0)
+  7:  # cond(bv(0,64)=bv(0,64))
   start(2)
   pc(8)
-  8:  # update(C,D)
-  store(C)
+  8:  # update(bv(2,64),bv(0,64))
+  store(2)
   9:  start(3)
   pc(11)
   11:  commit(3)
   11:  rollback(2)
   pc(10)
-  10:  load(B)
-  # element(B,E)
+  10:  load(10)
+  # element(bv(10,64),bv(0,64))
   11:  rollback(0)
   pc(6)
-  6:  # update(C,0)
-  store(C)
-  7:  # cond(A=0)
+  6:  # update(bv(2,64),bv(0,64))
+  store(2)
+  7:  # cond(bv(0,64)=bv(0,64))
   start(4)
   pc(8)
-  8:  # update(C,0)
-  store(C)
+  8:  # update(bv(2,64),bv(0,64))
+  store(2)
   9:  start(5)
   pc(11)
   11:  commit(5)
   11:  rollback(4)
   pc(10)
-  10:  load(B)
-  # element(B,F)
+  10:  load(10)
+  # element(bv(10,64),bv(0,64))
 final conf:
   i=6
   m=[0=0,1=10,2=0,10=0,0xf000000=-1]
-  a=[pc=11,y=F,pc=0,sp=0xf000000,bp=0xf00000,x=A,v=B,w=C]
+  a=[pc=11,y=0,pc=0,sp=0xf000000,bp=0xf00000,x=0,v=10,w=2]
   s=[]
 program:
   0: load(x,0)
@@ -235,28 +235,28 @@ prg='p_2_5.muasm', nospec, entry=0, ana=reach1
 m=[251658240= -1]
 a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=0,C=0,D=0,E=0,F=0,G=0,H=0]
+  [A=0,B=0,C=0]
 initial conf:
-  m=[0xf000000=-1,0=A,1=C,2=E]
-  a=[pc=0,sp=0xf000000,bp=0xf00000,y=G]
+  m=[0xf000000=-1,0=A,1=B,2=C]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,y=D]
 trace:
   0:  load(0)
-  # element(0,B)
+  # element(bv(0,64),A)
   1:  load(1)
-  # element(1,D)
+  # element(bv(1,64),B)
   2:  load(2)
-  # element(2,F)
-  3:  # cond(B=0)
+  # element(bv(2,64),C)
+  3:  # cond(A=bv(0,64))
   pc(6)
-  6:  # update(F,G)
-  store(F)
-  7:  # cond(B=0)
+  6:  # update(C,D)
+  store(C)
+  7:  # cond(A=bv(0,64))
   pc(10)
-  10:  load(D)
-  # element(D,H)
+  10:  load(B)
+  # element(B,D)
 final conf:
-  m=[0xf000000=-1,0=G,1=C,2=E]
-  a=[pc=11,sp=0xf000000,bp=0xf00000,x=B,v=D,w=F,y=H]
+  m=[0xf000000=-1,0=D,1=B,2=C]
+  a=[pc=11,sp=0xf000000,bp=0xf00000,x=A,v=B,w=C,y=D]
 program:
   0: load(j,2)
   1: u<-1
@@ -278,35 +278,35 @@ prg='p_2_5b.muasm', nospec, entry=0, ana=reach1
 m=[251658240= -1]
 a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=0,C=1,D=0,E=0,F=0,G=2,H=1]
+  [A=0,B=0,C=2]
 initial conf:
-  m=[0xf000000=-1,2=A,1=D]
+  m=[0xf000000=-1,2=A,1=B]
   a=[pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(2)
-  # element(2,B)
-  1:  2:  # update(B,1)
-  store(B)
+  # element(bv(2,64),A)
+  1:  2:  # update(A,bv(1,64))
+  store(A)
   3:  load(0)
-  # element(0,C)
+  # element(bv(0,64),bv(1,64))
   4:  load(1)
-  # element(1,E)
+  # element(bv(1,64),B)
   5:  load(2)
-  # element(2,F)
-  6:  # G=E*2+C+1
-  7:  # cond(G\=0)
+  # element(bv(2,64),A)
+  6:  # C=B*bv(2,64)+bv(1,64)+bv(1,64)
+  7:  # cond(C\=bv(0,64))
   pc(8)
-  8:  load(E)
-  # element(E,H)
+  8:  load(B)
+  # element(B,bv(1,64))
   9:  pc(11)
-  11:  # cond(G\=0)
+  11:  # cond(C\=bv(0,64))
   pc(12)
-  12:  # update(F,H)
-  store(F)
+  12:  # update(A,bv(1,64))
+  store(A)
   13:  pc(15)
 final conf:
-  m=[0xf000000=-1,2=A,0=H,1=D]
-  a=[pc=15,sp=0xf000000,bp=0xf00000,j=B,u=1,x=G,v=E,w=F,y=H]
+  m=[0xf000000=-1,2=A,0=1,1=B]
+  a=[pc=15,sp=0xf000000,bp=0xf00000,j=A,u=1,x=C,v=B,w=A,y=1]
 program:
   0: load(j,2)
   1: u<-1
@@ -328,35 +328,35 @@ prg='p_2_5b.muasm', nospec, entry=0, ana=reach1
 m=[2=0,251658240= -1]
 a=[pc=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=1,C=0,D=0,E=0,F=2,G=1]
+  [A=0,B=2]
 initial conf:
-  m=[2=0,0xf000000=-1,1=C]
+  m=[2=0,0xf000000=-1,1=A]
   a=[pc=0,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(2)
-  # element(2,A)
-  1:  2:  # update(A,1)
-  store(A)
+  # element(bv(2,64),bv(0,64))
+  1:  2:  # update(bv(0,64),bv(1,64))
+  store(0)
   3:  load(0)
-  # element(0,B)
+  # element(bv(0,64),bv(1,64))
   4:  load(1)
-  # element(1,D)
+  # element(bv(1,64),A)
   5:  load(2)
-  # element(2,E)
-  6:  # F=D*2+B+1
-  7:  # cond(F\=0)
+  # element(bv(2,64),bv(0,64))
+  6:  # B=A*bv(2,64)+bv(1,64)+bv(1,64)
+  7:  # cond(B\=bv(0,64))
   pc(8)
-  8:  load(D)
-  # element(D,G)
+  8:  load(A)
+  # element(A,bv(1,64))
   9:  pc(11)
-  11:  # cond(F\=0)
+  11:  # cond(B\=bv(0,64))
   pc(12)
-  12:  # update(E,G)
-  store(E)
+  12:  # update(bv(0,64),bv(1,64))
+  store(0)
   13:  pc(15)
 final conf:
-  m=[2=0,0xf000000=-1,0=G,1=C]
-  a=[pc=15,pc=0,sp=0xf000000,bp=0xf00000,j=A,u=1,x=F,v=D,w=E,y=G]
+  m=[2=0,0xf000000=-1,0=1,1=A]
+  a=[pc=15,pc=0,sp=0xf000000,bp=0xf00000,j=0,u=1,x=B,v=A,w=0,y=1]
 program:
   0: load(j,2)
   1: u<-1
@@ -378,35 +378,35 @@ prg='p_2_5b.muasm', nospec, entry=0, ana=reach1
 m=[2=2,251658240= -1]
 a=[pc=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=2,B=0,C=0,D=0,E=0,F=1,G=1,H=0]
+  [A=0,B=0,C=1]
 initial conf:
-  m=[2=2,0xf000000=-1,0=B,1=D]
+  m=[2=2,0xf000000=-1,0=A,1=B]
   a=[pc=0,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(2)
-  # element(2,A)
-  1:  2:  # update(A,1)
-  store(A)
+  # element(bv(2,64),bv(2,64))
+  1:  2:  # update(bv(2,64),bv(1,64))
+  store(2)
   3:  load(0)
-  # element(0,C)
+  # element(bv(0,64),A)
   4:  load(1)
-  # element(1,E)
+  # element(bv(1,64),B)
   5:  load(2)
-  # element(2,F)
-  6:  # G=E*2+C+1
-  7:  # cond(G\=0)
+  # element(bv(2,64),bv(1,64))
+  6:  # C=B*bv(2,64)+A+bv(1,64)
+  7:  # cond(C\=bv(0,64))
   pc(8)
-  8:  load(E)
-  # element(E,H)
+  8:  load(B)
+  # element(B,A)
   9:  pc(11)
-  11:  # cond(G\=0)
+  11:  # cond(C\=bv(0,64))
   pc(12)
-  12:  # update(F,H)
-  store(F)
+  12:  # update(bv(1,64),A)
+  store(1)
   13:  pc(15)
 final conf:
-  m=[2=1,0xf000000=-1,0=B,1=H]
-  a=[pc=15,pc=0,sp=0xf000000,bp=0xf00000,j=A,u=1,x=G,v=E,w=F,y=H]
+  m=[2=1,0xf000000=-1,0=A,1=A]
+  a=[pc=15,pc=0,sp=0xf000000,bp=0xf00000,j=2,u=1,x=C,v=B,w=1,y=A]
 program:
   0: load(j,2)
   1: u<-1
@@ -428,33 +428,33 @@ prg='p_2_5b.muasm', nospec, entry=0, ana=reach1
 m=[0= -1,2=2,251658240= -1]
 a=[pc=0,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [B=2,C=0xffffffffffffffff,D=0,E=0,F=1,G=0,H=0xffffffffffffffff]
+  [A=0,B=0]
 initial conf:
-  m=[0=-1,2=2,0xf000000=-1,1=D]
-  a=[pc=0,pc=0,sp=0xf000000,bp=0xf00000,y=A]
+  m=[0=-1,2=2,0xf000000=-1,1=A]
+  a=[pc=0,pc=0,sp=0xf000000,bp=0xf00000,y=C]
 trace:
   0:  load(2)
-  # element(2,B)
-  1:  2:  # update(B,1)
-  store(B)
+  # element(bv(2,64),bv(2,64))
+  1:  2:  # update(bv(2,64),bv(1,64))
+  store(2)
   3:  load(0)
-  # element(0,C)
+  # element(bv(0,64),bv(-1,64))
   4:  load(1)
-  # element(1,E)
+  # element(bv(1,64),A)
   5:  load(2)
-  # element(2,F)
-  6:  # G=E*2+C+1
-  7:  # cond(G=0)
+  # element(bv(2,64),bv(1,64))
+  6:  # B=A*bv(2,64)+bv(-1,64)+bv(1,64)
+  7:  # cond(B=bv(0,64))
   pc(10)
-  10:  # update(F,A)
-  store(F)
-  11:  # cond(G=0)
+  10:  # update(bv(1,64),C)
+  store(1)
+  11:  # cond(B=bv(0,64))
   pc(14)
-  14:  load(E)
-  # element(E,H)
+  14:  load(A)
+  # element(A,bv(-1,64))
 final conf:
-  m=[0=-1,2=1,0xf000000=-1,1=A]
-  a=[pc=15,pc=0,sp=0xf000000,bp=0xf00000,j=B,u=1,x=G,v=E,w=F,y=H]
+  m=[0=-1,2=1,0xf000000=-1,1=C]
+  a=[pc=15,pc=0,sp=0xf000000,bp=0xf00000,j=2,u=1,x=B,v=A,w=1,y=-1]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
@@ -466,21 +466,21 @@ prg='p_10.muasm', nospec, entry=0, ana=reach1
 m=[251658240= -1]
 a=[pc=0,in=0,bound=1,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=0,C=0,D=0]
+  [A=0,B=0]
 initial conf:
   m=[0xf000000=-1,0=B]
   a=[pc=0,in=0,bound=1,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
-  0:  # A=(0>=1)
-  1:  # cond(A=0)
+  0:  # A=ite(bv(0,64)>=bv(1,64),bv(1,64),bv(0,64))
+  1:  # cond(A=bv(0,64))
   pc(3)
   3:  load(0)
-  # element(0,C)
-  4:  load(C)
-  # element(C,D)
+  # element(bv(0,64),B)
+  4:  load(B)
+  # element(B,B)
 final conf:
   m=[0xf000000=-1,0=B]
-  a=[pc=5,in=0,bound=1,pc=0,sp=0xf000000,bp=0xf00000,x=A,secret=C,z=D]
+  a=[pc=5,in=0,bound=1,pc=0,sp=0xf000000,bp=0xf00000,x=A,secret=B,z=B]
 program:
   0: x<-in>=bound
   1: beqz(x,3)
@@ -497,8 +497,8 @@ initial conf:
   m=[0xf000000=-1]
   a=[pc=0,in=2,bound=1,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
-  0:  # A=(2>=1)
-  1:  # cond(A\=0)
+  0:  # A=ite(bv(2,64)>=bv(1,64),bv(1,64),bv(0,64))
+  1:  # cond(A\=bv(0,64))
   pc(2)
   2:  pc(5)
 final conf:
@@ -515,15 +515,15 @@ prg='p_10.muasm', spec, window_size=4, entry=0, ana=reach1
 m=[251658240= -1]
 a=[pc=0,in=0,bound=1,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=0,C=0,D=0]
+  [A=0,B=0]
 initial conf:
   i=0
   m=[0xf000000=-1,0=B]
   a=[pc=0,in=0,bound=1,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
-  0:  # A=(0>=1)
-  1:  # cond(A=0)
+  0:  # A=ite(bv(0,64)>=bv(1,64),bv(1,64),bv(0,64))
+  1:  # cond(A=bv(0,64))
   start(0)
   pc(2)
   2:  start(1)
@@ -532,13 +532,13 @@ trace:
   5:  rollback(0)
   pc(3)
   3:  load(0)
-  # element(0,C)
-  4:  load(C)
-  # element(C,D)
+  # element(bv(0,64),B)
+  4:  load(B)
+  # element(B,B)
 final conf:
   i=2
   m=[0xf000000=-1,0=B]
-  a=[pc=5,in=0,bound=1,pc=0,sp=0xf000000,bp=0xf00000,x=A,secret=C,z=D]
+  a=[pc=5,in=0,bound=1,pc=0,sp=0xf000000,bp=0xf00000,x=A,secret=B,z=B]
   s=[]
 program:
   0: x<-in>=bound
@@ -551,21 +551,21 @@ prg='p_10.muasm', spec, window_size=4, entry=0, ana=reach1
 m=[251658240= -1]
 a=[pc=0,in=2,bound=1,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=1,B=0,C=0,D=0,E=0]
+  [A=1,B=0]
 initial conf:
   i=0
-  m=[0xf000000=-1,2=B,0=D]
+  m=[0xf000000=-1,2=B,0=C]
   a=[pc=0,in=2,bound=1,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
-  0:  # A=(2>=1)
-  1:  # cond(A\=0)
+  0:  # A=ite(bv(2,64)>=bv(1,64),bv(1,64),bv(0,64))
+  1:  # cond(A\=bv(0,64))
   start(0)
   pc(3)
   3:  load(2)
-  # element(2,C)
-  4:  load(C)
-  # element(C,E)
+  # element(bv(2,64),B)
+  4:  load(B)
+  # element(B,C)
   5:  rollback(0)
   pc(2)
   2:  start(1)
@@ -573,7 +573,7 @@ trace:
   5:  commit(1)
 final conf:
   i=2
-  m=[0xf000000=-1,2=B,0=D]
+  m=[0xf000000=-1,2=B,0=C]
   a=[pc=5,in=2,bound=1,pc=0,sp=0xf000000,bp=0xf00000,x=A]
   s=[]
 program:
@@ -592,8 +592,8 @@ initial conf:
   m=[0xf000000=-1]
   a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
 trace:
-  0:  # C=(A>=B)
-  1:  # cond(C\=0)
+  0:  # C=ite(A>=B,bv(1,64),bv(0,64))
+  1:  # cond(C\=bv(0,64))
   pc(2)
   2:  pc(5)
 final conf:
@@ -610,21 +610,21 @@ prg='p_10.muasm', spec, window_size=4, entry=0, ana=reach1
 m=[251658240= -1]
 a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=0,C=1,D=0,E=0,F=0]
+  [A=0,B=0,C=1,D=0]
 initial conf:
   i=0
   m=[0xf000000=-1,0=D]
   a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
   s=[]
 trace:
-  0:  # C=(A>=B)
-  1:  # cond(C\=0)
+  0:  # C=ite(A>=B,bv(1,64),bv(0,64))
+  1:  # cond(C\=bv(0,64))
   start(0)
   pc(3)
   3:  load(A)
-  # element(A,E)
-  4:  load(E)
-  # element(E,F)
+  # element(A,D)
+  4:  load(D)
+  # element(D,D)
   5:  rollback(0)
   pc(2)
   2:  start(1)
@@ -652,57 +652,57 @@ prg='p_2_5.muasm', nospec, entry=0, ana=reach
 m=[251658240= -1]
 a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=0,C=0,D=0,E=0,F=0,G=0,H=0]
+  [A=0,B=0,C=0]
 initial conf:
-  m=[0xf000000=-1,0=A,1=C,2=E]
-  a=[pc=0,sp=0xf000000,bp=0xf00000,y=G]
+  m=[0xf000000=-1,0=A,1=B,2=C]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,y=D]
 trace:
   0:  load(0)
-  # element(0,B)
+  # element(bv(0,64),A)
   1:  load(1)
-  # element(1,D)
+  # element(bv(1,64),B)
   2:  load(2)
-  # element(2,F)
-  3:  # cond(B=0)
+  # element(bv(2,64),C)
+  3:  # cond(A=bv(0,64))
   pc(6)
-  6:  # update(F,G)
-  store(F)
-  7:  # cond(B=0)
+  6:  # update(C,D)
+  store(C)
+  7:  # cond(A=bv(0,64))
   pc(10)
-  10:  load(D)
-  # element(D,H)
+  10:  load(B)
+  # element(B,D)
 final conf:
-  m=[0xf000000=-1,0=G,1=C,2=E]
-  a=[pc=11,sp=0xf000000,bp=0xf00000,x=B,v=D,w=F,y=H]
+  m=[0xf000000=-1,0=D,1=B,2=C]
+  a=[pc=11,sp=0xf000000,bp=0xf00000,x=A,v=B,w=C,y=D]
 [concolic] negating last path condition and computing new model...
 [concolic] no model found, negate previous condition...
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0xffffffffffffffff,B=0xffffffffffffffff,C=1,D=1,E=0xffffffffffffffff,F=0xffffffffffffffff,G=0,H=0]
+  [A=0xffffffffffffffff,B=0xffffffffffffffff,C=1]
 initial conf:
-  m=[0xf000000=-1,0=C,1=B,2=A,0xffffffffffffffff=G]
+  m=[0xf000000=-1,0=C,1=B,2=A,0xffffffffffffffff=D]
   a=[pc=0,sp=0xf000000,bp=0xf00000]
 trace:
   0:  load(0)
-  # element(0,D)
+  # element(bv(0,64),C)
   1:  load(1)
-  # element(1,E)
+  # element(bv(1,64),B)
   2:  load(2)
-  # element(2,F)
-  3:  # cond(D\=0)
+  # element(bv(2,64),A)
+  3:  # cond(C\=bv(0,64))
   pc(4)
-  4:  load(E)
-  # element(E,H)
+  4:  load(B)
+  # element(B,D)
   5:  pc(7)
-  7:  # cond(D\=0)
+  7:  # cond(C\=bv(0,64))
   pc(8)
-  8:  # update(F,H)
-  store(F)
+  8:  # update(A,D)
+  store(A)
   9:  pc(11)
 final conf:
-  m=[0xf000000=-1,0=C,1=B,2=A,0xffffffffffffffff=H]
-  a=[pc=11,sp=0xf000000,bp=0xf00000,x=D,v=E,w=F,y=H]
+  m=[0xf000000=-1,0=C,1=B,2=A,0xffffffffffffffff=D]
+  a=[pc=11,sp=0xf000000,bp=0xf00000,x=C,v=B,w=A,y=D]
 [concolic] negating last path condition and computing new model...
 [concolic] no model found, negate previous condition...
 [concolic] finished, no more conditions to negate
@@ -722,8 +722,8 @@ initial conf:
   m=[0xf000000=-1]
   a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
 trace:
-  0:  # C=(A>=B)
-  1:  # cond(C\=0)
+  0:  # C=ite(A>=B,bv(1,64),bv(0,64))
+  1:  # cond(C\=bv(0,64))
   pc(2)
   2:  pc(5)
 final conf:
@@ -732,21 +732,21 @@ final conf:
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0x8000000000000000,B=0x8000000000000001,C=0,D=0,E=0,F=0,G=0]
+  [A=0x8000000000000000,B=0x8000000000000001,C=0,D=0]
 initial conf:
-  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  m=[0xf000000=-1,0x8000000000000000=D,0=E]
   a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
 trace:
-  0:  # C=(A>=B)
-  1:  # cond(C=0)
+  0:  # C=ite(A>=B,bv(1,64),bv(0,64))
+  1:  # cond(C=bv(0,64))
   pc(3)
   3:  load(A)
-  # element(A,E)
-  4:  load(E)
-  # element(E,G)
+  # element(A,D)
+  4:  load(D)
+  # element(D,E)
 final conf:
-  m=[0xf000000=-1,0x8000000000000000=D,0=F]
-  a=[pc=5,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C,secret=E,z=G]
+  m=[0xf000000=-1,0x8000000000000000=D,0=E]
+  a=[pc=5,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C,secret=D,z=E]
 [concolic] finished, no more conditions to negate
 program:
   0: x<-in>=bound
@@ -769,12 +769,12 @@ initial conf:
   m=[0xf000000=-1]
   a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B,in2=D,bound2=E]
 trace:
-  0:  # C=(A>=B)
-  1:  # cond(C\=0)
+  0:  # C=ite(A>=B,bv(1,64),bv(0,64))
+  1:  # cond(C\=bv(0,64))
   pc(2)
   2:  pc(5)
-  5:  # F=(D>=E)
-  6:  # cond(F\=0)
+  5:  # F=ite(D>=E,bv(1,64),bv(0,64))
+  6:  # cond(F\=bv(0,64))
   pc(7)
   7:  pc(10)
 final conf:
@@ -783,97 +783,96 @@ final conf:
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0x8000000000000000,B=0x8000000000000000,C=0x8000000000000001,D=0x8000000000000000,E=1,F=0,G=0,H=0,I=0,J=0]
+  [A=0x8000000000000000,B=0x8000000000000000,C=0x8000000000000001,D=0x8000000000000000,E=1,F=0,G=0]
 initial conf:
-  m=[0xf000000=-1,0x8000000000000000=G,0=I]
+  m=[0xf000000=-1,0x8000000000000000=G,0=H]
   a=[pc=0,sp=0xf000000,bp=0xf00000,in=B,bound=D,in2=A,bound2=C]
 trace:
-  0:  # E=(B>=D)
-  1:  # cond(E\=0)
+  0:  # E=ite(B>=D,bv(1,64),bv(0,64))
+  1:  # cond(E\=bv(0,64))
   pc(2)
   2:  pc(5)
-  5:  # F=(A>=C)
-  6:  # cond(F=0)
+  5:  # F=ite(A>=C,bv(1,64),bv(0,64))
+  6:  # cond(F=bv(0,64))
   pc(8)
   8:  load(B)
-  # element(B,H)
-  9:  load(H)
-  # element(H,J)
+  # element(B,G)
+  9:  load(G)
+  # element(G,H)
 final conf:
-  m=[0xf000000=-1,0x8000000000000000=G,0=I]
-  a=[pc=10,sp=0xf000000,bp=0xf00000,in=B,bound=D,in2=A,bound2=C,x=E,x2=F,secret=H,z=J]
+  m=[0xf000000=-1,0x8000000000000000=G,0=H]
+  a=[pc=10,sp=0xf000000,bp=0xf00000,in=B,bound=D,in2=A,bound2=C,x=E,x2=F,secret=G,z=H]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0x8000000000000000,B=0x8000000000000001,C=0,D=0,E=0,F=0,G=0,H=0,I=0,J=1]
+  [A=0x8000000000000000,B=0x8000000000000001,C=0,D=0,F=0,G=0,H=1]
 initial conf:
-  m=[0xf000000=-1,0x8000000000000000=D,0=F]
-  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B,in2=H,bound2=I]
+  m=[0xf000000=-1,0x8000000000000000=D,0=E]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B,in2=F,bound2=G]
 trace:
-  0:  # C=(A>=B)
-  1:  # cond(C=0)
+  0:  # C=ite(A>=B,bv(1,64),bv(0,64))
+  1:  # cond(C=bv(0,64))
   pc(3)
   3:  load(A)
-  # element(A,E)
-  4:  load(E)
-  # element(E,G)
-  5:  # J=(H>=I)
-  6:  # cond(J\=0)
+  # element(A,D)
+  4:  load(D)
+  # element(D,E)
+  5:  # H=ite(F>=G,bv(1,64),bv(0,64))
+  6:  # cond(H\=bv(0,64))
   pc(7)
   7:  pc(10)
 final conf:
-  m=[0xf000000=-1,0x8000000000000000=D,0=F]
-  a=[pc=10,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C,secret=E,z=G,in2=H,bound2=I,x2=J]
+  m=[0xf000000=-1,0x8000000000000000=D,0=E]
+  a=[pc=10,sp=0xf000000,bp=0xf00000,in=A,bound=B,x=C,secret=D,z=E,in2=F,bound2=G,x2=H]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0x8000000000000000,B=0x8000000000000000,C=0x8000000000000001,D=0x8000000000000001,E=0xffffffffffffffff,F=0xffffffffffffffff,G=0,H=0xffffffffffffffff,I=0xffffffffffffffff,J=0,K=0xffffffffffffffff,L=0xffffffffffffffff]
+  [A=0x8000000000000000,B=0x8000000000000000,C=0x8000000000000001,D=0x8000000000000001,E=0xffffffffffffffff,F=0xffffffffffffffff,G=0,H=0]
 initial conf:
   m=[0xf000000=-1,0x8000000000000000=F,0xffffffffffffffff=E]
   a=[pc=0,sp=0xf000000,bp=0xf00000,in=B,bound=D,in2=A,bound2=C]
 trace:
-  0:  # G=(B>=D)
-  1:  # cond(G=0)
+  0:  # G=ite(B>=D,bv(1,64),bv(0,64))
+  1:  # cond(G=bv(0,64))
   pc(3)
   3:  load(B)
-  # element(B,H)
-  4:  load(H)
-  # element(H,I)
-  5:  # J=(A>=C)
-  6:  # cond(J=0)
+  # element(B,F)
+  4:  load(F)
+  # element(F,E)
+  5:  # H=ite(A>=C,bv(1,64),bv(0,64))
+  6:  # cond(H=bv(0,64))
   pc(8)
   8:  load(B)
-  # element(B,K)
-  9:  load(K)
-  # element(K,L)
+  # element(B,F)
+  9:  load(F)
+  # element(F,E)
 final conf:
   m=[0xf000000=-1,0x8000000000000000=F,0xffffffffffffffff=E]
-  a=[pc=10,sp=0xf000000,bp=0xf00000,in=B,bound=D,in2=A,bound2=C,x=G,secret=K,z=L,x2=J]
+  a=[pc=10,sp=0xf000000,bp=0xf00000,in=B,bound=D,in2=A,bound2=C,x=G,secret=F,z=E,x2=H]
 [concolic] finished, no more conditions to negate
 program:
   0: z<-0
   1: cmov(x=y,z<-1)
   2: beqz(z,4)
-  3: load(1,v)
+  3: load(v,1)
 ---------------------------------------------------------------------------
 prg='p_cmov.muasm', nospec, entry=0, ana=reach
 m=[251658240= -1]
 a=[pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=0,C=1,D=0,E=0,F=0]
+  [A=0,B=0,C=1]
 initial conf:
-  m=[0xf000000=-1,0=E]
-  a=[pc=0,sp=0xf000000,bp=0xf00000,x=A,y=B,v=D]
+  m=[0xf000000=-1,1=D]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,x=A,y=B]
 trace:
-  0:  1:  # C=ite(A=B,1,0)
-  2:  # cond(C\=0)
+  0:  1:  # C=ite(A=B,bv(1,64),bv(0,64))
+  2:  # cond(C\=bv(0,64))
   pc(3)
-  3:  load(D)
-  # element(D,F)
-  # update(1,F)
+  3:  load(1)
+  # element(bv(1,64),D)
 final conf:
-  m=[0xf000000=-1,0=E]
-  a=[pc=4,sp=0xf000000,bp=0xf00000,z=C,x=A,y=B,v=D,1=F]
+  m=[0xf000000=-1,1=D]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,z=C,x=A,y=B,v=D]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
@@ -882,8 +881,8 @@ initial conf:
   m=[0xf000000=-1]
   a=[pc=0,sp=0xf000000,bp=0xf00000,x=B,y=A]
 trace:
-  0:  1:  # C=ite(B=A,1,0)
-  2:  # cond(C=0)
+  0:  1:  # C=ite(B=A,bv(1,64),bv(0,64))
+  2:  # cond(C=bv(0,64))
   pc(4)
 final conf:
   m=[0xf000000=-1]
@@ -902,21 +901,21 @@ a=[pc=0,sp=251658240,bp=15728640]
 [exploring paths]
 [path found]
 Assignments:
-  [A=0,B=0,C=1,D=0,E=0,F=0]
+  [A=0,B=0,C=1,D=0]
 initial conf:
   i=0
   m=[0xf000000=-1,0=D]
   a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
   s=[]
 trace:
-  0:  # C=(A>=B)
-  1:  # cond(C\=0)
+  0:  # C=ite(A>=B,bv(1,64),bv(0,64))
+  1:  # cond(C\=bv(0,64))
   start(0)
   pc(3)
   3:  load(A)
-  # element(A,E)
-  4:  load(E)
-  # element(E,F)
+  # element(A,D)
+  4:  load(D)
+  # element(D,D)
   5:  rollback(0)
   pc(2)
   2:  start(1)
@@ -930,10 +929,10 @@ final conf:
 [checking speculative non-interference]
 [path is unsafe, showing counter-example initial configurations A and B]
 Assignments:
-  [A=0,B=0,C=0,D=1,E=1]
+  [A=0,B=0,C=0,D=1]
 Case A:
 conf:
-  m=[0xf000000=-1,0=E,1=D]
+  m=[0xf000000=-1,0=D,1=D]
   a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
 trace:
 Case B:
@@ -941,6 +940,9 @@ conf:
   m=[0xf000000=-1,0=C]
   a=[pc=0,sp=0xf000000,bp=0xf00000,in=A,bound=B]
 trace:
+[Found data leak]
+[No control leak]
+[path is unsafe]
 [program is unsafe]
 program:
   0: x<-v<y
@@ -958,8 +960,8 @@ initial conf:
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
   a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
-  0:  # A=(13<10)
-  1:  # cond(A=0)
+  0:  # A=ite(bv(13,64)<bv(10,64),bv(1,64),bv(0,64))
+  1:  # cond(A=bv(0,64))
   pc(5)
 final conf:
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
@@ -975,27 +977,27 @@ prg='spectre_lfence.muasm', spec, window_size=4, entry=0, ana=reach1
 m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
 a=[pc=0,y=10,v=4,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=1,B=2,C=2]
+  [A=1]
 initial conf:
   i=0
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
   a=[pc=0,y=10,v=4,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
-  0:  # A=(4<10)
-  1:  # cond(A\=0)
+  0:  # A=ite(bv(4,64)<bv(10,64),bv(1,64),bv(0,64))
+  1:  # cond(A\=bv(0,64))
   start(0)
   pc(5)
   5:  rollback(0)
   pc(2)
   2:  3:  load(4)
-  # element(4,B)
-  4:  load(B)
-  # element(B,C)
+  # element(bv(4,64),bv(2,64))
+  4:  load(2)
+  # element(bv(2,64),bv(2,64))
 final conf:
   i=1
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
-  a=[pc=5,y=10,v=C,pc=0,sp=0xf000000,bp=0xf00000,x=A]
+  a=[pc=5,y=10,v=2,pc=0,sp=0xf000000,bp=0xf00000,x=A]
   s=[]
 program:
   0: x<-v<y
@@ -1015,8 +1017,8 @@ initial conf:
   a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
-  0:  # A=(13<10)
-  1:  # cond(A=0)
+  0:  # A=ite(bv(13,64)<bv(10,64),bv(1,64),bv(0,64))
+  1:  # cond(A=bv(0,64))
   start(0)
   pc(2)
   2:  3:  rollback(0)
@@ -1043,8 +1045,8 @@ initial conf:
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
   a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
-  0:  1:  # A=(13<10)
-  2:  # cond(A=0)
+  0:  1:  # A=ite(bv(13,64)<bv(10,64),bv(1,64),bv(0,64))
+  2:  # cond(A=bv(0,64))
   pc(6)
 final conf:
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
@@ -1061,28 +1063,28 @@ prg='spectre_slh.muasm', spec, window_size=4, entry=0, ana=reach1
 m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
 a=[pc=0,y=10,v=4,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=1,B=0xfffffff,C=2,D=2]
+  [A=1,B=0xfffffff]
 initial conf:
   i=0
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
   a=[pc=0,y=10,v=4,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
-  0:  1:  # A=(4<10)
-  2:  # cond(A\=0)
+  0:  1:  # A=ite(bv(4,64)<bv(10,64),bv(1,64),bv(0,64))
+  2:  # cond(A\=bv(0,64))
   start(0)
   pc(6)
   6:  rollback(0)
   pc(3)
-  3:  # B=ite(4>=10,0,268435455)
+  3:  # B=ite(bv(4,64)>=bv(10,64),bv(0,64),bv(268435455,64))
   4:  load(4)
-  # element(4,C)
-  5:  load(C/\B)
-  # element(C/\B,D)
+  # element(bv(4,64),bv(2,64))
+  5:  load(bv(2,64)/\B)
+  # element(bv(2,64)/\B,bv(2,64))
 final conf:
   i=1
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
-  a=[pc=6,y=10,v=D,pc=0,sp=0xf000000,bp=0xf00000,u=B,x=A]
+  a=[pc=6,y=10,v=2,pc=0,sp=0xf000000,bp=0xf00000,u=B,x=A]
   s=[]
 program:
   0: u<-268435455
@@ -1096,22 +1098,22 @@ prg='spectre_slh.muasm', spec, window_size=4, entry=0, ana=reach1
 m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
 a=[pc=0,y=10,v=13,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=0,C=4,D=7]
+  [A=0,B=0]
 initial conf:
   i=0
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
   a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
-  0:  1:  # A=(13<10)
-  2:  # cond(A=0)
+  0:  1:  # A=ite(bv(13,64)<bv(10,64),bv(1,64),bv(0,64))
+  2:  # cond(A=bv(0,64))
   start(0)
   pc(3)
-  3:  # B=ite(13>=10,0,268435455)
+  3:  # B=ite(bv(13,64)>=bv(10,64),bv(0,64),bv(268435455,64))
   4:  load(13)
-  # element(13,C)
-  5:  load(C/\B)
-  # element(C/\B,D)
+  # element(bv(13,64),bv(4,64))
+  5:  load(bv(4,64)/\B)
+  # element(bv(4,64)/\B,bv(7,64))
   6:  rollback(0)
   pc(6)
 final conf:
@@ -1134,8 +1136,8 @@ initial conf:
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
   a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
 trace:
-  0:  # A=(13<10)
-  1:  # cond(A=0)
+  0:  # A=ite(bv(13,64)<bv(10,64),bv(1,64),bv(0,64))
+  1:  # cond(A=bv(0,64))
   pc(4)
 final conf:
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
@@ -1150,27 +1152,27 @@ prg='spectre.muasm', spec, window_size=4, entry=0, ana=reach1
 m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
 a=[pc=0,y=10,v=4,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=1,B=2,C=2]
+  [A=1]
 initial conf:
   i=0
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
   a=[pc=0,y=10,v=4,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
-  0:  # A=(4<10)
-  1:  # cond(A\=0)
+  0:  # A=ite(bv(4,64)<bv(10,64),bv(1,64),bv(0,64))
+  1:  # cond(A\=bv(0,64))
   start(0)
   pc(4)
   4:  rollback(0)
   pc(2)
   2:  load(4)
-  # element(4,B)
-  3:  load(B)
-  # element(B,C)
+  # element(bv(4,64),bv(2,64))
+  3:  load(2)
+  # element(bv(2,64),bv(2,64))
 final conf:
   i=1
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
-  a=[pc=4,y=10,v=C,pc=0,sp=0xf000000,bp=0xf00000,x=A]
+  a=[pc=4,y=10,v=2,pc=0,sp=0xf000000,bp=0xf00000,x=A]
   s=[]
 program:
   0: x<-v<y
@@ -1182,21 +1184,21 @@ prg='spectre.muasm', spec, window_size=4, entry=0, ana=reach1
 m=[0=7,1=1,2=2,4=2,13=4,10=0,251658240= -1]
 a=[pc=0,y=10,v=13,pc=0,sp=251658240,bp=15728640]
 Assignments:
-  [A=0,B=4,C=2]
+  [A=0]
 initial conf:
   i=0
   m=[0=7,1=1,2=2,4=2,13=4,10=0,0xf000000=-1]
   a=[pc=0,y=10,v=13,pc=0,sp=0xf000000,bp=0xf00000]
   s=[]
 trace:
-  0:  # A=(13<10)
-  1:  # cond(A=0)
+  0:  # A=ite(bv(13,64)<bv(10,64),bv(1,64),bv(0,64))
+  1:  # cond(A=bv(0,64))
   start(0)
   pc(2)
   2:  load(13)
-  # element(13,B)
-  3:  load(B)
-  # element(B,C)
+  # element(bv(13,64),bv(4,64))
+  3:  load(4)
+  # element(bv(4,64),bv(2,64))
   4:  rollback(0)
   pc(4)
 final conf:
@@ -1220,8 +1222,8 @@ initial conf:
   m=[0xf000000=-1]
   a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
-  0:  # C=(A<B)
-  1:  # cond(C=0)
+  0:  # C=ite(A<B,bv(1,64),bv(0,64))
+  1:  # cond(C=bv(0,64))
   pc(5)
 final conf:
   m=[0xf000000=-1]
@@ -1229,21 +1231,21 @@ final conf:
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0x8000000000000000,B=0x8000000000000001,C=1,D=0,E=0,F=0,G=0]
+  [A=0x8000000000000000,B=0x8000000000000001,C=1,D=0]
 initial conf:
-  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  m=[0xf000000=-1,0x8000000000000000=D,0=E]
   a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
-  0:  # C=(A<B)
-  1:  # cond(C\=0)
+  0:  # C=ite(A<B,bv(1,64),bv(0,64))
+  1:  # cond(C\=bv(0,64))
   pc(2)
   2:  3:  load(A)
-  # element(A,E)
-  4:  load(E)
-  # element(E,G)
+  # element(A,D)
+  4:  load(D)
+  # element(D,E)
 final conf:
-  m=[0xf000000=-1,0x8000000000000000=D,0=F]
-  a=[pc=5,sp=0xf000000,bp=0xf00000,v=G,y=B,x=C]
+  m=[0xf000000=-1,0x8000000000000000=D,0=E]
+  a=[pc=5,sp=0xf000000,bp=0xf00000,v=E,y=B,x=C]
 [concolic] finished, no more conditions to negate
 program:
   0: u<-268435455
@@ -1262,8 +1264,8 @@ initial conf:
   m=[0xf000000=-1]
   a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
-  0:  1:  # C=(A<B)
-  2:  # cond(C=0)
+  0:  1:  # C=ite(A<B,bv(1,64),bv(0,64))
+  2:  # cond(C=bv(0,64))
   pc(6)
 final conf:
   m=[0xf000000=-1]
@@ -1271,22 +1273,22 @@ final conf:
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0x8000000000000000,B=0x8000000000000001,C=1,D=0xfffffff,E=0,F=0,G=0,H=0]
+  [A=0x8000000000000000,B=0x8000000000000001,C=1,D=0xfffffff,E=0]
 initial conf:
-  m=[0xf000000=-1,0x8000000000000000=E,0=G]
+  m=[0xf000000=-1,0x8000000000000000=E,0=F]
   a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
-  0:  1:  # C=(A<B)
-  2:  # cond(C\=0)
+  0:  1:  # C=ite(A<B,bv(1,64),bv(0,64))
+  2:  # cond(C\=bv(0,64))
   pc(3)
-  3:  # D=ite(A>=B,0,268435455)
+  3:  # D=ite(A>=B,bv(0,64),bv(268435455,64))
   4:  load(A)
-  # element(A,F)
-  5:  load(F/\D)
-  # element(F/\D,H)
+  # element(A,E)
+  5:  load(E/\D)
+  # element(E/\D,F)
 final conf:
-  m=[0xf000000=-1,0x8000000000000000=E,0=G]
-  a=[pc=6,sp=0xf000000,bp=0xf00000,v=H,y=B,u=D,x=C]
+  m=[0xf000000=-1,0x8000000000000000=E,0=F]
+  a=[pc=6,sp=0xf000000,bp=0xf00000,v=F,y=B,u=D,x=C]
 [concolic] finished, no more conditions to negate
 program:
   0: x<-v<y
@@ -1303,8 +1305,8 @@ initial conf:
   m=[0xf000000=-1]
   a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
-  0:  # C=(A<B)
-  1:  # cond(C=0)
+  0:  # C=ite(A<B,bv(1,64),bv(0,64))
+  1:  # cond(C=bv(0,64))
   pc(4)
 final conf:
   m=[0xf000000=-1]
@@ -1312,21 +1314,21 @@ final conf:
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0x8000000000000000,B=0x8000000000000001,C=1,D=0,E=0,F=0,G=0]
+  [A=0x8000000000000000,B=0x8000000000000001,C=1,D=0]
 initial conf:
-  m=[0xf000000=-1,0x8000000000000000=D,0=F]
+  m=[0xf000000=-1,0x8000000000000000=D,0=E]
   a=[pc=0,sp=0xf000000,bp=0xf00000,v=A,y=B]
 trace:
-  0:  # C=(A<B)
-  1:  # cond(C\=0)
+  0:  # C=ite(A<B,bv(1,64),bv(0,64))
+  1:  # cond(C\=bv(0,64))
   pc(2)
   2:  load(A)
-  # element(A,E)
-  3:  load(E)
-  # element(E,G)
+  # element(A,D)
+  3:  load(D)
+  # element(D,E)
 final conf:
-  m=[0xf000000=-1,0x8000000000000000=D,0=F]
-  a=[pc=4,sp=0xf000000,bp=0xf00000,v=G,y=B,x=C]
+  m=[0xf000000=-1,0x8000000000000000=D,0=E]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,v=E,y=B,x=C]
 [concolic] finished, no more conditions to negate
 program:
   0: beqz(x,2)
@@ -1343,9 +1345,9 @@ initial conf:
   m=[0xf000000=-1]
   a=[pc=0,sp=0xf000000,bp=0xf00000,x=A,y=B]
 trace:
-  0:  # cond(A=0)
+  0:  # cond(A=bv(0,64))
   pc(2)
-  2:  # cond(B=0)
+  2:  # cond(B=bv(0,64))
   pc(4)
 final conf:
   m=[0xf000000=-1]
@@ -1353,54 +1355,54 @@ final conf:
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0xffffffffffffffff,B=0,C=0,D=0]
+  [A=0xffffffffffffffff,B=0]
 initial conf:
   m=[0xf000000=-1,0x11=C]
   a=[pc=0,sp=0xf000000,bp=0xf00000,x=B,y=A]
 trace:
-  0:  # cond(B=0)
+  0:  # cond(B=bv(0,64))
   pc(2)
-  2:  # cond(A\=0)
+  2:  # cond(A\=bv(0,64))
   pc(3)
   3:  load(17)
-  # element(17,D)
+  # element(bv(17,64),C)
 final conf:
   m=[0xf000000=-1,0x11=C]
-  a=[pc=4,sp=0xf000000,bp=0xf00000,x=B,y=A,v2=D]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,x=B,y=A,v2=C]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0xffffffffffffffff,B=0,C=0,D=0]
+  [A=0xffffffffffffffff,C=0]
 initial conf:
   m=[0xf000000=-1,0x10=B]
-  a=[pc=0,sp=0xf000000,bp=0xf00000,x=A,y=D]
+  a=[pc=0,sp=0xf000000,bp=0xf00000,x=A,y=C]
 trace:
-  0:  # cond(A\=0)
+  0:  # cond(A\=bv(0,64))
   pc(1)
   1:  load(16)
-  # element(16,C)
-  2:  # cond(D=0)
+  # element(bv(16,64),B)
+  2:  # cond(C=bv(0,64))
   pc(4)
 final conf:
   m=[0xf000000=-1,0x10=B]
-  a=[pc=4,sp=0xf000000,bp=0xf00000,x=A,v1=C,y=D]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,x=A,v1=B,y=C]
 [concolic] negating last path condition and computing new model...
 [concolic] new input model found
 Assignments:
-  [A=0xffffffffffffffff,B=0xffffffffffffffff,C=0xffffffffffffffff,D=0xffffffffffffffff,E=0,F=0]
+  [A=0xffffffffffffffff,B=0xffffffffffffffff,C=0xffffffffffffffff]
 initial conf:
-  m=[0xf000000=-1,0x10=C,0x11=E]
+  m=[0xf000000=-1,0x10=C,0x11=D]
   a=[pc=0,sp=0xf000000,bp=0xf00000,x=B,y=A]
 trace:
-  0:  # cond(B\=0)
+  0:  # cond(B\=bv(0,64))
   pc(1)
   1:  load(16)
-  # element(16,D)
-  2:  # cond(A\=0)
+  # element(bv(16,64),C)
+  2:  # cond(A\=bv(0,64))
   pc(3)
   3:  load(17)
-  # element(17,F)
+  # element(bv(17,64),D)
 final conf:
-  m=[0xf000000=-1,0x10=C,0x11=E]
-  a=[pc=4,sp=0xf000000,bp=0xf00000,x=B,y=A,v1=D,v2=F]
+  m=[0xf000000=-1,0x10=C,0x11=D]
+  a=[pc=4,sp=0xf000000,bp=0xf00000,x=B,y=A,v1=C,v2=D]
 [concolic] finished, no more conditions to negate
