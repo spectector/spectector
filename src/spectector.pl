@@ -42,7 +42,8 @@
 :- use_module(muasm_program).
 :- use_module(muasm_print).
 :- use_module(spectector_noninter).
-
+:- use_module(spectector_approximate).
+:- use_module(spectector_approxleaks).
 % ---------------------------------------------------------------------------
 
 :- export(main/1).
@@ -76,6 +77,7 @@ show_help :-
         reach:    reachability using concolic execution
         reach1:   like reach, but stop at first path
         noninter: non-interference check (default)
+        approx:   approximate quantitative analysis of leaking locations
   --steps N        Execution step limit
   --timeout T
                    Timeout for the whole analysis (in ms)
@@ -222,6 +224,9 @@ run(PrgFile, Opts) :-
     ( Ana0 = noninter ->
         extract_query(low(Low), Options, [[]]),
         Ana = noninter(Low)
+    ; Ana0 = approx ->
+        extract_query(low(Low), Options, [[]]),
+	Ana = approx(Low)
     ; Ana = Ana0
     ),
     ( member(term_stop_spec, Options) -> set_term_stop_spec
@@ -380,6 +385,10 @@ runtest2(reach, C0) :- !,
 runtest2(reach1, C0) :- !,
     ( (C,Trace) = ~mrun(C0) -> true ; fail ), % (only first path)
     pretty_print([triple(C0,Trace,C)]).
+runtest2(approx(Low), C0) :- !,
+    %approximate_check(Low, C0),
+    approxleaks(0.75,0.1,Low, C0).
+
 runtest2(noninter(Low), C0) :- !,
     noninter_check(Low, C0).
 
